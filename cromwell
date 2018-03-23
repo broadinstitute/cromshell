@@ -4,11 +4,10 @@ This=`basename $0`
 BinDir=`dirname $0`
 
 # FIXME: read env var, or default with this
-export CROMWELL_URL="http://jg-11k.dsde-cromwell-dev.broadinstitute.org:8000"
-#export CROMWELL_URL="http://kc-cromwell:8080"
+export CROMWELL_URL="https://cromwell-v30.dsde-methods.broadinstitute.org"
 
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles"
-CROMWELL_LAST_WORKFLOW_FILE="$HOME/.cromwell.last.workfow.id"
+CROMWELL_LAST_WORKFLOW_FILE="$HOME/.cromshell.last.workfow.id"
 
 instruct()  # {{{
 {
