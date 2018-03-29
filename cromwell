@@ -81,7 +81,11 @@ function abort() {
 if [ "$1" = "submit" ] ; then
    submit $2 $3 $4
    exit
+elif [ -z "$1" ] ; then
+   instruct
+   exit
 fi
+
 if [[ $2 == -* ]]; then
   row=${2#-}
   workflowID=$(tail -n $row $CROMWELL_DIARY_WORKFLOW_FILE | head -n 1)
@@ -104,5 +108,6 @@ elif [ "$1" = "timing" ] ; then
 elif [ "$1" = "abort" ] ; then
    abort $workflowID
 else
+    echo "$1 is not a valid operation"
     instruct exit
 fi
