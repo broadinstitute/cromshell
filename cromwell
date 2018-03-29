@@ -6,7 +6,10 @@ BinDir=`dirname $0`
 # FIXME: read env var, or default with this
 export CROMWELL_URL="https://cromwell-v30.dsde-methods.broadinstitute.org"
 
-CROMSHELL_CONFIG=$HOME/.cromshell/
+
+CROMSHELL_CONFIG=$HOME/.cromshell
+mkdir -p $CROMSHELL_CONFIG
+
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles"
 CROMWELL_LAST_WORKFLOW_FILE="${CROMSHELL_CONFIG}/last.workfow.id"
 CROMWELL_DIARY_WORKFLOW_FILE="${CROMSHELL_CONFIG}/all.workfow.ids"
@@ -75,8 +78,6 @@ function abort() {
   echo $response  
 }
 
-
-
 if [ "$1" = "submit" ] ; then
    submit $2 $3 $4
    exit
@@ -105,4 +106,3 @@ elif [ "$1" = "abort" ] ; then
 else
     instruct exit
 fi
-
