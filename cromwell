@@ -6,9 +6,10 @@ BinDir=`dirname $0`
 # FIXME: read env var, or default with this
 export CROMWELL_URL="https://cromwell-v30.dsde-methods.broadinstitute.org"
 
+CROMSHELL_CONFIG=$HOME/.cromshell/
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles"
-CROMWELL_LAST_WORKFLOW_FILE="$HOME/.cromshell.last.workfow.id"
-
+CROMWELL_LAST_WORKFLOW_FILE="${CROMSHELL_CONFIG}/last.workfow.id"
+CROMWELL_DIARY_WORKFLOW_FILE="${CROMSHELL_CONFIG}/all.workfow.ids"
 instruct()  # {{{
 {
    echo
@@ -16,15 +17,18 @@ instruct()  # {{{
    echo
    echo "Usage:    $This <subcommand> [options]"
    echo
-   echo "NOTE: As a convenience, f you omit a workflow-id from a command, the last used workflow-id "
+   echo "NOTE: As a convenience, if you omit a workflow-id from a command, the last used workflow-id "
    echo "will be used as a default.  When submitting a workflow, the returned worfklow-id "
-   echo "will become the last used workflow id"
+   echo "will become the last used workflow id. Also, you can use -n instead of a workflow-id to "
+   echo "use a previous run (status -1 would be the status of the last run, -2 would be the one before that.)"
    echo
    echo "Supported Subcommands:"
    echo "   submit [wdl-file] [inputs] [options]"
    echo "   status [worfklow-id]"
    echo "   logs [workflow-id]"
    echo "   metadata [worfklow-id]"
+   echo "   executionStatusCount [worfklow-id]"
+   echo "   slim_metadata [worfklow-id]"
    echo "   timing [worfklow-id]"
    echo "   abort [worfklow-id]"
    echo
@@ -33,51 +37,72 @@ instruct()  # {{{
 }  # }}}
 
 function submit() { 
-  response=$(curl -s -F wdlSource=@${1} -F workflowInputs=@${2} -F workflowOptions=@${3} ${CROMWELL_URL}/api/workflows/v1)
+  response=$(curl -s -F workflowSource=@${1} -F workflowInputs=@${2} -F workflowOptions=@${3} ${CROMWELL_URL}/api/workflows/v1)
   echo $response  
   id=$(echo $response | cut -d"," -f1 | cut -d":" -f2 | sed s/\"//g | sed s/\ //g)
   mkdir $id
   cp ${1} ${2} ${3} ${id}/
   echo $id > $CROMWELL_LAST_WORKFLOW_FILE
+  echo $id >> $CROMWELL_DIARY_WORKFLOW_FILE
 }
 function status() {
-  if [ -n "$1" ]; then id=$1; else id=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} ); fi
-  curl -s ${CROMWELL_URL}/api/workflows/v1/${id}/status | jq . ; 
+  curl -s ${CROMWELL_URL}/api/workflows/v1/${1}/status | jq . ;
 }
+
 function logs() {
-  if [ -n "$1" ]; then id=$1; else id=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} ); fi
-  curl -s ${CROMWELL_URL}/api/workflows/v1/${id}/logs | jq . ; 
+  curl -s ${CROMWELL_URL}/api/workflows/v1/${1}/logs | jq . ;
 }
-function metadata() { 
-  if [ -n "$1" ]; then id=$1; else id=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} ); fi
-  curl --compressed -s ${CROMWELL_URL}/api/workflows/v1/${id}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . ;
+
+function metadata() {
+  curl --compressed -s ${CROMWELL_URL}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . ;
 }
-function timing() { 
-  if [ -n "$1" ]; then id=$1; else id=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} ); fi
-  open ${CROMWELL_URL}/api/workflows/v1/${id}/timing; 
+
+function executionStatusCount() {
+  curl --compressed -s ${CROMWELL_URL}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} |
+  jq '.calls | to_entries | map({(.key): .value | flatten | group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add})'
 }
+
+function slim_metadata() {
+  curl --compressed -s "${CROMWELL_URL}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .;
+}
+
+function timing() {
+  open ${CROMWELL_URL}/api/workflows/v1/${1}/timing;
+}
+
 function abort() { 
-  if [ -n "$1" ]; then id=$1; else id=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} ); fi
-  response=$(curl -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${CROMWELL_URL}/api/workflows/v1/${id}/abort")
+  response=$(curl -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${CROMWELL_URL}/api/workflows/v1/${1}/abort")
   echo $response  
 }
 
 
 
-
 if [ "$1" = "submit" ] ; then
    submit $2 $3 $4
-elif [ "$1" = "status" ] ; then
-   status $2
-elif [ "$1" = "logs" ] ; then
-   logs $2
-elif [ "$1" = "metadata" ] ; then
-   metadata $2
-elif [ "$1" = "timing" ] ; then
-   timing $2
-elif [ "$1" = "abort" ] ; then
-   abort $2
+   exit
+fi
+if [[ $2 == -* ]]; then
+  row=${2#-}
+  workflowID=$(tail -n $row $CROMWELL_DIARY_WORKFLOW_FILE | head -n 1)
 else
-	instruct exit
+  if [ -n "$2" ]; then workflowID=$2; else workflowID=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} ); fi
+fi
+echo "using workflow-id == $workflowID" 1>&2
+if [ "$1" = "status" ] ; then
+   status $workflowID
+elif [ "$1" = "logs" ] ; then
+   logs $workflowID
+elif [ "$1" = "metadata" ] ; then
+   metadata $workflowID
+elif [ "$1" = "executionStatusCount" ] ; then
+   executionStatusCount $workflowID
+elif [ "$1" = "slim_metadata" ] ; then
+   slim_metadata $workflowID
+elif [ "$1" = "timing" ] ; then
+   timing $workflowID
+elif [ "$1" = "abort" ] ; then
+   abort $workflowID
+else
+    instruct exit
 fi
 
