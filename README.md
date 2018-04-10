@@ -4,7 +4,7 @@ shell script for interacting with cromwell servers
 requires curl and [jq](https://stedolan.github.io/jq/)
 
 ### Supported Subcommands:
-  * submit [wdl-file] [inputs] [options]
+  * submit [wdl-file] [inputs] [options] [dependencies]
   * status [worfklow-id]
   * logs [workflow-id]
   * metadata [worfklow-id]
