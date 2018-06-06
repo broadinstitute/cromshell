@@ -40,7 +40,7 @@ instruct()  # {{{
 }  # }}}
 
 function submit() { 
-  response=$(curl -s -F workflowSource=@${1} -F workflowInputs=@${2} -F workflowOptions=@${3} -F workflowDependencies=@${4} ${CROMWELL_URL}/api/workflows/v1)
+  response=$(curl -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   echo $response  
   id=$(echo $response | cut -d"," -f1 | cut -d":" -f2 | sed s/\"//g | sed s/\ //g)
   mkdir $id
