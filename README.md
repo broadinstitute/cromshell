@@ -8,8 +8,8 @@ requires curl and [jq](https://stedolan.github.io/jq/)
   * status [worfklow-id]
   * logs [workflow-id]
   * metadata [worfklow-id]
-  * executionStatusCount [worfklow-id]
-  * slim_metadata [worfklow-id]
+  * execution-status-count [worfklow-id]
+  * slim-metadata [worfklow-id]
   * timing [worfklow-id]
   * abort [worfklow-id]
    
