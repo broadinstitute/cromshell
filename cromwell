@@ -94,7 +94,11 @@ else
 fi
 echo "using workflow-id == $workflowID" 1>&2
 if [ "$1" = "status" ] ; then
-   status $workflowID
+   if [[ "$#" -le 2 ]] ; then
+    status $workflowID
+   elif [ "$#" -gt 2 ]; then
+    for var in "${@:2}"; do status ${var}; done
+   fi
 elif [ "$1" = "logs" ] ; then
    logs $workflowID
 elif [ "$1" = "metadata" ] ; then
