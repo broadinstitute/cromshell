@@ -18,3 +18,4 @@ requires curl and [jq](https://stedolan.github.io/jq/)
  It will copy your wdl and json inputs into the folder for reproducibility.  
  * It keeps track of your most recently submitted jobs by storing their ids in `./cromshell/  
  You may ommit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs.
+ * You can override the default cromwell server by setting the environmental variable CROMWELL_URL to the appropriate URL.
