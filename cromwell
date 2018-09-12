@@ -100,7 +100,7 @@ elif [ "$1" = "logs" ] ; then
 elif [ "$1" = "metadata" ] ; then
    metadata $workflowID
 elif [ "$1" = "execution-status-count" ] ; then
-   executionStatusCount $workflowID
+   execution-status-count $workflowID
 elif [ "$1" = "slim-metadata" ] ; then
    slim-metadata $workflowID
 elif [ "$1" = "timing" ] ; then
