@@ -30,8 +30,8 @@ instruct()  # {{{
    echo "   status [worfklow-id]"
    echo "   logs [workflow-id]"
    echo "   metadata [worfklow-id]"
-   echo "   executionStatusCount [worfklow-id]"
-   echo "   slim_metadata [worfklow-id]"
+   echo "   execution-status-count [worfklow-id]"
+   echo "   slim-metadata [worfklow-id]"
    echo "   timing [worfklow-id]"
    echo "   abort [worfklow-id]"
    echo
@@ -60,12 +60,12 @@ function metadata() {
   curl --compressed -s ${CROMWELL_URL}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . ;
 }
 
-function executionStatusCount() {
+function execution-status-count() {
   curl --compressed -s ${CROMWELL_URL}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} |
   jq '.calls | to_entries | map({(.key): .value | flatten | group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add})'
 }
 
-function slim_metadata() {
+function slim-metadata() {
   curl --compressed -s "${CROMWELL_URL}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .;
 }
 
@@ -99,10 +99,10 @@ elif [ "$1" = "logs" ] ; then
    logs $workflowID
 elif [ "$1" = "metadata" ] ; then
    metadata $workflowID
-elif [ "$1" = "executionStatusCount" ] ; then
-   executionStatusCount $workflowID
-elif [ "$1" = "slim_metadata" ] ; then
-   slim_metadata $workflowID
+elif [ "$1" = "execution-status-count" ] ; then
+   execution-status-count $workflowID
+elif [ "$1" = "slim-metadata" ] ; then
+   slim-metadata $workflowID
 elif [ "$1" = "timing" ] ; then
    timing $workflowID
 elif [ "$1" = "abort" ] ; then
