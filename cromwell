@@ -3,8 +3,8 @@
 This=`basename $0`
 BinDir=`dirname $0`
 
-# FIXME: read env var, or default with this
-export CROMWELL_URL="https://cromwell-v30.dsde-methods.broadinstitute.org"
+# read env var, or use default server URL
+export CROMWELL_URL=${CROMWELL_URL:-"https://cromwell-v30.dsde-methods.broadinstitute.org"}
 
 
 CROMSHELL_CONFIG=$HOME/.cromshell
