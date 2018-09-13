@@ -93,12 +93,12 @@ else
   if [ -n "$2" ]; then workflowID=$2; else workflowID=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} ); fi
 fi
 echo "using workflow-id == $workflowID" 1>&2
-if [ "$1" = "status" ] ; then
+if [ "$1" = "status" ] || [ "$1" = "abort" ] ; then
    if [[ "$#" -le 2 ]] ; then
     status $workflowID
-   elif [ "$#" -gt 2 ]; then
-    for var in "${@:2}"; do status ${var}; done
-   fi
+  else
+    for var in "${@:2}"; do "$1" ${var}; done
+  fi
 elif [ "$1" = "logs" ] ; then
    logs $workflowID
 elif [ "$1" = "metadata" ] ; then
@@ -109,8 +109,6 @@ elif [ "$1" = "slim-metadata" ] ; then
    slim-metadata $workflowID
 elif [ "$1" = "timing" ] ; then
    timing $workflowID
-elif [ "$1" = "abort" ] ; then
-   abort $workflowID
 else
     echo "$1 is not a valid operation"
     instruct exit
