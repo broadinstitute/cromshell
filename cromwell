@@ -24,15 +24,17 @@ instruct()  # {{{
    echo "will be used as a default.  When submitting a workflow, the returned worfklow-id "
    echo "will become the last used workflow id. Also, you can use -n instead of a workflow-id to "
    echo "use a previous run (status -1 would be the status of the last run, -2 would be the one before that.)"
+   echo "However, for commands that accepts multiple workflow-id's (status and abort), this does not apply, "
+   echo "the explicit workflow-id's are expected if you provide multiple ones."
    echo
    echo "Supported Subcommands:"
    echo "   submit [wdl-file] [inputs] [options] [dependencies]"
-   echo "   status [worfklow-id]"
+   echo "   status [worfklow-id] [[worfklow-id]...]"
    echo "   logs [workflow-id]"
    echo "   metadata [worfklow-id]"
    echo "   execution-status-count [worfklow-id]"
    echo "   slim-metadata [worfklow-id]"
-   echo "   timing [worfklow-id]"
+   echo "   timing [worfklow-id] [[worfklow-id]...]"
    echo "   abort [worfklow-id]"
    echo
    echo
