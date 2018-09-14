@@ -97,7 +97,7 @@ fi
 echo "using workflow-id == $workflowID" 1>&2
 if [ "$1" = "status" ] || [ "$1" = "abort" ] ; then
    if [[ "$#" -le 2 ]] ; then
-    status $workflowID
+    "$1" $workflowID
   else
     for var in "${@:2}"; do "$1" ${var}; done
   fi
