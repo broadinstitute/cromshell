@@ -1,0 +1,311 @@
+#!/usr/bin/env bash
+
+################################################################################
+
+#Setup variables for the script:
+UNALIASED_SCRIPT_NAME=$( readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}" )
+SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
+SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
+MINARGS=1
+MAXARGS=99
+
+################################################################################
+
+# read env var, or use default server URL
+export CROMWELL_URL=${CROMWELL_URL:-"https://cromwell-v30.dsde-methods.broadinstitute.org"}
+
+CROMSHELL_CONFIG=${HOME}/.cromshell
+mkdir -p ${CROMSHELL_CONFIG}
+
+CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles"
+CROMWELL_LAST_WORKFLOW_FILE="${CROMSHELL_CONFIG}/last.workfow.id"
+CROMWELL_DIARY_WORKFLOW_FILE="${CROMSHELL_CONFIG}/all.workfow.ids"
+
+################################################################################
+
+SUB_COMMAND=''
+WORKFLOW_ID=''
+OPTIONS=''
+
+################################################################################
+
+function simpleUsage()
+{
+  echo -e "Usage:    ${SCRIPTNAME} <subcommand> [options]"
+  echo -e "Pokes Cromwell REST endpoints at a server specified by the "
+  echo -e "environment variable \$CROMWELL_URL" 
+}
+
+#Define a usage function:
+function usage() 
+{
+  simpleUsage
+  echo
+  echo -e "When submitting a workflow, the returned worfklow-id will become the" 
+  echo -e "last used workflow id. Also, you can use -n instead of a workflow-id to "
+  echo -e "use a previous run (status -1 would be the status of the last run," 
+  echo -e "-2 would be the one before that).  However, for commands that "
+  echo -e "accepts multiple workflow-id's (status and abort), this does not apply, "
+  echo -e "the explicit workflow-id's are expected if you provide multiple ones."
+  echo
+	echo -e "NOTE: As a convenience, if you omit a workflow-id from a command,"
+ 	echo -e "the last used workflow-id will be used as a default.  "
+  echo
+  echo -e "Requires the following programs to be installed:"
+  echo -e "  curl"
+  echo -e "  mail"
+  echo -e "  jq"
+  echo
+  echo -e "Supported Subcommands:"
+  echo -e "   submit [wdl-file] [inputs] [options] [dependencies]"
+  echo -e "   status [worfklow-id] [[worfklow-id]...]"
+  echo -e "   logs [worfklow-id] [[worfklow-id]...]"
+  echo -e "   metadata [worfklow-id] [[worfklow-id]...]"
+  echo -e "   slim-metadata [worfklow-id] [[worfklow-id]...]"
+  echo -e "   execution-status-count [worfklow-id] [[worfklow-id]...]"
+  echo -e "   timing [worfklow-id] [[worfklow-id]...]"
+  echo -e "   abort [worfklow-id] [[worfklow-id]...]"
+	echo -e "   notify [workflow-id] email_address"
+  echo 
+  echo -e "Return values:"
+  echo -e "  0                  SUCCESS"
+	echo -e "  ANYTHING_BUT_ZERO  FAILURE/ERROR"
+  echo
+}
+
+#Display a message to std error:
+function error() 
+{
+  echo "$1" 1>&2 
+}
+
+TMPFILELIST=''
+function makeTemp()
+{
+  local f
+  f=$( mktemp )
+  TMPFILELIST="${TMPFILELIST} $f"
+  echo $f
+}
+
+function cleanTempVars()
+{
+  rm -f ${TMPFILELIST}
+}
+
+function at_exit()
+{
+  cleanTempVars
+}
+
+function checkPipeStatus() {
+	for st in ${PIPESTATUS[@]} ; do 
+		[ $st -ne 0 ] && return $st
+	done
+	return 0
+}
+
+################################################################################
+
+trap at_exit EXIT 
+
+################################################################################
+
+#Check given arguments:
+if [[ $# -gt $MAXARGS ]] ; then
+  usage
+  exit 1
+elif [[ $# -lt $MINARGS ]] ; then
+  usage
+  exit 2
+fi
+
+################################################################################
+
+function populateWorkflowId() {
+
+	local userSpecifiedId=$1
+
+	# If the user specified a negative number, get the nth last workflow:
+  if [[ $userSpecifiedId == -* ]]; then
+  	local row=${userSpecifiedId#-}
+  	WORKFLOW_ID=$(tail -n $row $CROMWELL_DIARY_WORKFLOW_FILE | head -n 1)
+  else
+		# If the user specified anything at this point, assume that it 
+		# is a workflow UUID:
+  	if [ -n "$userSpecifiedId" ]; then 
+			WORKFLOW_ID=$userSpecifiedId 
+		# If the user specified nothing, get the last workflow ID:	
+		else 
+			WORKFLOW_ID=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} )
+		fi
+  fi
+}
+
+# Submit a workflow and arguments to the Cromwell Server
+function submit() { 
+  local response=$(curl -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
+	local r=$?
+  echo $response  
+
+	[ $r -ne 0 ] && error "FAILED TO SUBMIT JOB" && return $r
+
+  local id=$(echo $response | cut -d"," -f1 | cut -d":" -f2 | sed s/\"//g | sed s/\ //g)
+  mkdir $id
+  cp ${1} ${2} ${3} ${4} ${id}/
+  echo $id > $CROMWELL_LAST_WORKFLOW_FILE
+  echo $id >> $CROMWELL_DIARY_WORKFLOW_FILE
+	return 0
+}
+
+# Check the status of a Cromwell job UUID
+function status() {
+  curl -s ${CROMWELL_URL}/api/workflows/v1/${1}/status | jq . ;
+	return $( checkPipeStatus )
+}
+
+# Get the logs of a Cromwell job UUID
+function logs() {
+  curl -s ${CROMWELL_URL}/api/workflows/v1/${1}/logs | jq . ;
+	return $( checkPipeStatus )
+}
+
+# Get the metadata for a Cromwell job UUID
+function metadata() {
+  curl --compressed -s ${CROMWELL_URL}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . ;
+	return $( checkPipeStatus )
+}
+
+# Get the metadata for a Cromwell job UUID
+function execution-status-count() {
+  curl --compressed -s ${CROMWELL_URL}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} | \
+  jq '.calls | to_entries | map({(.key): .value | flatten | group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add})'
+	return $( checkPipeStatus )
+}
+
+function slim-metadata() {
+  curl --compressed -s "${CROMWELL_URL}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .;
+	return $( checkPipeStatus )
+}
+
+function timing() {
+  open ${CROMWELL_URL}/api/workflows/v1/${1}/timing;
+	return $?
+}
+
+function abort() { 
+  response=$(curl -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${CROMWELL_URL}/api/workflows/v1/${1}/abort")
+	local r=$?
+  echo $response  
+	return $r
+}
+
+# Spin off a task in the background that will check periodically if the workflow ID is 
+# complete.
+# When it is, send an email to the email address specified.
+function notify() {
+
+	local id=$1
+	local email=$2
+
+	error "Spinning off notification thread for workflow ${id} to ${email} ..."
+	
+	statusFile=$( mktemp )
+
+	local separator="=================================================="
+
+	while true ; do 
+		status $id 1>$statusFile
+		grep -oE "Succeeded|Failed|Aborted" $statusFile &>/dev/null
+		r=$?
+		if [ $r -eq 0 ] ; then
+			metaData=$( metadata $id )
+			echo -e "CROMWELL Task Complete:\n\n${id}\n\non\n\n${CROMWELL_URL}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task Complete [${CROMWELL_URL}]" ${email} 
+			break
+		fi
+		# wait for 10 seconds:
+		sleep 10
+	done 
+}
+
+function runSubCommandOnWorkflowId() {
+	# Get the workflow ID:
+	populateWorkflowId $1
+	error "using workflow-id == $WORKFLOW_ID"
+	${SUB_COMMAND} ${WORKFLOW_ID} 
+	shift
+	echo
+}
+
+################################################################################
+
+#Read args:
+while [ $# -gt 0 ] ; do
+
+  case "$1" in
+    -h|--h|--help|-help|help)
+      usage;
+      exit 0;
+      ;;
+    submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify) 
+			# Get our sub-command:
+			SUB_COMMAND=$1
+			shift
+			# We'll manually handle the rest of the options:
+			break
+			;;
+    *)
+      error "${SCRIPTNAME}: invalid option: $1" 
+      simpleUsage
+      echo "Try \`$SCRIPTNAME --help' for more information."
+      exit 3;
+    ;; 
+  esac
+  
+  #Get next argument in $1:
+  shift
+done
+
+################################################################################
+
+# Special case: submitting a job:
+if [[ "${SUB_COMMAND}" == "submit" ]] ; then
+	${SUB_COMMAND} $1 $2 $3 $4 
+	exit $?
+fi
+
+# Special case: notify
+if [[ "${SUB_COMMAND}" == "notify" ]] ; then
+
+	# If the user gave us > 1 argument with notify, 
+	# we assume arg 1 is the WORKFLOW_ID and arg 2 
+	# is the email address:
+	if [[ $# -gt 1 ]] ; then
+		# Get the workflow ID:
+		populateWorkflowId $1
+		shift
+	fi
+	
+	# Make sure the user gave us a good email address:
+	echo "$1" | grep '@' &> /dev/null
+	r=$?
+	[ $r -ne 0 ] && error "Error: invalid email address: $1" && exit 5
+	email=$1
+
+	# Make sure our workflow ID is populated:
+	populateWorkflowId ${WORKFLOW_ID}
+	
+	# Spin off our notifier:
+	notify $WORKFLOW_ID $email &
+	exit 0
+fi
+
+# Run our sub command once on the first workflow ID:
+runSubCommandOnWorkflowId
+
+# Run the task on all remaining workflow IDs:
+# This is required because there's no do-while loop in bash.
+while [ $# -gt 0 ] ; do
+	runSubCommandOnWorkflowId
+done
+
