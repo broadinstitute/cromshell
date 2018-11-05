@@ -121,7 +121,6 @@ function _checkPipeStatus() {
 
   for (( i = 0 ; i < ${#RC[@]} ; i++ )) ; do 
     st=${RC[i]}
-    echo "st = ${st}"
     if [ $st -ne 0 ] ; then
       # If we were passed a description string for this error in the pipe, then we print it:
       let argIndex=$i+1
@@ -150,7 +149,7 @@ function checkPrerequisites {
   if $foundMissing ; then
     error "Error: the following commands could not be found:"
     error "  $missing"
-    error "Please install them and try again".
+    error "Please install them and try again."
     if [[ $(uname) == 'Darwin' ]] ; then
       error "NOTE: You likely must use homebrew to install them."
     fi
