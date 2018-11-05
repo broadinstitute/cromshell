@@ -2,13 +2,17 @@
 
 ################################################################################
 
-#Setup variables for the script:
+# Setup variables for the script:
 UNALIASED_SCRIPT_NAME=$( readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}" )
 SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
 MAXARGS=99
 PREREQUISITES="curl jq mail"
+
+# Determine if this shell is interactive:
+ISCALLEDBYUSER=true
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && ISCALLEDBYUSER=false
 
 # Required for the aliased call to checkPipeStatus:
 shopt -s expand_aliases
@@ -160,17 +164,6 @@ trap at_exit EXIT
 
 ################################################################################
 
-#Check given arguments:
-if [[ $# -gt $MAXARGS ]] ; then
-  usage
-  exit 1
-elif [[ $# -lt $MINARGS ]] ; then
-  usage
-  exit 2
-fi
-
-################################################################################
-
 function populateWorkflowId() {
   
   local userSpecifiedId=$1
@@ -221,7 +214,7 @@ function status() {
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
 
   grep -qE '"Failed"|"Aborted"' $f
-	r=$?
+  r=$?
   [[ $r -eq 0 ]] && retVal=1
 
   cat $f | jq . 
@@ -292,13 +285,11 @@ function notify() {
 
   local id=$1
   local email=$2
-
-  error "Spinning off notification thread for workflow ${id} to ${email} ..."
   
   statusFile=$( mktemp )
 
   local separator="=================================================="
-
+  
   while true ; do 
     status $id 1>$statusFile
     grep -oE "Succeeded|Failed|Aborted" $statusFile &>/dev/null
@@ -325,90 +316,108 @@ function runSubCommandOnWorkflowId() {
 
 ################################################################################
 
-#Read args:
-while [ $# -gt 0 ] ; do
+# Do all the interactive stuff if the script is called by a user.
+# The bash equivalent to `if __name__ == '__main__':
+if ${ISCALLEDBYUSER} ; then
 
-  case "$1" in
-    -h|--h|--help|-help|help)
-      usage;
-      exit 0;
-      ;;
-    submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify) 
-      # Get our sub-command:
-      SUB_COMMAND=$1
-      shift
-      # We'll manually handle the rest of the options:
-      break
-      ;;
-    *)
-      error "${SCRIPTNAME}: invalid option: $1" 
-      simpleUsage
-      echo "Try \`$SCRIPTNAME --help' for more information."
-      exit 3;
-    ;; 
-  esac
-  
-  #Get next argument in $1:
-  shift
-done
-
-################################################################################
-
-# Make sure we have all the required commands:
-checkPrerequisites $PREREQUISITES 
-r=$?
-[[ $r -ne 0 ]] && exit 6
-
-# Make sure we can talk to the cromwell server:
-ping -c1 -t1 $( echo ${CROMWELL_URL} | sed 's#.*://##g' )&> /dev/null
-r=$?
-[[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: ${CROMWELL_URL}" && exit 4
-
-# Special case: submitting a job:
-if [[ "${SUB_COMMAND}" == "submit" ]] ; then
-  ${SUB_COMMAND} $1 $2 $3 $4 
-  exit $?
-fi
-
-# Special case: notify
-if [[ "${SUB_COMMAND}" == "notify" ]] ; then
-
-  # If the user gave us > 1 argument with notify, 
-  # we assume arg 1 is the WORKFLOW_ID and arg 2 
-  # is the email address:
-  if [[ $# -gt 1 ]] ; then
-    # Get the workflow ID:
-    populateWorkflowId $1
-    shift
+  #Check given arguments:
+  if [[ $# -gt $MAXARGS ]] ; then
+    simpleUsage
+    exit 1
+  elif [[ $# -lt $MINARGS ]] ; then
+    simpleUsage
+    exit 2
   fi
-  
-  # Make sure the user gave us a good email address:
-  echo "$1" | grep -q  '@' 
+
+  #Read args:
+  while [ $# -gt 0 ] ; do
+
+    case "$1" in
+      -h|--h|--help|-help|help)
+        usage;
+        exit 0;
+        ;;
+      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify) 
+        # Get our sub-command:
+        SUB_COMMAND=$1
+        shift
+        # We'll manually handle the rest of the options:
+        break
+        ;;
+      *)
+        error "${SCRIPTNAME}: invalid option: $1" 
+        simpleUsage
+        echo "Try \`$SCRIPTNAME --help' for more information."
+        exit 3;
+        ;; 
+    esac
+
+    #Get next argument in $1:
+    shift
+  done
+
+  ################################################################################
+
+  # Make sure we have all the required commands:
+  checkPrerequisites $PREREQUISITES 
   r=$?
-  [ $r -ne 0 ] && error "Error: invalid email address: $1" && exit 5
-  email=$1
+  [[ $r -ne 0 ]] && exit 6
 
-  # Make sure our workflow ID is populated:
-  populateWorkflowId ${WORKFLOW_ID}
-  
-  # Spin off our notifier:
-  nohup notify ${WORKFLOW_ID} $email &>/dev/null &
-  exit 0
-fi
+  # Make sure we can talk to the cromwell server:
+  ping -c1 -t1 $( echo ${CROMWELL_URL} | sed 's#.*://##g' )&> /dev/null
+  r=$?
+  [[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: ${CROMWELL_URL}" && exit 4
 
-# Run our sub command once on the first workflow ID:
-runSubCommandOnWorkflowId ${1}
-r=$?
-shift
+  # Special case: submitting a job:
+  if [[ "${SUB_COMMAND}" == "submit" ]] ; then
+    ${SUB_COMMAND} $1 $2 $3 $4 
+    exit $?
+  fi
 
-# Run the task on all remaining workflow IDs:
-# This is required because there's no do-while loop in bash.
-while [ $# -gt 0 ] ; do
+  # Special case: notify
+  if [[ "${SUB_COMMAND}" == "notify" ]] ; then
+
+    # If the user gave us > 1 argument with notify, 
+    # we assume arg 1 is the WORKFLOW_ID and arg 2 
+    # is the email address:
+    if [[ $# -gt 1 ]] ; then
+      # Get the workflow ID:
+      populateWorkflowId $1
+      shift
+    fi
+
+    # Make sure the user gave us a good email address:
+    echo "$1" | grep -q  '@' 
+    r=$?
+    [ $r -ne 0 ] && error "Error: invalid email address: $1" && exit 5
+    email=$1
+
+    # Make sure our workflow ID is populated:
+    populateWorkflowId ${WORKFLOW_ID}
+
+    # Spin off our notifier:
+  	error "Spinning off notification thread for workflow ${WORKFLOW_ID} to ${email} ..."
+		nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; notify ${WORKFLOW_ID} ${email}" &>/dev/null &
+  	echo "Spun off thread on PID $!"
+
+    exit 0
+  fi
+
+  # Run our sub command once on the first workflow ID:
   runSubCommandOnWorkflowId ${1}
   r=$?
   shift
-done
 
-# Exit the script with the return value of the last run sub-command:
-exit $r
+  # Run the task on all remaining workflow IDs:
+  # This is required because there's no do-while loop in bash.
+  while [ $# -gt 0 ] ; do
+    runSubCommandOnWorkflowId ${1}
+    r=$?
+    shift
+  done
+
+  # Exit the script with the return value of the last run sub-command:
+  exit $r
+
+fi
 
