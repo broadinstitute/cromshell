@@ -221,7 +221,8 @@ function status() {
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
 
   grep -qE '"Failed"|"Aborted"' $f
-  [ $? -ne 1 ] && retVal=1
+	r=$?
+  [[ $r -eq 0 ]] && retVal=1
 
   cat $f | jq . 
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
@@ -391,21 +392,21 @@ if [[ "${SUB_COMMAND}" == "notify" ]] ; then
   populateWorkflowId ${WORKFLOW_ID}
   
   # Spin off our notifier:
-  notify ${WORKFLOW_ID} $email &
+  nohup notify ${WORKFLOW_ID} $email &>/dev/null &
   exit 0
 fi
 
 # Run our sub command once on the first workflow ID:
 runSubCommandOnWorkflowId ${1}
-shift
 r=$?
+shift
 
 # Run the task on all remaining workflow IDs:
 # This is required because there's no do-while loop in bash.
 while [ $# -gt 0 ] ; do
   runSubCommandOnWorkflowId ${1}
-  shift
   r=$?
+  shift
 done
 
 # Exit the script with the return value of the last run sub-command:
