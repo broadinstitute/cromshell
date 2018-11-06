@@ -30,6 +30,12 @@ CROMWELL_LAST_WORKFLOW_FILE="${CROMSHELL_CONFIG}/last.workfow.id"
 CROMWELL_DIARY_WORKFLOW_FILE="${CROMSHELL_CONFIG}/all.workfow.ids"
 
 CURL_CONNECT_TIMEOUT=5
+
+PING_CMD='ping -c1 -W1 -w10'
+if [[ $( uname ) == "Darwin" ]] ; then
+  PING_CMD='ping -c1 -W1000 -t10'
+fi
+
 ################################################################################
 
 SUB_COMMAND=''
@@ -76,7 +82,7 @@ function usage()
   echo -e "   execution-status-count [worfklow-id] [[worfklow-id]...]"
   echo -e "   timing [worfklow-id] [[worfklow-id]...]"
   echo -e "   abort [worfklow-id] [[worfklow-id]...]"
-  echo -e "   notify [workflow-id] email_address"
+  echo -e "   notify [workflow-id] [server_to_run_daemon] email_address"
   echo 
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
@@ -158,6 +164,14 @@ function checkPrerequisites {
   return 0
 }
 
+function assertCromwellLastWorkflowFileExists() {
+  if [[ ! -f ${CROMWELL_LAST_WORKFLOW_FILE} ]] ; then
+    error "Error: You have never submitted any jobs using ${SCRIPTNAME}."
+    error "       You must enter a workflow ID to get information on it."
+    exit 99
+  fi
+}
+
 ################################################################################
 
 trap at_exit EXIT 
@@ -171,6 +185,7 @@ function populateWorkflowId() {
   # If the user specified a negative number, get the nth last workflow:
   if [[ $userSpecifiedId == -* ]]; then
     local row=${userSpecifiedId#-}
+    assertCromwellLastWorkflowFileExists
     WORKFLOW_ID=$(tail -n $row $CROMWELL_DIARY_WORKFLOW_FILE | head -n 1)
   else
     # If the user specified anything at this point, assume that it 
@@ -179,11 +194,7 @@ function populateWorkflowId() {
       WORKFLOW_ID=$userSpecifiedId 
       # If the user specified nothing, get the last workflow ID:  
     else
-      if [[ ! -f ${CROMWELL_LAST_WORKFLOW_FILE} ]] ; then
-        error "Error: You have never submitted any jobs using ${SCRIPTNAME}."
-        error "       You must enter a workflow ID to get information on it."
-        exit 99
-      fi
+      assertCromwellLastWorkflowFileExists
       WORKFLOW_ID=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} )
     fi
   fi
@@ -364,9 +375,10 @@ if ${ISCALLEDBYUSER} ; then
   [[ $r -ne 0 ]] && exit 6
 
   # Make sure we can talk to the cromwell server:
-  ping -c1 -t1 $( echo ${CROMWELL_URL} | sed 's#.*://##g' )&> /dev/null
+  serverName=$( echo ${CROMWELL_URL} | sed 's#.*://##g' )
+  $PING_CMD $serverName &> /dev/null
   r=$?
-  [[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: ${CROMWELL_URL}" && exit 4
+  [[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: $serverName" && exit 4
 
   # Special case: submitting a job:
   if [[ "${SUB_COMMAND}" == "submit" ]] ; then
@@ -377,12 +389,18 @@ if ${ISCALLEDBYUSER} ; then
   # Special case: notify
   if [[ "${SUB_COMMAND}" == "notify" ]] ; then
 
-    # If the user gave us > 1 argument with notify, 
-    # we assume arg 1 is the WORKFLOW_ID and arg 2 
-    # is the email address:
-    if [[ $# -gt 1 ]] ; then
+    # Is the next argument our workflow ID?
+    # Workflow IDs are standard UUIDs:
+    if [[ "${1}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] ; then
       # Get the workflow ID:
       populateWorkflowId $1
+      shift
+    fi
+ 
+    # Get the host on which this will be run:
+    hostServer="${HOSTNAME}"
+    if [[ $# -gt 1 ]] ; then
+      hostServer=$1
       shift
     fi
 
@@ -395,10 +413,25 @@ if ${ISCALLEDBYUSER} ; then
     # Make sure our workflow ID is populated:
     populateWorkflowId ${WORKFLOW_ID}
 
-    # Spin off our notifier:
-  	error "Spinning off notification thread for workflow ${WORKFLOW_ID} to ${email} ..."
-		nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; notify ${WORKFLOW_ID} ${email}" &>/dev/null &
-  	echo "Spun off thread on PID $!"
+    # Do some wizardry here to spin off the notification daemon on a remote server:
+    if [[ "${hostServer}" != "${HOSTNAME}" ]] ; then
+      error "Creating notification daemon on host ${hostServer} ..."
+
+      # Send the script to the server:
+      scp ${SCRIPTDIR}/${SCRIPTNAME} ${hostServer}:~/. &> /dev/null
+      [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && exit 7
+
+      # Spin off notification process on the server:
+      results=$( ssh ${hostServer} "~/${SCRIPTNAME} notify ${WORKFLOW_ID} ${email}" )
+      [[ $? -ne 0 ]] && error "ERROR: Could not start notification daemon on ${hostServer}" && exit 8
+
+      # Let the user know we've done our job:
+      echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
+    else
+      error "Spinning off notification to ${email} thread for workflow ${WORKFLOW_ID} ..."
+      nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; notify ${WORKFLOW_ID} ${email}" &>/dev/null &
+      echo "Spun off thread on PID $!"
+    fi
 
     exit 0
   fi
