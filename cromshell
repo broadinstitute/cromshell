@@ -307,7 +307,8 @@ function notify() {
     r=$?
     if [ $r -eq 0 ] ; then
       metaData=$( metadata $id )
-      echo -e "CROMWELL Task Complete:\n\n${id}\n\non\n\n${CROMWELL_URL}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task Complete [${CROMWELL_URL}]" ${email} 
+      result=$( cat $statusFile | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
+      echo -e "CROMWELL Task ${result}:\n\n${id}\n\non\n\n${CROMWELL_URL}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${result} [${CROMWELL_URL}]" ${email} 
       break
     fi
     # wait for 10 seconds:
