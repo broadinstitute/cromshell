@@ -1,17 +1,18 @@
 # cromshell
 shell script for interacting with cromwell servers
 
-requires curl and [jq](https://stedolan.github.io/jq/)
+requires `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 
 ### Supported Subcommands:
-  * submit [wdl-file] [inputs] [options] [dependencies]
-  * status [worfklow-id] [[worfklow-id]...]
-  * logs [workflow-id]
-  * metadata [worfklow-id]
-  * execution-status-count [worfklow-id]
-  * slim-metadata [worfklow-id]
-  * timing [worfklow-id]
-  * abort [worfklow-id]  [[worfklow-id]...]
+  * `submit` [wdl-file] [inputs] [options] [dependencies]
+  * `status` [worfklow-id] [[worfklow-id]...]
+  * `logs` [worfklow-id] [[worfklow-id]...]
+  * `metadata` [worfklow-id] [[worfklow-id]...]
+  * `slim-metadata` [worfklow-id] [[worfklow-id]...]
+  * `execution-status-count` [worfklow-id] [[worfklow-id]...]
+  * `timing` [worfklow-id] [[worfklow-id]...]
+  * `abort` [worfklow-id] [[worfklow-id]...]
+  * `notify` [workflow-id] [server_to_run_daemon] email_address
    
  ### Features:
  * Running `submit` will create a new folder in your working directory named with the cromwell job id of the newly submitted job.  
