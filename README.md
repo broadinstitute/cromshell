@@ -1,6 +1,6 @@
 # Installation
 
-`cromshell` and it's dependencies can be installed on OSX with `brew install lbergelson/louis/cromshell`
+`cromshell` and it's dependencies can be installed on OSX with `brew install broadinstitute/dsp/cromshell`
 
 Alternatively, download the script and put it somewhere...
 
