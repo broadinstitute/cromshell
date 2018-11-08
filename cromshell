@@ -3,7 +3,7 @@
 ################################################################################
 
 # Setup variables for the script:
-UNALIASED_SCRIPT_NAME=$( readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}" )
+UNALIASED_SCRIPT_NAME=$( python -c "import os;print os.path.realpath(\"${BASH_SOURCE[0]}\")" )
 SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
@@ -297,18 +297,15 @@ function notify() {
   local id=$1
   local email=$2
   
-  statusFile=$( mktemp )
-
   local separator="=================================================="
   
   while true ; do 
-    status $id 1>$statusFile
-    grep -oE "Succeeded|Failed|Aborted" $statusFile &>/dev/null
-    r=$?
+		completionStatus=$( status $id 2>/dev/null | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
+    echo $completionStatus | grep -qE "Succeeded|Failed|Aborted" 
+    r=${PIPESTATUS[1]}
     if [ $r -eq 0 ] ; then
       metaData=$( metadata $id )
-      result=$( cat $statusFile | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
-      echo -e "CROMWELL Task ${result}:\n\n${id}\n\non\n\n${CROMWELL_URL}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${result} [${CROMWELL_URL}]" ${email} 
+      echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${CROMWELL_URL}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${CROMWELL_URL}]" ${email} 
       break
     fi
     # wait for 10 seconds:
