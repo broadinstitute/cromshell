@@ -1,3 +1,9 @@
+# Installation
+
+`cromshell` and it's dependencies can be installed on OSX with `brew install broadinstitute/dsp/cromshell`
+
+Alternatively, download the script and put it somewhere...
+
 # cromshell
 shell script for interacting with cromwell servers
 
