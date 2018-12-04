@@ -87,6 +87,7 @@ function usage()
   echo -e "   timing [worfklow-id] [[worfklow-id]...]"
   echo -e "   abort [worfklow-id] [[worfklow-id]...]"
   echo -e "   notify [workflow-id] [server_to_run_daemon] email_address [cromwell_server]"
+  echo -e "   fetch [workflow-id] [[workflow-id]...]"
   echo -e "   list"
   echo 
   echo -e "Return values:"
@@ -315,6 +316,30 @@ function list() {
 	return $?
 }
 
+# Get the root log folder from the cloud and put it in the metadata folder for this run
+function fetch() {
+	local id=$1
+	local cromwellServer=$2
+
+	local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
+
+	local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
+
+	which gsutil &>/dev/null 	
+	r=$?
+	[ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+
+	mkdir -p ${localServerFolder}
+
+	error "Retrieving logs from ${remoteFolder}"
+	error "Copying into ${localServerFolder}"
+	gsutil cp -r ${remoteFolder}/* ${localServerFolder}/.
+
+	error "Files copied to local folder: ${localServerFolder}"
+	
+	return 0
+}
+
 # Spin off a task in the background that will check periodically if the workflow ID is 
 # complete.
 # When it is, send an email to the email address specified.
@@ -375,7 +400,7 @@ if ${ISCALLEDBYUSER} ; then
         usage;
         exit 0;
         ;;
-      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list) 
+      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch) 
         # Get our sub-command:
         SUB_COMMAND=$1
         shift
