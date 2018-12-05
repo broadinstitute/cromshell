@@ -333,7 +333,7 @@ function fetch() {
 
 	error "Retrieving logs from ${remoteFolder}"
 	error "Copying into ${localServerFolder}"
-	gsutil cp -r ${remoteFolder}/* ${localServerFolder}/.
+	gsutil rsync -rP ${remoteFolder}/ ${localServerFolder}/.
 
 	error "Files copied to local folder: ${localServerFolder}"
 	
