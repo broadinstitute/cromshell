@@ -8,7 +8,7 @@ SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
 MAXARGS=99
-PREREQUISITES="curl jq mail"
+PREREQUISITES="curl jq mail column"
 
 # Determine if this shell is interactive:
 ISCALLEDBYUSER=true
@@ -17,6 +17,11 @@ ISCALLEDBYUSER=true
 # Required for the aliased call to checkPipeStatus:
 shopt -s expand_aliases
 
+################################################################################
+COLOR_NORM='\033[0m'
+COLOR_FAILED='\033[1;37;41m'
+COLOR_SUCCEEDED='\033[1;30;42m'
+COLOR_RUNNING='\033[0;30;46m'
 ################################################################################
 
 # read env var, or use default server URL
@@ -88,7 +93,8 @@ function usage()
   echo -e "   abort [worfklow-id] [[worfklow-id]...]"
   echo -e "   notify [workflow-id] [server_to_run_daemon] email_address [cromwell_server]"
   echo -e "   fetch-logs [workflow-id] [[workflow-id]...]"
-  echo -e "   list"
+  echo -e "   fetch-all [workflow-id] [[workflow-id]...]"
+  echo -e "   list [-c]"
   echo 
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
@@ -316,12 +322,74 @@ function abort() {
 
 # List all jobs submitted in ${CROMWELL_SUBMISSIONS_FILE}
 function list() {
-  cat ${CROMWELL_SUBMISSIONS_FILE}
+  local doColor=$1
+
+  # If we have to colorize the output, we do so:
+  if [[ ${#doColor} -ne 0 ]] && [[ "${doColor}" == "-c" ]] ; then 
+
+    local tmpFile=$( makeTemp )  
+    cat ${CROMWELL_SUBMISSIONS_FILE} | column -t > ${tmpFile}
+
+    while read line ; do 
+
+      # Check for failed jobs and color those lines:
+      echo "${line}" | grep -q 'Failed' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_FAILED}${line}${COLOR_NORM}" && continue
+
+      # Check for successful jobs and color those lines:
+      echo "${line}" | grep -q 'Succeeded' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_SUCCEEDED}${line}${COLOR_NORM}" && continue
+
+      # Check for running jobs and color those lines:
+      echo "${line}" | grep -q 'Running' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_RUNNING}${line}${COLOR_NORM}" && continue
+
+      echo "${line}"  
+    done < ${tmpFile} 
+  else  
+    cat ${CROMWELL_SUBMISSIONS_FILE} | column -t
+  fi
   return $?
 }
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 function fetch-logs() {
+  local id=$1
+  local cromwellServer=$2
+
+  local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
+
+  local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
+
+  which gsutil &>/dev/null   
+  r=$?
+  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+
+  mkdir -p ${localServerFolder}
+
+  error "Retrieving logs from ${remoteFolder}"
+  error "Copying into ${localServerFolder}"
+
+  # Do the copy, filtering for log files only:
+	# Specifically, it will copy all files:
+	#     - ending in .log (case insensitive)
+	#     - Named rc
+	#     - Named stdout
+	#     - Named stderr
+	#     - Named script
+	gsutil rsync -rP -n -x '^(?!.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script).*' ${remoteFolder}/ ${localServerFolder}/.
+
+  error "Files copied to local folder: ${localServerFolder}"
+  
+  return 0
+}
+
+# Get the root log folder from the cloud and put it in the metadata folder for this run
+# Includes all logs and output files
+function fetch-all() {
   local id=$1
   local cromwellServer=$2
 
@@ -404,7 +472,7 @@ if ${ISCALLEDBYUSER} ; then
         usage;
         exit 0;
         ;;
-      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-logs) 
+      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs) 
         # Get our sub-command:
         SUB_COMMAND=$1
         shift
@@ -444,7 +512,7 @@ if ${ISCALLEDBYUSER} ; then
 
   # Special case: list
   if [[ "${SUB_COMMAND}" == "list" ]] ; then
-    ${SUB_COMMAND}
+    ${SUB_COMMAND} $1
     exit $?
   fi
   
