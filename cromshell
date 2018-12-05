@@ -321,7 +321,7 @@ function fetch() {
 	local id=$1
 	local cromwellServer=$2
 
-	local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
+	local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
 
 	local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
 
