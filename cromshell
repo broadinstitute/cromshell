@@ -8,7 +8,7 @@ SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
 MAXARGS=99
-PREREQUISITES="curl jq mail perl"
+PREREQUISITES="curl jq mail"
 
 # Determine if this shell is interactive:
 ISCALLEDBYUSER=true
@@ -254,7 +254,7 @@ function status() {
 
   # Update ${CROMWELL_SUBMISSIONS_FILE}:
   local st=$( cat $f | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
-  perl -p -i -e "s#(.*${1}.*\\.wdl)\\t*.*#\\1\\t${st}#g" ${CROMWELL_SUBMISSIONS_FILE}
+  sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${st}#g" ${CROMWELL_SUBMISSIONS_FILE}
 
   return $retVal
 }
