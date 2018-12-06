@@ -380,7 +380,7 @@ function fetch-logs() {
 	#     - Named stdout
 	#     - Named stderr
 	#     - Named script
-	gsutil rsync -rP -n -x '^(?!.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script).*' ${remoteFolder}/ ${localServerFolder}/.
+	gsutil rsync -rP -x '^(?!.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script).*' ${remoteFolder}/ ${localServerFolder}/.
 
   error "Files copied to local folder: ${localServerFolder}"
   
