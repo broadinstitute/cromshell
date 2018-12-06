@@ -94,6 +94,7 @@ function usage()
   echo -e "   notify [workflow-id] [server_to_run_daemon] email_address [cromwell_server]"
   echo -e "   fetch-logs [workflow-id] [[workflow-id]...]"
   echo -e "   fetch-all [workflow-id] [[workflow-id]...]"
+  echo -e "   list-outputs [workflow-id] [[workflow-id]...]"
   echo -e "   list [-c]"
   echo 
   echo -e "Return values:"
@@ -355,6 +356,38 @@ function list() {
   return $?
 }
 
+# List the output files for a given run.
+# Will list all output files that are not:
+#     *.log
+#     rc
+#     stdout
+#     stderr
+#     script
+#     output
+function list-outputs() {
+  local id=$1
+  local cromwellServer=$2
+
+  local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
+
+  local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
+
+  which gsutil &>/dev/null   
+  r=$?
+  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+
+	error "Output files from job ${cromwellServer}:${id} : "
+
+	# The -n flag just lists what would have happened if the copy occurred
+	# we use this to our advantage to list the files we want:
+	gsutil rsync -rP -n -x '.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script|.*output' ${remoteFolder}/ ${localServerFolder}/. 2>&1 | \
+		grep 'Would copy' | \
+		sed 's#Would copy \(.*\) to .*#\1#g'
+
+  return 0
+}
+
+
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 function fetch-logs() {
   local id=$1
@@ -472,7 +505,7 @@ if ${ISCALLEDBYUSER} ; then
         usage;
         exit 0;
         ;;
-      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs) 
+      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs) 
         # Get our sub-command:
         SUB_COMMAND=$1
         shift
