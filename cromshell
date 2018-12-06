@@ -19,6 +19,12 @@ shopt -s expand_aliases
 
 ################################################################################
 COLOR_NORM='\033[0m'
+COLOR_UNDERLINED='\033[1;4m'
+COLOR_FAILED='\033[1;37;41m'
+COLOR_SUCCEEDED='\033[1;30;42m'
+COLOR_RUNNING='\033[0;30;46m'
+################################################################################
+
 COLOR_FAILED='\033[1;37;41m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
@@ -95,7 +101,7 @@ function usage()
   echo -e "   fetch-logs [workflow-id] [[workflow-id]...]"
   echo -e "   fetch-all [workflow-id] [[workflow-id]...]"
   echo -e "   list-outputs [workflow-id] [[workflow-id]...]"
-  echo -e "   list [-c]"
+  echo -e "   list [-c] [-u]"
   echo 
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
@@ -323,15 +329,55 @@ function abort() {
 
 # List all jobs submitted in ${CROMWELL_SUBMISSIONS_FILE}
 function list() {
-  local doColor=$1
 
+  local doColor=false
+  local doUpdate=false
+
+  for arg in ${@} ; do 
+    case "$arg" in
+      -c) doColor=true
+         ;; 
+      -u) doUpdate=true
+         ;; 
+    esac
+  done
+ 
+  # If we need to update the data, do so here:
+  if $doUpdate ; then
+    error "Updating cached status list"
+    local tmpFile srv id runSt 
+
+    # Make a copy of our file because we'll be modifying it:
+    tmpFile=$( makeTemp )
+    cp ${CROMWELL_SUBMISSIONS_FILE} ${tmpFile}
+
+    while read line ; do 
+        id=$( echo "$line" | awk '{print $3}' )
+        # Only update if the ID field is, in fact, a valid ID:
+        if [[ "${id}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] ; then
+          srv=$( echo "$line" | awk '{print $2}' )
+          runSt=$( echo "$line" | awk '{print $5}' )
+          
+          # get the status of the run if it has not completed:
+          if [[ "${runSt}" != "Failed" ]] && [[ "${runSt}" != "Aborted" ]] && [[ "${runSt}" != "Succeeded" ]] ; then
+            status ${id} ${srv} &> /dev/null
+          fi
+        fi
+    done < ${tmpFile}
+  fi
+ 
   # If we have to colorize the output, we do so:
-  if [[ ${#doColor} -ne 0 ]] && [[ "${doColor}" == "-c" ]] ; then 
+  if $doColor ; then
 
     local tmpFile=$( makeTemp )  
     cat ${CROMWELL_SUBMISSIONS_FILE} | column -t > ${tmpFile}
 
     while read line ; do 
+  
+      # Check for header line:
+      echo "${line}" | grep -q '^DATE' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_UNDERLINED}${line}${COLOR_NORM}" && continue
 
       # Check for failed jobs and color those lines:
       echo "${line}" | grep -q 'Failed' 
@@ -376,13 +422,13 @@ function list-outputs() {
   r=$?
   [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
 
-	error "Output files from job ${cromwellServer}:${id} : "
+  error "Output files from job ${cromwellServer}:${id} : "
 
-	# The -n flag just lists what would have happened if the copy occurred
-	# we use this to our advantage to list the files we want:
-	gsutil rsync -rP -n -x '.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script|.*output' ${remoteFolder}/ ${localServerFolder}/. 2>&1 | \
-		grep 'Would copy' | \
-		sed 's#Would copy \(.*\) to .*#\1#g'
+  # The -n flag just lists what would have happened if the copy occurred
+  # we use this to our advantage to list the files we want:
+  gsutil rsync -rP -n -x '.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script|.*output' ${remoteFolder}/ ${localServerFolder}/. 2>&1 | \
+    grep 'Would copy' | \
+    sed 's#Would copy \(.*\) to .*#\1#g'
 
   return 0
 }
@@ -407,13 +453,13 @@ function fetch-logs() {
   error "Copying into ${localServerFolder}"
 
   # Do the copy, filtering for log files only:
-	# Specifically, it will copy all files:
-	#     - ending in .log (case insensitive)
-	#     - Named rc
-	#     - Named stdout
-	#     - Named stderr
-	#     - Named script
-	gsutil rsync -rP -x '^(?!.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script).*' ${remoteFolder}/ ${localServerFolder}/.
+  # Specifically, it will copy all files:
+  #     - ending in .log (case insensitive)
+  #     - Named rc
+  #     - Named stdout
+  #     - Named stderr
+  #     - Named script
+  gsutil rsync -rP -x '^(?!.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script).*' ${remoteFolder}/ ${localServerFolder}/.
 
   error "Files copied to local folder: ${localServerFolder}"
   
@@ -545,7 +591,7 @@ if ${ISCALLEDBYUSER} ; then
 
   # Special case: list
   if [[ "${SUB_COMMAND}" == "list" ]] ; then
-    ${SUB_COMMAND} $1
+    ${SUB_COMMAND} $1 $2
     exit $?
   fi
   
