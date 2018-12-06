@@ -8,7 +8,7 @@ SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
 MAXARGS=99
-PREREQUISITES="curl jq mail"
+PREREQUISITES="curl jq mail column"
 
 # Determine if this shell is interactive:
 ISCALLEDBYUSER=true
@@ -18,16 +18,24 @@ ISCALLEDBYUSER=true
 shopt -s expand_aliases
 
 ################################################################################
+COLOR_NORM='\033[0m'
+COLOR_FAILED='\033[1;37;41m'
+COLOR_SUCCEEDED='\033[1;30;42m'
+COLOR_RUNNING='\033[0;30;46m'
+################################################################################
 
 # read env var, or use default server URL
-export CROMWELL_URL=${CROMWELL_URL:-"https://cromwell-v30.dsde-methods.broadinstitute.org"}
+export CROMWELL_URL=${CROMWELL_URL:-"https://cromwell-v36.dsde-methods.broadinstitute.org"}
 
-CROMSHELL_CONFIG=${HOME}/.cromshell
-mkdir -p ${CROMSHELL_CONFIG}
+FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
+
+CROMSHELL_CONFIG_DIR=${HOME}/.cromshell
+mkdir -p ${CROMSHELL_CONFIG_DIR}
 
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles"
-CROMWELL_LAST_WORKFLOW_FILE="${CROMSHELL_CONFIG}/last.workfow.id"
-CROMWELL_DIARY_WORKFLOW_FILE="${CROMSHELL_CONFIG}/all.workfow.ids"
+CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
+
+[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS" > ${CROMWELL_SUBMISSIONS_FILE} 
 
 CURL_CONNECT_TIMEOUT=5
 
@@ -40,6 +48,7 @@ fi
 
 SUB_COMMAND=''
 WORKFLOW_ID=''
+WORKFLOW_SERVER_URL=''
 OPTIONS=''
 
 ################################################################################
@@ -82,7 +91,11 @@ function usage()
   echo -e "   execution-status-count [worfklow-id] [[worfklow-id]...]"
   echo -e "   timing [worfklow-id] [[worfklow-id]...]"
   echo -e "   abort [worfklow-id] [[worfklow-id]...]"
-  echo -e "   notify [workflow-id] [server_to_run_daemon] email_address"
+  echo -e "   notify [workflow-id] [server_to_run_daemon] email_address [cromwell_server]"
+  echo -e "   fetch-logs [workflow-id] [[workflow-id]...]"
+  echo -e "   fetch-all [workflow-id] [[workflow-id]...]"
+  echo -e "   list-outputs [workflow-id] [[workflow-id]...]"
+  echo -e "   list [-c]"
   echo 
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
@@ -164,8 +177,9 @@ function checkPrerequisites {
   return 0
 }
 
-function assertCromwellLastWorkflowFileExists() {
-  if [[ ! -f ${CROMWELL_LAST_WORKFLOW_FILE} ]] ; then
+function assertHavePreviouslySubmittedAJob() {
+  local nLines=$( wc -l ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $1}' )
+  if [[ $nLines -eq 1 ]] ; then
     error "Error: You have never submitted any jobs using ${SCRIPTNAME}."
     error "       You must enter a workflow ID to get information on it."
     exit 99
@@ -178,24 +192,34 @@ trap at_exit EXIT
 
 ################################################################################
 
-function populateWorkflowId() {
+function populateWorkflowIdAndServerUrl() {
   
   local userSpecifiedId=$1
   
   # If the user specified a negative number, get the nth last workflow:
   if [[ $userSpecifiedId == -* ]]; then
     local row=${userSpecifiedId#-}
-    assertCromwellLastWorkflowFileExists
-    WORKFLOW_ID=$(tail -n $row $CROMWELL_DIARY_WORKFLOW_FILE | head -n 1)
+    assertHavePreviouslySubmittedAJob
+    WORKFLOW_ID=$(tail -n $row $CROMWELL_SUBMISSIONS_FILE | head -n 1 | awk '{print $3}' )
+    WORKFLOW_SERVER_URL=$(tail -n $row $CROMWELL_SUBMISSIONS_FILE | head -n 1 | awk '{print $2}' )
   else
     # If the user specified anything at this point, assume that it 
     # is a workflow UUID:
     if [ -n "$userSpecifiedId" ]; then 
       WORKFLOW_ID=$userSpecifiedId 
-      # If the user specified nothing, get the last workflow ID:  
+      WORKFLOW_SERVER_URL=${CROMWELL_URL}
+  
+      # Attempt to get the workflow server from the submission database:  
+      local tmpFile=$( makeTemp )
+      grep ${WORKFLOW_ID} ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
+      r=$?
+      [ $r -eq 0 ] && WORKFLOW_SERVER_URL=$( awk '{print $2}' ${tmpFile} )
+
+    # If the user specified nothing, get the last workflow ID:  
     else
-      assertCromwellLastWorkflowFileExists
-      WORKFLOW_ID=$(cat ${CROMWELL_LAST_WORKFLOW_FILE} )
+      assertHavePreviouslySubmittedAJob
+      WORKFLOW_ID=$( tail -n1 ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $3}' )
+      WORKFLOW_SERVER_URL=$(tail -n1 $CROMWELL_SUBMISSIONS_FILE | awk '{print $2}' )
     fi
   fi
 }
@@ -209,10 +233,14 @@ function submit() {
   [ $r -ne 0 ] && error "FAILED TO SUBMIT JOB" && return $r
 
   local id=$(echo $response | cut -d"," -f1 | cut -d":" -f2 | sed s/\"//g | sed s/\ //g)
-  mkdir $id
-  cp ${1} ${2} ${3} ${4} ${id}/
-  echo $id > $CROMWELL_LAST_WORKFLOW_FILE
-  echo $id >> $CROMWELL_DIARY_WORKFLOW_FILE
+  
+  local runDir=${CROMSHELL_CONFIG_DIR}/${FOLDER_URL}/${id}
+  mkdir -p ${runDir}
+
+  cp ${1} ${2} ${3} ${4} ${runDir}/
+
+  echo -e "$(date +%Y%m%d_%H%M%S)\t${CROMWELL_URL}\t${id}\t$(basename ${1})\tSubmitted" >> ${CROMWELL_SUBMISSIONS_FILE}
+
   return 0
 }
 
@@ -221,7 +249,7 @@ function status() {
   local retVal=0
 
   local f=$( makeTemp )
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${CROMWELL_URL}/api/workflows/v1/${1}/status > $f
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/status > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
 
   grep -qE '"Failed"|"Aborted"' $f
@@ -231,26 +259,30 @@ function status() {
   cat $f | jq . 
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
+  # Update ${CROMWELL_SUBMISSIONS_FILE}:
+  local st=$( cat $f | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
+  sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${st}#g" ${CROMWELL_SUBMISSIONS_FILE}
+
   return $retVal
 }
 
 # Get the logs of a Cromwell job UUID
 function logs() {
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${CROMWELL_URL}/api/workflows/v1/${1}/logs | jq . 
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
 
 # Get the metadata for a Cromwell job UUID
 function metadata() {
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${CROMWELL_URL}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
 
 # Get the metadata in condensed form for a Cromwell job UUID
 function slim-metadata() {
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${CROMWELL_URL}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -258,7 +290,7 @@ function slim-metadata() {
 # Get the status of the given job and how many times it was run
 function execution-status-count() {
   f=$( makeTemp )
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${CROMWELL_URL}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 9
 
   # Make sure the query succeeded:
@@ -277,16 +309,140 @@ function execution-status-count() {
 # Bring up a browser window to view timing information on the job.
 function timing() {
   echo "Opeining timing information in a web browser for job ID: ${1}"
-  open ${CROMWELL_URL}/api/workflows/v1/${1}/timing
+  open ${2}/api/workflows/v1/${1}/timing
   return $?
 }
 
 # Cancel a running job.
 function abort() { 
-  response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${CROMWELL_URL}/api/workflows/v1/${1}/abort")
+  response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
   echo $response  
   return $r
+}
+
+# List all jobs submitted in ${CROMWELL_SUBMISSIONS_FILE}
+function list() {
+  local doColor=$1
+
+  # If we have to colorize the output, we do so:
+  if [[ ${#doColor} -ne 0 ]] && [[ "${doColor}" == "-c" ]] ; then 
+
+    local tmpFile=$( makeTemp )  
+    cat ${CROMWELL_SUBMISSIONS_FILE} | column -t > ${tmpFile}
+
+    while read line ; do 
+
+      # Check for failed jobs and color those lines:
+      echo "${line}" | grep -q 'Failed' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_FAILED}${line}${COLOR_NORM}" && continue
+
+      # Check for successful jobs and color those lines:
+      echo "${line}" | grep -q 'Succeeded' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_SUCCEEDED}${line}${COLOR_NORM}" && continue
+
+      # Check for running jobs and color those lines:
+      echo "${line}" | grep -q 'Running' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_RUNNING}${line}${COLOR_NORM}" && continue
+
+      echo "${line}"  
+    done < ${tmpFile} 
+  else  
+    cat ${CROMWELL_SUBMISSIONS_FILE} | column -t
+  fi
+  return $?
+}
+
+# List the output files for a given run.
+# Will list all output files that are not:
+#     *.log
+#     rc
+#     stdout
+#     stderr
+#     script
+#     output
+function list-outputs() {
+  local id=$1
+  local cromwellServer=$2
+
+  local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
+
+  local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
+
+  which gsutil &>/dev/null   
+  r=$?
+  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+
+	error "Output files from job ${cromwellServer}:${id} : "
+
+	# The -n flag just lists what would have happened if the copy occurred
+	# we use this to our advantage to list the files we want:
+	gsutil rsync -rP -n -x '.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script|.*output' ${remoteFolder}/ ${localServerFolder}/. 2>&1 | \
+		grep 'Would copy' | \
+		sed 's#Would copy \(.*\) to .*#\1#g'
+
+  return 0
+}
+
+
+# Get the root log folder from the cloud and put it in the metadata folder for this run
+function fetch-logs() {
+  local id=$1
+  local cromwellServer=$2
+
+  local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
+
+  local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
+
+  which gsutil &>/dev/null   
+  r=$?
+  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+
+  mkdir -p ${localServerFolder}
+
+  error "Retrieving logs from ${remoteFolder}"
+  error "Copying into ${localServerFolder}"
+
+  # Do the copy, filtering for log files only:
+	# Specifically, it will copy all files:
+	#     - ending in .log (case insensitive)
+	#     - Named rc
+	#     - Named stdout
+	#     - Named stderr
+	#     - Named script
+	gsutil rsync -rP -x '^(?!.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script).*' ${remoteFolder}/ ${localServerFolder}/.
+
+  error "Files copied to local folder: ${localServerFolder}"
+  
+  return 0
+}
+
+# Get the root log folder from the cloud and put it in the metadata folder for this run
+# Includes all logs and output files
+function fetch-all() {
+  local id=$1
+  local cromwellServer=$2
+
+  local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
+
+  local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
+
+  which gsutil &>/dev/null   
+  r=$?
+  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+
+  mkdir -p ${localServerFolder}
+
+  error "Retrieving logs from ${remoteFolder}"
+  error "Copying into ${localServerFolder}"
+  gsutil rsync -rP ${remoteFolder}/ ${localServerFolder}/.
+
+  error "Files copied to local folder: ${localServerFolder}"
+  
+  return 0
 }
 
 # Spin off a task in the background that will check periodically if the workflow ID is 
@@ -296,16 +452,18 @@ function notify() {
 
   local id=$1
   local email=$2
+  local cromwellServer=$3
   
   local separator="=================================================="
   
   while true ; do 
-		completionStatus=$( status $id 2>/dev/null | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
+    completionStatus=$( status $id ${cromwellServer} 2>/dev/null | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
     echo $completionStatus | grep -qE "Succeeded|Failed|Aborted" 
     r=${PIPESTATUS[1]}
     if [ $r -eq 0 ] ; then
-      metaData=$( metadata $id )
-      echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${CROMWELL_URL}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${CROMWELL_URL}]" ${email} 
+       workflowFile=$( grep '$id' ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $4}' ) 
+      metaData=$( metadata $id ${cromwellServer} )
+      echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email} 
       break
     fi
     # wait for 10 seconds:
@@ -315,9 +473,10 @@ function notify() {
 
 function runSubCommandOnWorkflowId() {
   # Get the workflow ID:
-  populateWorkflowId $1
+  populateWorkflowIdAndServerUrl $1
   error "Using workflow-id == $WORKFLOW_ID"
-  ${SUB_COMMAND} ${WORKFLOW_ID} 
+  error "Using workflow server URL == $WORKFLOW_SERVER_URL"
+  ${SUB_COMMAND} ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL} 
   r=$?
   echo
   return $r
@@ -346,7 +505,7 @@ if ${ISCALLEDBYUSER} ; then
         usage;
         exit 0;
         ;;
-      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify) 
+      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs) 
         # Get our sub-command:
         SUB_COMMAND=$1
         shift
@@ -384,6 +543,12 @@ if ${ISCALLEDBYUSER} ; then
     exit $?
   fi
 
+  # Special case: list
+  if [[ "${SUB_COMMAND}" == "list" ]] ; then
+    ${SUB_COMMAND} $1
+    exit $?
+  fi
+  
   # Special case: notify
   if [[ "${SUB_COMMAND}" == "notify" ]] ; then
 
@@ -391,13 +556,14 @@ if ${ISCALLEDBYUSER} ; then
     # Workflow IDs are standard UUIDs:
     if [[ "${1}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] ; then
       # Get the workflow ID:
-      populateWorkflowId $1
+      populateWorkflowIdAndServerUrl $1
       shift
     fi
  
     # Get the host on which this will be run:
     hostServer="${HOSTNAME}"
-    if [[ $# -gt 1 ]] ; then
+    
+    if [[ ! "${1}" =~ ^.*@.*  ]] ; then
       hostServer=$1
       shift
     fi
@@ -409,7 +575,7 @@ if ${ISCALLEDBYUSER} ; then
     email=$1
 
     # Make sure our workflow ID is populated:
-    populateWorkflowId ${WORKFLOW_ID}
+    populateWorkflowIdAndServerUrl ${WORKFLOW_ID}
 
     # Do some wizardry here to spin off the notification daemon on a remote server:
     if [[ "${hostServer}" != "${HOSTNAME}" ]] ; then
@@ -420,14 +586,14 @@ if ${ISCALLEDBYUSER} ; then
       [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && exit 7
 
       # Spin off notification process on the server:
-      results=$( ssh ${hostServer} "~/${SCRIPTNAME} notify ${WORKFLOW_ID} ${email}" )
+      results=$( ssh ${hostServer} "~/${SCRIPTNAME} notify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" )
       [[ $? -ne 0 ]] && error "ERROR: Could not start notification daemon on ${hostServer}" && exit 8
 
       # Let the user know we've done our job:
       echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
     else
       error "Spinning off notification to ${email} thread for workflow ${WORKFLOW_ID} ..."
-      nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; notify ${WORKFLOW_ID} ${email}" &>/dev/null &
+      nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; notify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
       echo "Spun off thread on PID $!"
     fi
 
