@@ -427,6 +427,7 @@ function list() {
 #     script
 #     output
 function list-outputs() {
+  assertCanCommunicateWithServer $2
   local id=$1
   local cromwellServer=$2
 
@@ -452,6 +453,7 @@ function list-outputs() {
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 function fetch-logs() {
+  assertCanCommunicateWithServer $2
   local id=$1
   local cromwellServer=$2
 
@@ -485,6 +487,7 @@ function fetch-logs() {
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 # Includes all logs and output files
 function fetch-all() {
+  assertCanCommunicateWithServer $2
   local id=$1
   local cromwellServer=$2
 
@@ -515,7 +518,8 @@ function notify() {
   local id=$1
   local email=$2
   local cromwellServer=$3
-  
+
+  assertCanCommunicateWithServer ${cromwellServer}
   local separator="=================================================="
   
   while true ; do 
