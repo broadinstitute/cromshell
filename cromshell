@@ -140,7 +140,8 @@ function at_exit()
 # that occurred.
 # This function should be called as `checkPipeStatus` as per the 
 # alias below it.
-function _checkPipeStatus() {
+function _checkPipeStatus()
+{
 
   local hadFailure=false
 
@@ -162,7 +163,8 @@ function _checkPipeStatus() {
 }
 alias checkPipeStatus='RC=( "${PIPESTATUS[@]}" );_checkPipeStatus'
 
-function checkPrerequisites {
+function checkPrerequisites
+{
   local missing=""
   local foundMissing=false
   for c in ${@} ; do
@@ -183,7 +185,8 @@ function checkPrerequisites {
   return 0
 }
 
-function assertHavePreviouslySubmittedAJob() {
+function assertHavePreviouslySubmittedAJob()
+{
   local nLines=$( wc -l ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $1}' )
   if [[ $nLines -eq 1 ]] ; then
     error "Error: You have never submitted any jobs using ${SCRIPTNAME}."
@@ -198,7 +201,8 @@ trap at_exit EXIT
 
 ################################################################################
 
-function populateWorkflowIdAndServerUrl() {
+function populateWorkflowIdAndServerUrl()
+{
   
   local userSpecifiedId=$1
   
@@ -231,7 +235,8 @@ function populateWorkflowIdAndServerUrl() {
 }
 
 # Submit a workflow and arguments to the Cromwell Server
-function submit() { 
+function submit()
+{
   local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
   echo $response  
@@ -251,7 +256,8 @@ function submit() {
 }
 
 # Check the status of a Cromwell job UUID
-function status() {
+function status()
+{
   local retVal=0
 
   local f=$( makeTemp )
@@ -273,28 +279,32 @@ function status() {
 }
 
 # Get the logs of a Cromwell job UUID
-function logs() {
+function logs()
+{
   curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
 
 # Get the metadata for a Cromwell job UUID
-function metadata() {
+function metadata()
+{
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
 
 # Get the metadata in condensed form for a Cromwell job UUID
-function slim-metadata() {
+function slim-metadata()
+{
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
 
 # Get the status of the given job and how many times it was run
-function execution-status-count() {
+function execution-status-count()
+{
   f=$( makeTemp )
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 9
@@ -313,14 +323,16 @@ function execution-status-count() {
 }
 
 # Bring up a browser window to view timing information on the job.
-function timing() {
+function timing()
+{
   echo "Opeining timing information in a web browser for job ID: ${1}"
   open ${2}/api/workflows/v1/${1}/timing
   return $?
 }
 
 # Cancel a running job.
-function abort() { 
+function abort()
+{
   response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
   echo $response  
@@ -328,7 +340,8 @@ function abort() {
 }
 
 # List all jobs submitted in ${CROMWELL_SUBMISSIONS_FILE}
-function list() {
+function list()
+{
 
   local doColor=false
   local doUpdate=false
@@ -410,7 +423,8 @@ function list() {
 #     stderr
 #     script
 #     output
-function list-outputs() {
+function list-outputs()
+{
   local id=$1
   local cromwellServer=$2
 
@@ -435,7 +449,8 @@ function list-outputs() {
 
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
-function fetch-logs() {
+function fetch-logs()
+{
   local id=$1
   local cromwellServer=$2
 
@@ -468,7 +483,8 @@ function fetch-logs() {
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 # Includes all logs and output files
-function fetch-all() {
+function fetch-all()
+{
   local id=$1
   local cromwellServer=$2
 
@@ -494,7 +510,8 @@ function fetch-all() {
 # Spin off a task in the background that will check periodically if the workflow ID is 
 # complete.
 # When it is, send an email to the email address specified.
-function notify() {
+function notify()
+{
 
   local id=$1
   local email=$2
@@ -517,7 +534,8 @@ function notify() {
   done 
 }
 
-function runSubCommandOnWorkflowId() {
+function runSubCommandOnWorkflowId()
+{
   # Get the workflow ID:
   populateWorkflowIdAndServerUrl $1
   error "Using workflow-id == $WORKFLOW_ID"
