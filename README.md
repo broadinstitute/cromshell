@@ -5,7 +5,7 @@
 Alternatively, download the script and put it somewhere...
 
 # cromshell
- script for interacting with cromwell servers
+ A script for submitting workflows to a cromwell server and monitoring / querying their results.
 
 requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 
