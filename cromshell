@@ -62,47 +62,52 @@ OPTIONS=''
 function simpleUsage()
 {
   echo -e "Usage:    ${SCRIPTNAME} <subcommand> [options]"
-  echo -e "Pokes Cromwell REST endpoints at a server specified by the "
-  echo -e "environment variable \$CROMWELL_URL" 
+  echo -e "Run and inspect workflows on a Cromwell server."
 }
 
 #Define a usage function:
 function usage() 
 {
   simpleUsage
+  echo -e "CROMWELL_URL=$CROMWELL_URL"
   echo
-  echo -e "When submitting a workflow, the returned worfklow-id will become the" 
-  echo -e "last used workflow id. Also, you can use -n instead of a workflow-id to "
-  echo -e "use a previous run (status -1 would be the status of the last run," 
-  echo -e "-2 would be the one before that).  However, for commands that "
-  echo -e "accepts multiple workflow-id's (status and abort), this does not apply, "
-  echo -e "the explicit workflow-id's are expected if you provide multiple ones."
+  echo -e "If no workflow-id is specified then the last submitted workflow-id is assumed."
+  echo -e "Alternatively, negative numbers can be used to refer to previous workflows."
   echo
-  echo -e "NOTE: As a convenience, if you omit a workflow-id from a command,"
-  echo -e "the last used workflow-id will be used as a default.  "
+  echo -e "  example usage:"
+  echo -e "      cromshell submit workflow.wdl inputs.json options.json dependencies.zip"
+  echo -e "      cromshell status"
+  echo -e "      cromshell logs -2"
   echo
-  if [[ ${#PREREQUISITES} -ne 0 ]] ; then
-    echo -e "Requires the following programs to be installed:"
-    for prereq in ${PREREQUISITES} ; do 
-      echo -e "  ${prereq}"
-    done
-    echo
-  fi
   echo -e "Supported Subcommands:"
-  echo -e "   submit [wdl-file] [inputs] [options] [dependencies]"
-  echo -e "   status [worfklow-id] [[worfklow-id]...]"
-  echo -e "   logs [worfklow-id] [[worfklow-id]...]"
-  echo -e "   metadata [worfklow-id] [[worfklow-id]...]"
-  echo -e "   slim-metadata [worfklow-id] [[worfklow-id]...]"
-  echo -e "   execution-status-count [worfklow-id] [[worfklow-id]...]"
-  echo -e "   timing [worfklow-id] [[worfklow-id]...]"
-  echo -e "   abort [worfklow-id] [[worfklow-id]...]"
-  echo -e "   notify [workflow-id] [server_to_run_daemon] email_address [cromwell_server]"
-  echo -e "   fetch-logs [workflow-id] [[workflow-id]...]"
-  echo -e "   fetch-all [workflow-id] [[workflow-id]...]"
-  echo -e "   list-outputs [workflow-id] [[workflow-id]...]"
-  echo -e "   list [-c] [-u]"
-  echo 
+  echo -e "  Start/Stop workflows"
+  echo -e "   submit <wdl> <inputs json> [options json] [included wdls] Submit a new workflow"
+  echo -e "   abort [workflow-id] [[workflow-id]...]                    Abort a running workflow"
+  echo -e
+  echo -e "  Query workflow status:"
+  echo -e "   status [workflow-id] [[workflow-id]...]                   Check the status of a workflow"
+  echo -e "   metadata [workflow-id] [[workflow-id]...]                 Get the full metadata of a workflow"
+  echo -e "   slim-metadata [workflow-id] [[workflow-id]...]            Get a subset of the metadata from a workflow"
+  echo -e "   execution-status-count [workflow-id] [[workflow-id]...]   Get the summarized status of all jobs in the workflow"
+  echo -e "   timing [workflow-id] [[workflow-id]...]                   Open the timing diagram in a browser"
+  echo -e
+  echo -e "  Logs"
+  echo -e "   logs [workflow-id] [[workflow-id]...]                     List the log files produced by a workflow"
+  echo -e "   fetch-logs [workflow-id] [[workflow-id]...]               Download all logs produced by a workflow"
+  echo -e
+  echo -e "  Job Outputs"
+  echo -e "   list-outputs [workflow-id] [[workflow-id]...]             List all output files produced by a workflow"
+  echo -e "   fetch-all [workflow-id] [[workflow-id]...]                Download all output files produced by a workflow"
+  echo -e
+  echo    "  Get email notification on job completion"
+  echo -e "   notify [workflow-id] [daemon-server] email [cromwell-server]"
+  echo -e "        daemon-server  server to run the notification daemon on"
+  echo
+  echo -e "  Display a list jobs submitted through cromshell:"
+  echo -e "   list [-c] [-u]                                            "
+  echo -e "         -c    Color the output by completion status"
+  echo -e "         -u    Check completion status of all unfinished jobs"
+  echo -e
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
   echo -e "  ANYTHING_BUT_ZERO  FAILURE/ERROR"
@@ -140,7 +145,8 @@ function at_exit()
 # that occurred.
 # This function should be called as `checkPipeStatus` as per the 
 # alias below it.
-function _checkPipeStatus() {
+function _checkPipeStatus()
+{
 
   local hadFailure=false
 
@@ -162,7 +168,8 @@ function _checkPipeStatus() {
 }
 alias checkPipeStatus='RC=( "${PIPESTATUS[@]}" );_checkPipeStatus'
 
-function checkPrerequisites {
+function checkPrerequisites
+{
   local missing=""
   local foundMissing=false
   for c in ${@} ; do
@@ -183,6 +190,7 @@ function checkPrerequisites {
   return 0
 }
 
+
 function assertCanCommunicateWithServer
 {
   # Make sure we can talk to the cromwell server:
@@ -192,7 +200,8 @@ function assertCanCommunicateWithServer
   [[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: $serverName" && exit 4
 }
 
-function assertHavePreviouslySubmittedAJob() {
+function assertHavePreviouslySubmittedAJob()
+{
   local nLines=$( wc -l ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $1}' )
   if [[ $nLines -eq 1 ]] ; then
     error "Error: You have never submitted any jobs using ${SCRIPTNAME}."
@@ -207,7 +216,8 @@ trap at_exit EXIT
 
 ################################################################################
 
-function populateWorkflowIdAndServerUrl() {
+function populateWorkflowIdAndServerUrl()
+{
   
   local userSpecifiedId=$1
   
@@ -240,8 +250,11 @@ function populateWorkflowIdAndServerUrl() {
 }
 
 # Submit a workflow and arguments to the Cromwell Server
-function submit() { 
+
+function submit() 
+{ 
   assertCanCommunicateWithServer $CROMWELL_URL
+
   local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
   echo $response  
@@ -261,7 +274,8 @@ function submit() {
 }
 
 # Check the status of a Cromwell job UUID
-function status() {
+function status()
+{
   local retVal=0
 
   assertCanCommunicateWithServer $2
@@ -284,7 +298,8 @@ function status() {
 }
 
 # Get the logs of a Cromwell job UUID
-function logs() {
+function logs() 
+{
   assertCanCommunicateWithServer $2
   curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
@@ -292,7 +307,8 @@ function logs() {
 }
 
 # Get the metadata for a Cromwell job UUID
-function metadata() {
+function metadata() 
+{
   assertCanCommunicateWithServer $2
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
@@ -300,7 +316,8 @@ function metadata() {
 }
 
 # Get the metadata in condensed form for a Cromwell job UUID
-function slim-metadata() {
+function slim-metadata() 
+{
   assertCanCommunicateWithServer $2
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
@@ -308,7 +325,8 @@ function slim-metadata() {
 }
 
 # Get the status of the given job and how many times it was run
-function execution-status-count() {
+function execution-status-count() 
+{
   assertCanCommunicateWithServer $2
   f=$( makeTemp )
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
@@ -328,14 +346,16 @@ function execution-status-count() {
 }
 
 # Bring up a browser window to view timing information on the job.
-function timing() {
+function timing() 
+{
   echo "Opening timing information in a web browser for job ID: ${1}"
   open ${2}/api/workflows/v1/${1}/timing
   return $?
 }
 
 # Cancel a running job.
-function abort() {
+function abort() 
+{
   assertCanCommunicateWithServer $2
   response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
@@ -344,7 +364,8 @@ function abort() {
 }
 
 # List all jobs submitted in ${CROMWELL_SUBMISSIONS_FILE}
-function list() {
+function list()
+{
 
   local doColor=false
   local doUpdate=false
@@ -426,7 +447,8 @@ function list() {
 #     stderr
 #     script
 #     output
-function list-outputs() {
+function list-outputs() 
+{
   assertCanCommunicateWithServer $2
   local id=$1
   local cromwellServer=$2
@@ -452,7 +474,8 @@ function list-outputs() {
 
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
-function fetch-logs() {
+function fetch-logs() 
+{
   assertCanCommunicateWithServer $2
   local id=$1
   local cromwellServer=$2
@@ -486,7 +509,8 @@ function fetch-logs() {
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 # Includes all logs and output files
-function fetch-all() {
+function fetch-all() 
+{
   assertCanCommunicateWithServer $2
   local id=$1
   local cromwellServer=$2
@@ -513,7 +537,8 @@ function fetch-all() {
 # Spin off a task in the background that will check periodically if the workflow ID is 
 # complete.
 # When it is, send an email to the email address specified.
-function notify() {
+function notify()
+{
 
   local id=$1
   local email=$2
@@ -537,7 +562,8 @@ function notify() {
   done 
 }
 
-function runSubCommandOnWorkflowId() {
+function runSubCommandOnWorkflowId()
+{
   # Get the workflow ID:
   populateWorkflowIdAndServerUrl $1
   error "Using workflow-id == $WORKFLOW_ID"
