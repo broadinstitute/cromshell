@@ -59,6 +59,43 @@ OPTIONS=''
 
 ################################################################################
 
+function turtle() 
+{
+  echo "                  __     "
+  echo "       .,-;-;-,. /'_\\    " 
+  echo "     _/_/_/_|_\\_\\) /     "
+  echo "   '-<_><_><_><_>=/\\     "
+  echo "     \`/_/====/_/-'\\_\\    " 
+  echo "      \"\"     \"\"    \"\"    " 
+}
+
+function thoughtBubble() 
+{
+
+  echo "          .-~~~-.              " 
+  echo "  .- ~ ~-(       )_ _          "  
+  echo " /                     ~ -.    "    
+  echo "|         CROMSHELL       \\  "      
+  echo " \\                         .'  "      
+  echo "   ~- . _           _ . -~     "   
+  echo "         ~~~~~~~~~~~"        
+  echo "               () "
+  echo "                o "
+  echo "                 ."
+}
+
+function logo()
+{
+	echo
+	echo '  +--------------------------+'
+	echo '  |        CROMSHELL         |'
+	echo '  +--------------------------+'
+  turtle
+	echo
+}
+
+################################################################################
+
 function simpleUsage()
 {
   echo -e "Usage:    ${SCRIPTNAME} <subcommand> [options]"
@@ -69,6 +106,7 @@ function simpleUsage()
 function usage() 
 {
   simpleUsage
+  echo -e
   echo -e "CROMWELL_URL=$CROMWELL_URL"
   echo
   echo -e "If no workflow-id is specified then the last submitted workflow-id is assumed."
@@ -579,6 +617,9 @@ function runSubCommandOnWorkflowId()
 # Do all the interactive stuff if the script is called by a user.
 # The bash equivalent to `if __name__ == '__main__':
 if ${ISCALLEDBYUSER} ; then
+
+	# Display our logo: 
+	logo
 
   #Check given arguments:
   if [[ $# -gt $MAXARGS ]] ; then
