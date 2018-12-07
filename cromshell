@@ -183,6 +183,15 @@ function checkPrerequisites {
   return 0
 }
 
+function assertCanCommunicateWithServer
+{
+  # Make sure we can talk to the cromwell server:
+  serverName=$( echo ${1}| sed 's#.*://##g' )
+  $PING_CMD $serverName &> /dev/null
+  r=$?
+  [[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: $serverName" && exit 4
+}
+
 function assertHavePreviouslySubmittedAJob() {
   local nLines=$( wc -l ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $1}' )
   if [[ $nLines -eq 1 ]] ; then
@@ -232,6 +241,7 @@ function populateWorkflowIdAndServerUrl() {
 
 # Submit a workflow and arguments to the Cromwell Server
 function submit() { 
+  assertCanCommunicateWithServer $CROMWELL_URL
   local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
   echo $response  
@@ -254,6 +264,7 @@ function submit() {
 function status() {
   local retVal=0
 
+  assertCanCommunicateWithServer $2
   local f=$( makeTemp )
   curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/status > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
@@ -274,6 +285,7 @@ function status() {
 
 # Get the logs of a Cromwell job UUID
 function logs() {
+  assertCanCommunicateWithServer $2
   curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
@@ -281,6 +293,7 @@ function logs() {
 
 # Get the metadata for a Cromwell job UUID
 function metadata() {
+  assertCanCommunicateWithServer $2
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
@@ -288,6 +301,7 @@ function metadata() {
 
 # Get the metadata in condensed form for a Cromwell job UUID
 function slim-metadata() {
+  assertCanCommunicateWithServer $2
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
@@ -295,6 +309,7 @@ function slim-metadata() {
 
 # Get the status of the given job and how many times it was run
 function execution-status-count() {
+  assertCanCommunicateWithServer $2
   f=$( makeTemp )
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 9
@@ -314,13 +329,14 @@ function execution-status-count() {
 
 # Bring up a browser window to view timing information on the job.
 function timing() {
-  echo "Opeining timing information in a web browser for job ID: ${1}"
+  echo "Opening timing information in a web browser for job ID: ${1}"
   open ${2}/api/workflows/v1/${1}/timing
   return $?
 }
 
 # Cancel a running job.
-function abort() { 
+function abort() {
+  assertCanCommunicateWithServer $2
   response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
   echo $response  
@@ -576,12 +592,6 @@ if ${ISCALLEDBYUSER} ; then
   checkPrerequisites $PREREQUISITES 
   r=$?
   [[ $r -ne 0 ]] && exit 6
-
-  # Make sure we can talk to the cromwell server:
-  serverName=$( echo ${CROMWELL_URL} | sed 's#.*://##g' )
-  $PING_CMD $serverName &> /dev/null
-  r=$?
-  [[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: $serverName" && exit 4
 
   # Special case: submitting a job:
   if [[ "${SUB_COMMAND}" == "submit" ]] ; then
