@@ -1,3 +1,13 @@
+```
+                  __                                                            __
+       .,-;-;-,. /'_\     +-----------------------------------------------+    /_'\.,-;-;-,.
+     _/_/_/_|_\_\) /      |  CROMSHELL : run Cromwell jobs from the shell |     \ (/_/__|_\_\_
+   '-<_><_><_><_>=/\      +-----------------------------------------------+     /\=<_><_><_><_>-'
+     `/_/====/_/-'\_\                                                          /_/'-\_\====\_\'
+      ""     ""    ""                                                          ""    ""     ""
+```
+
+
 # Installation
 
 `cromshell` and it's dependencies can be installed on OSX with `brew install broadinstitute/dsp/cromshell`
