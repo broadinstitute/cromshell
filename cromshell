@@ -38,7 +38,7 @@ FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' )
 CROMSHELL_CONFIG_DIR=${HOME}/.cromshell
 mkdir -p ${CROMSHELL_CONFIG_DIR}
 
-CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles"
+CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
 CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
 
 [ ! -f ${CROMWELL_SUBMISSIONS_FILE} ] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS" > ${CROMWELL_SUBMISSIONS_FILE} 
@@ -372,7 +372,7 @@ function slim-metadata()
 {
   turtle
   assertCanCommunicateWithServer $2
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus" | jq .
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
