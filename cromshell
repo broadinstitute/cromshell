@@ -142,6 +142,9 @@ function usage()
   echo -e "   list-outputs [workflow-id] [[workflow-id]...]             List all output files produced by a workflow"
   echo -e "   fetch-all [workflow-id] [[workflow-id]...]                Download all output files produced by a workflow"
   echo -e
+  echo -e "  Debugging"
+  echo -e "    get-input-wdl [workflow-id] [[workflow-id]...]          Get the WDL used as input to a workflow"
+  echo -e
   echo    "  Get email notification on job completion"
   echo -e "   notify [workflow-id] [daemon-server] email [cromwell-server]"
   echo -e "        daemon-server  server to run the notification daemon on"
@@ -298,6 +301,7 @@ function submit()
   turtle
   assertCanCommunicateWithServer $CROMWELL_URL
 
+  if [ ! -z "$4" ]; then zip freshen $4; fi
   local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
   echo $response  
@@ -593,6 +597,18 @@ function fetch-all()
   return 0
 }
 
+#Get the WDL used as input to a workflow -- output to stdout
+#Note that this does not include subworkflows
+function get-input-wdl()
+{
+  turtle
+  assertCanCommunicateWithServer $2
+  local id=$1
+
+  grossString=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${CROMWELL_URL}/api/workflows/v1/${id}/metadata?includeKey=submittedFiles&expandSubWorkflows=false" | jq '.submittedFiles | .workflow');
+  grossString="${grossString%\"}"; grossString="${grossString#\"}";  printf "$grossString";
+}
+
 # Spin off a task in the background that will check periodically if the workflow ID is 
 # complete.
 # When it is, send an email to the email address specified.
@@ -656,7 +672,7 @@ if ${ISCALLEDBYUSER} ; then
         usage;
         exit 0;
         ;;
-      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs) 
+      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs|get-input-wdl)
         # Get our sub-command:
         SUB_COMMAND=$1
         shift
