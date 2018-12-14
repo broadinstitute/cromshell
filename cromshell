@@ -66,12 +66,12 @@ function turtle()
   else
     eye=x
   fi
-  echo "                  __     "
-  echo "       .,-;-;-,. /${eye}_\\    "
-  echo "     _/_/_/_|_\\_\\) /     "
-  echo "   '-<_><_><_><_>=/\\     "
-  echo "     \`/_/====/_/-'\\_\\    " 
-  echo "      \"\"     \"\"    \"\"    " 
+  error "                  __     "
+  error "       .,-;-;-,. /${eye}_\\    "
+  error "     _/_/_/_|_\\_\\) /     "
+  error "   '-<_><_><_><_>=/\\     "
+  error "     \`/_/====/_/-'\\_\\    " 
+  error "      \"\"     \"\"    \"\"    " 
 }
 
 function thoughtBubble() 
