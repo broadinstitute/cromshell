@@ -381,7 +381,7 @@ function slim-metadata()
   return $?
 }
 
-# Get the status of the given job and how many times it was run
+# Get the exection status for each task with counts for scatters
 function execution-status-count() 
 {
   turtle
