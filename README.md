@@ -12,6 +12,8 @@
 
 `cromshell` and it's dependencies can be installed on OSX with `brew install broadinstitute/dsp/cromshell`
 
+or through [bioconda](https://bioconda.github.io/) with `conda install cromshell`
+
 Alternatively, download the script and put it somewhere...
 
 # cromshell
