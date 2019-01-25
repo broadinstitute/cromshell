@@ -74,6 +74,16 @@ function turtle()
   error "      \"\"     \"\"    \"\"    " 
 }
 
+function turtleDead()
+{
+  error "    ,,    ,,     ,,       "
+  error "    \\‾\\,-/‾/====/‾/,     "
+  error "     \\/=<‾><‾><‾><‾>-,   "
+  error "     / (\\‾\\‾|‾/‾/‾/‾     "
+  error "    \\‾x/ ˙'-;-;-'˙       "
+  error "     ‾‾                  "
+}
+
 function thoughtBubble() 
 {
 
@@ -327,12 +337,12 @@ function status()
   curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/status > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
 
-  grep -qE '"Failed"|"Aborted"' $f
+  grep -qE '"Failed"|"Aborted"|"fail"' $f
   r=$?
   [[ $r -eq 0 ]] && retVal=1
 
   if [[ $retVal -eq 1 ]]; then
-    turtle "dead"
+    turtleDead
   else
     turtle
   fi
