@@ -28,6 +28,7 @@ COLOR_RUNNING='\033[0;30;46m'
 COLOR_FAILED='\033[1;37;41m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
+
 ################################################################################
 
 # read env var, or use default server URL
@@ -53,6 +54,7 @@ fi
 ################################################################################
 
 SUB_COMMAND=''
+WORKFLOW_ID_LIST=''
 WORKFLOW_ID=''
 WORKFLOW_SERVER_URL=''
 OPTIONS=''
@@ -101,20 +103,24 @@ function thoughtBubble()
 
 function logo()
 {
-	echo
-	echo '  +--------------------------+'
-	echo '  |        CROMSHELL         |'
-	echo '  +--------------------------+'
+  echo
+  echo '  +--------------------------+'
+  echo '  |        CROMSHELL         |'
+  echo '  +--------------------------+'
   turtle
-	echo
+  echo
 }
 
 ################################################################################
 
 function simpleUsage()
 {
-  echo -e "Usage:    ${SCRIPTNAME} <subcommand> [options]"
-  echo -e "Run and inspect workflows on a Cromwell server."
+  if [[ $# -ne 0 ]] ; then
+    usage | grep ${1} | sed -e 's#\(.*]\).*#\1#g' -e "s#^[ \\t]*#Usage:    ${SCRIPTNAME} #g"
+  else
+    echo -e "Usage:    ${SCRIPTNAME} SUB-COMMAND [options]"
+    echo -e "Run and inspect workflows on a Cromwell server."
+  fi
 }
 
 #Define a usage function:
@@ -134,26 +140,28 @@ function usage()
   echo
   echo -e "Supported Subcommands:"
   echo -e "  Start/Stop workflows"
-  echo -e "   submit <wdl> <inputs json> [options json] [included wdls] Submit a new workflow"
-  echo -e "   abort [workflow-id] [[workflow-id]...]                    Abort a running workflow"
+  echo -e "   submit <wdl> <inputs_json> [options_json] [included_wdl_zip_file] Submit a new workflow"
+  echo -e "        included_wdl_zip_file  Zip file containing any WDL files included in the input WDL"
+  echo -e "   abort [workflow-id] [[workflow-id]...]                            Abort a running workflow"
   echo -e
   echo -e "  Query workflow status:"
-  echo -e "   status [workflow-id] [[workflow-id]...]                   Check the status of a workflow"
-  echo -e "   metadata [workflow-id] [[workflow-id]...]                 Get the full metadata of a workflow"
-  echo -e "   slim-metadata [workflow-id] [[workflow-id]...]            Get a subset of the metadata from a workflow"
-  echo -e "   execution-status-count [workflow-id] [[workflow-id]...]   Get the summarized status of all jobs in the workflow"
-  echo -e "   timing [workflow-id] [[workflow-id]...]                   Open the timing diagram in a browser"
+  echo -e "   status [workflow-id] [[workflow-id]...]                           Check the status of a workflow"
+  echo -e "   metadata [workflow-id] [[workflow-id]...]                         Get the full metadata of a workflow"
+  echo -e "   slim-metadata [workflow-id] [[workflow-id]...]                    Get a subset of the metadata from a workflow"
+  echo -e "   execution-status-count [workflow-id] [[workflow-id]...]           Get the summarized status of all jobs in the workflow"
+  echo -e "   timing [workflow-id] [[workflow-id]...]                           Open the timing diagram in a browser"
   echo -e
   echo -e "  Logs"
-  echo -e "   logs [workflow-id] [[workflow-id]...]                     List the log files produced by a workflow"
-  echo -e "   fetch-logs [workflow-id] [[workflow-id]...]               Download all logs produced by a workflow"
+  echo -e "   logs [workflow-id] [[workflow-id]...]                             List the log files produced by a workflow"
+  echo -e "   fetch-logs [workflow-id] [[workflow-id]...]                       Download all logs produced by a workflow"
   echo -e
   echo -e "  Job Outputs"
-  echo -e "   list-outputs [workflow-id] [[workflow-id]...]             List all output files produced by a workflow"
-  echo -e "   fetch-all [workflow-id] [[workflow-id]...]                Download all output files produced by a workflow"
+  echo -e "   list-outputs [workflow-id] [[workflow-id]...]                     List all output files produced by a workflow"
+  echo -e "   fetch-all [workflow-id] [[workflow-id]...]                        Download all output files produced by a workflow"
   echo -e
   echo    "  Get email notification on job completion"
   echo -e "   notify [workflow-id] [daemon-server] email [cromwell-server]"
+  echo -e "        email          email address to which to send the notification"
   echo -e "        daemon-server  server to run the notification daemon on"
   echo
   echo -e "  Display a list jobs submitted through cromshell:"
@@ -173,6 +181,7 @@ function error()
   echo "$1" 1>&2 
 }
 
+# Make a better temp file that gets cleaned up on script exit:
 TMPFILELIST=''
 function makeTemp()
 {
@@ -182,14 +191,24 @@ function makeTemp()
   echo $f
 }
 
+# Function to clean our temp files:
 function cleanTempVars()
 {
   rm -f ${TMPFILELIST}
 }
 
+# Function to be called at exit:
 function at_exit()
 {
   cleanTempVars
+}
+# Make sure we clean up on exit:
+trap at_exit EXIT 
+
+# Print the name and value of a simple variable:
+function printVar()
+{
+  error "$1 = ${!1}"
 }
 
 # Checks the bash built-in PIPESTATUS variable for any failures
@@ -243,6 +262,64 @@ function checkPrerequisites
   return 0
 }
 
+function checkForComplexHelpArgument() 
+{
+  for arg in $@ ; do
+    case $arg in 
+      -h|--h|-\?|--\?|--help|-help|help) usage; exit 0;;
+    esac
+  done
+}
+
+
+################################################################################
+# Cromshell-specific Utility Functions:
+
+# Handle arguments just expecting workflow IDs:
+# Will populate the $WORKFLOW_ID_LIST global variable or exit.
+function handleArgs_workflow_ids()
+{
+  #Read args:
+  if [ $# -eq 0 ] ; then
+    # No specified workflow ID.
+    # Get the last one.
+    populateLastWorkflowId
+    WORKFLOW_ID_LIST="${WORKFLOW_ID}"
+  else
+    while [ $# -gt 0 ] ; do
+      populateWorkflowIdAndServerUrl ${1}
+      WORKFLOW_ID_LIST="${WORKFLOW_ID_LIST} ${1}"
+
+      #Get next argument in $1:
+      shift
+    done
+  fi
+}
+
+function matchWorkflowId() 
+{
+  local rv=1
+  
+  if [[ "${1}" =~ ^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$ ]] ; then
+    rv=0
+  fi
+
+  echo ${rv}
+  return ${rv}
+}
+
+function invalidSubCommand()
+{
+  error "${SCRIPTNAME} $1: invalid $2: $3"
+  error ""
+  if [[ ${#1} -eq 0 ]] ; then
+    simpleUsage
+  else
+    simpleUsage $1
+  fi
+  echo "Try \`$SCRIPTNAME -h' for more information."
+  exit 3;
+}
 
 function assertCanCommunicateWithServer
 {
@@ -263,18 +340,18 @@ function assertHavePreviouslySubmittedAJob()
   fi
 }
 
-################################################################################
-
-trap at_exit EXIT 
-
-################################################################################
+function populateLastWorkflowId() 
+{
+  assertHavePreviouslySubmittedAJob
+  WORKFLOW_ID=$( tail -n1 ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $3}' )
+}
 
 function populateWorkflowIdAndServerUrl()
 {
   local userSpecifiedId=$1
   
   # If the user specified a negative number, get the nth last workflow:
-  if [[ $userSpecifiedId == -* ]]; then
+  if [[ $userSpecifiedId =~ ^-[[:digit:]]+$ ]]; then
     local row=${userSpecifiedId#-}
     assertHavePreviouslySubmittedAJob
     WORKFLOW_ID=$(tail -n $row $CROMWELL_SUBMISSIONS_FILE | head -n 1 | awk '{print $3}' )
@@ -294,15 +371,24 @@ function populateWorkflowIdAndServerUrl()
 
     # If the user specified nothing, get the last workflow ID:  
     else
-      assertHavePreviouslySubmittedAJob
-      WORKFLOW_ID=$( tail -n1 ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $3}' )
+      populateLastWorkflowId
       WORKFLOW_SERVER_URL=$(tail -n1 $CROMWELL_SUBMISSIONS_FILE | awk '{print $2}' )
     fi
+  fi
+
+  # Validate our workflow ID:
+  if [[ $( matchWorkflowId ${WORKFLOW_ID} ) -ne 0 ]] ; then
+    if [ -n "$userSpecifiedId" ] ; then
+      error "Invalid workflow ID: ${1}"
+      error "It is likely that there are not this many records in your cromshell file."
+    else
+      error "Invalid workflow ID: ${WORKFLOW_ID}"
+    fi
+    exit 5
   fi
 }
 
 # Submit a workflow and arguments to the Cromwell Server
-
 function submit() 
 {
   turtle
@@ -432,19 +518,29 @@ function abort()
 # List all jobs submitted in ${CROMWELL_SUBMISSIONS_FILE}
 function list()
 {
-  turtle
   local doColor=false
   local doUpdate=false
-
-  for arg in ${@} ; do 
-    case "$arg" in
-      -c) doColor=true
-         ;; 
-      -u) doUpdate=true
-         ;; 
-    esac
-  done
  
+  # Handle Arguments:
+  local OPTIND
+  while getopts "cu" opt ; do
+    case ${opt} in 
+      c)
+        doColor=true
+        ;;
+      u)
+        doUpdate=true
+        ;;
+      *)
+        invalidSubCommand list flag ${OPTARG}
+        ;; 
+    esac 
+  done
+  shift $((OPTIND-1)) 
+
+  # Display the logo:
+  turtle
+
   # If we need to update the data, do so here:
   if $doUpdate ; then
     error "Updating cached status list"
@@ -457,7 +553,7 @@ function list()
     while read line ; do 
         id=$( echo "$line" | awk '{print $3}' )
         # Only update if the ID field is, in fact, a valid ID:
-        if [[ "${id}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] ; then
+        if [[ $(matchWorkflowId ${id}) -eq 0 ]] ; then
           srv=$( echo "$line" | awk '{print $2}' )
           runSt=$( echo "$line" | awk '{print $5}' )
           
@@ -603,25 +699,97 @@ function fetch-all()
   return 0
 }
 
+function assertValidEmail() 
+{
+  # Make sure the user gave us a good email address:
+  echo "$1" | grep -q  '@' 
+  r=$?
+  if [ $r -ne 0 ] ; then
+    error "Error: invalid email address: $1"
+    error ""
+    simpleUsage notify
+    echo "Try \`$SCRIPTNAME -h' for more information."
+    exit 5
+  fi
+}
+
 # Spin off a task in the background that will check periodically if the workflow ID is 
 # complete.
 # When it is, send an email to the email address specified.
 function notify()
 {
+  if [[ $# -lt 1 ]] ; then
+    error "Error: You must specify an email address to notify."
+    error ""
+    simpleUsage notify
+    echo "Try \`$SCRIPTNAME -h' for more information."
+    exit 5
+  fi
 
+  # Is the next argument our workflow ID?
+  # Workflow IDs are standard UUIDs or negative numbers:
+  if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ ${1} =~ ^-[[:digit:]]+$ ]] ; then
+    # Get the workflow ID:
+    populateWorkflowIdAndServerUrl $1
+    shift
+  fi
+
+  # Get the host on which this will be run:
+  hostServer="${HOSTNAME}"
+
+  if [[ ! "${1}" =~ ^.*@.*  ]] ; then
+    hostServer=$1
+    shift
+  fi
+
+  # Make sure the user gave us a good email address:
+  assertValidEmail $1
+  email=$1
+  shift
+
+  # Make sure our workflow ID is populated:
+  populateWorkflowIdAndServerUrl ${WORKFLOW_ID}
+
+  # Do some wizardry here to spin off the notification daemon on a remote server:
+  if [[ "${hostServer}" != "${HOSTNAME}" ]] ; then
+    turtle
+    error "Creating notification daemon on host ${hostServer} ..."
+
+    # Send the script to the server:
+    scp ${SCRIPTDIR}/${SCRIPTNAME} ${hostServer}:~/. &> /dev/null
+    [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && exit 7
+
+    # Spin off notification process on the server:
+    results=$( ssh ${hostServer} "~/${SCRIPTNAME} notify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" )
+    [[ $? -ne 0 ]] && error "ERROR: Could not start notification daemon on ${hostServer}" && exit 8
+
+    # Let the user know we've done our job:
+    echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
+  else
+    error "Spinning off notification to ${email} thread for"
+    error "    workflow: ${WORKFLOW_ID}" 
+    error "    on Cromwell server: ${CROMWELL_URL} ..."
+    nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; _notifyHelper ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
+    echo "Spun off thread on PID $!"
+  fi
+}
+
+# Helper function for the notify command that actually notifies the user:
+function _notifyHelper()
+{
   local id=$1
   local email=$2
   local cromwellServer=$3
 
   assertCanCommunicateWithServer ${cromwellServer}
   local separator="=================================================="
-  
+
   while true ; do 
     completionStatus=$( status $id ${cromwellServer} 2>/dev/null | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
     echo $completionStatus | grep -qE "Succeeded|Failed|Aborted" 
     r=${PIPESTATUS[1]}
     if [ $r -eq 0 ] ; then
-       workflowFile=$( grep '$id' ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $4}' ) 
+      workflowFile=$( grep '$id' ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $4}' ) 
       metaData=$( metadata $id ${cromwellServer} )
       echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email} 
       break
@@ -649,127 +817,47 @@ function runSubCommandOnWorkflowId()
 # The bash equivalent to `if __name__ == '__main__':
 if ${ISCALLEDBYUSER} ; then
 
-  #Check given arguments:
-  if [[ $# -gt $MAXARGS ]] ; then
-    simpleUsage
-    exit 1
-  elif [[ $# -lt $MINARGS ]] ; then
-    simpleUsage
-    exit 2
-  fi
+  # Check the remaining arguments for help and display it if we have to: 
+  checkForComplexHelpArgument $@
 
-  #Read args:
-  while [ $# -gt 0 ] ; do
+  # Get our sub-command:
+  SUB_COMMAND=${1}
+  shift
 
-    case "$1" in
-      -h|--h|--help|-help|help)
-        usage;
-        exit 0;
-        ;;
-      submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs) 
-        # Get our sub-command:
-        SUB_COMMAND=$1
-        shift
-        # We'll manually handle the rest of the options:
-        break
-        ;;
-      *)
-        error "${SCRIPTNAME}: invalid option: $1" 
-        simpleUsage
-        echo "Try \`$SCRIPTNAME --help' for more information."
-        exit 3;
-        ;; 
-    esac
+  # Validate our sub-command:
+  case ${SUB_COMMAND} in
+    submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
+      # This is a good sub-command, so we do not need to do anything. 
+      ;;
+    *)
+      invalidSubCommand '' "sub-command" "${SUB_COMMAND}"
+      ;; 
+  esac
 
-    #Get next argument in $1:
-    shift
-  done
-
-  ################################################################################
-
-  # Make sure we have all the required commands:
+  # Now that we have checked for help arguments, we can
+  # make sure we have all the required commands:
   checkPrerequisites $PREREQUISITES 
   r=$?
   [[ $r -ne 0 ]] && exit 6
 
-  # Special case: submitting a job:
-  if [[ "${SUB_COMMAND}" == "submit" ]] ; then
-    ${SUB_COMMAND} $1 $2 $3 $4 
-    exit $?
-  fi
+  # Handle specific sub-command args and and call our sub-command:
+  echo "Sub-Command: ${SUB_COMMAND}"
+  case ${SUB_COMMAND} in 
+    submit|list|notify)
+      ${SUB_COMMAND} $@
+      rv=$?
+      ;;
+    *)
+      # All other tools just take a list of workflow IDs:
+      handleArgs_workflow_ids $@
 
-  # Special case: list
-  if [[ "${SUB_COMMAND}" == "list" ]] ; then
-    ${SUB_COMMAND} $1 $2
-    exit $?
-  fi
-  
-  # Special case: notify
-  if [[ "${SUB_COMMAND}" == "notify" ]] ; then
-    turtle
-    # Is the next argument our workflow ID?
-    # Workflow IDs are standard UUIDs:
-    if [[ "${1}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] ; then
-      # Get the workflow ID:
-      populateWorkflowIdAndServerUrl $1
-      shift
-    fi
- 
-    # Get the host on which this will be run:
-    hostServer="${HOSTNAME}"
-    
-    if [[ ! "${1}" =~ ^.*@.*  ]] ; then
-      hostServer=$1
-      shift
-    fi
+      for WORKFLOW_ID in ${WORKFLOW_ID_LIST} ; do 
+        runSubCommandOnWorkflowId ${WORKFLOW_ID}
+        rv=$?
+      done
+      ;;
+  esac
 
-    # Make sure the user gave us a good email address:
-    echo "$1" | grep -q  '@' 
-    r=$?
-    [ $r -ne 0 ] && error "Error: invalid email address: $1" && exit 5
-    email=$1
-
-    # Make sure our workflow ID is populated:
-    populateWorkflowIdAndServerUrl ${WORKFLOW_ID}
-
-    # Do some wizardry here to spin off the notification daemon on a remote server:
-    if [[ "${hostServer}" != "${HOSTNAME}" ]] ; then
-      error "Creating notification daemon on host ${hostServer} ..."
-
-      # Send the script to the server:
-      scp ${SCRIPTDIR}/${SCRIPTNAME} ${hostServer}:~/. &> /dev/null
-      [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && exit 7
-
-      # Spin off notification process on the server:
-      results=$( ssh ${hostServer} "~/${SCRIPTNAME} notify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" )
-      [[ $? -ne 0 ]] && error "ERROR: Could not start notification daemon on ${hostServer}" && exit 8
-
-      # Let the user know we've done our job:
-      echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
-    else
-      error "Spinning off notification to ${email} thread for workflow ${WORKFLOW_ID} ..."
-      nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; notify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
-      echo "Spun off thread on PID $!"
-    fi
-
-    exit 0
-  fi
-
-  # Run our sub command once on the first workflow ID:
-  runSubCommandOnWorkflowId ${1}
-  r=$?
-  shift
-
-  # Run the task on all remaining workflow IDs:
-  # This is required because there's no do-while loop in bash.
-  while [ $# -gt 0 ] ; do
-    runSubCommandOnWorkflowId ${1}
-    r=$?
-    shift
-  done
-
-  # Exit the script with the return value of the last run sub-command:
-  exit $r
-
+  exit $rv
 fi
 
