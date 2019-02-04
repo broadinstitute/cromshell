@@ -31,18 +31,25 @@ COLOR_RUNNING='\033[0;30;46m'
 
 ################################################################################
 
-# read env var, or use default server URL
-export CROMWELL_URL=${CROMWELL_URL:-"https://cromwell-v36.dsde-methods.broadinstitute.org"}
-
-FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
-
+# Setup Cromshell config details:
 CROMSHELL_CONFIG_DIR=${HOME}/.cromshell
 mkdir -p ${CROMSHELL_CONFIG_DIR}
-
-CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
 CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
-
 [ ! -f ${CROMWELL_SUBMISSIONS_FILE} ] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS" > ${CROMWELL_SUBMISSIONS_FILE} 
+
+# Find the CROMWELL Server:
+CROMWELL_SERVER_FILE=${CROMSHELL_CONFIG_DIR}/cromwell_server.config
+CROMWELL_NEEDS_SETUP=true
+[ -f ${CROMWELL_SERVER_FILE} ] && CROMWELL_NEEDS_SETUP=false
+if ! $CROMWELL_NEEDS_SETUP ; then
+  # NOTE: Server file allows for line comments using the prefix `#`
+  CROMWELL_SERVER_FROM_FILE=$( grep -v '^#' ${CROMWELL_SERVER_FILE} | head -n1 )
+fi
+
+# read env var, or use default server URL
+export CROMWELL_URL=${CROMWELL_URL:-"${CROMWELL_SERVER_FROM_FILE}"}
+FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
+CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
 
@@ -68,7 +75,7 @@ function turtle()
   if [[ -z $1 ]]; then
     eye="'"
   else
-    eye=x
+    eye="x"
   fi
   error "                  __     "
   error "       .,-;-;-,. /${eye}_\\    "
@@ -86,31 +93,6 @@ function turtleDead()
   error "     / (\\‾\\‾|‾/‾/‾/‾     "
   error "    \\‾x/ ˙'-;-;-'˙       "
   error "     ‾‾                  "
-}
-
-function thoughtBubble() 
-{
-
-  echo "          .-~~~-.              " 
-  echo "  .- ~ ~-(       )_ _          "  
-  echo " /                     ~ -.    "    
-  echo "|         CROMSHELL       \\  "      
-  echo " \\                         .'  "      
-  echo "   ~- . _           _ . -~     "   
-  echo "         ~~~~~~~~~~~"        
-  echo "               () "
-  echo "                o "
-  echo "                 ."
-}
-
-function logo()
-{
-  echo
-  echo '  +--------------------------+'
-  echo '  |        CROMSHELL         |'
-  echo '  +--------------------------+'
-  turtle
-  echo
 }
 
 ################################################################################
@@ -355,7 +337,11 @@ function assertCanCommunicateWithServer
   serverName=$( echo ${1}| sed 's#.*://##g'| sed 's#:[0-9]*##g' )
   $PING_CMD $serverName &> /dev/null
   r=$?
-  [[ $r -ne 0 ]] && error "Error: Cannot communicate with Cromwell server: $serverName" && exit 4
+  if [[ $r -ne 0 ]] ; then 
+    turtleDead 
+    error "Error: Cannot communicate with Cromwell server: $serverName" 
+    exit 4
+  fi
 }
 
 function assertHavePreviouslySubmittedAJob()
@@ -419,17 +405,43 @@ function populateWorkflowIdAndServerUrl()
 # Submit a workflow and arguments to the Cromwell Server
 function submit() 
 {
-  turtle
   assertCanCommunicateWithServer $CROMWELL_URL
 
   local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
-  echo $response  
 
+  # Check to make sure that we actually submitted the job correctly 
+  # and the server ate it well:
+   
+  # Did the Curl call fail?
   [ $r -ne 0 ] && error "FAILED TO SUBMIT JOB" && return $r
 
-  local id=$(echo $response | cut -d"," -f1 | cut -d":" -f2 | sed s/\"//g | sed s/\ //g)
+  # Get our status and job ID:
+  local st=$( echo "${response}" | jq -r '.status' 2>/dev/null )
+  local id=$( echo "${response}" | jq -r '.id' 2>/dev/null )
 
+  # If the status is not `Submitted`, something went wrong:
+  if [[ "${st}" != "Submitted" ]] ; then
+    turtleDead
+    error
+    error "Error: Server reports that job was not properly submitted.  Server response:"
+    error "${response}"
+    exit 9
+  fi
+
+  # If the ID is not an ID, something went wrong:
+  if [[ $( matchWorkflowId ${id} ) -ne 0 ]] ; then
+    turtleDead
+    error
+    error "Error: Did not get a valid ID back.  Something went wrong.  Server response:"
+    error "${response}"
+    exit 9
+  fi
+
+  # If we get here, we successfully submitted the job and should track it locally:
+  turtle
+  echo "${response}" 
+  
   local runDir=${CROMSHELL_CONFIG_DIR}/${FOLDER_URL}/${id}
   mkdir -p ${runDir}
 
@@ -443,7 +455,6 @@ function submit()
 # Check the status of a Cromwell job UUID
 function status()
 {
-
   local retVal=0
 
   assertCanCommunicateWithServer $2
@@ -474,8 +485,8 @@ function status()
 # Get the logs of a Cromwell job UUID
 function logs() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
@@ -484,8 +495,8 @@ function logs()
 # Get the metadata for a Cromwell job UUID
 function metadata() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
@@ -494,8 +505,8 @@ function metadata()
 # Get the metadata in condensed form for a Cromwell job UUID
 function slim-metadata() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
@@ -504,8 +515,8 @@ function slim-metadata()
 # Get the status of the given job and how many times it was run
 function execution-status-count() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   f=$( makeTemp )
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 9
@@ -535,8 +546,8 @@ function timing()
 # Cancel a running job.
 function abort() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
   echo $response  
@@ -677,7 +688,7 @@ function cleanup()
 
   getAnswerFromUser "Are you sure you want to CLEAR ALL RECORDS from these states: ${st}" 'Yes No' answer
   
-  if [[ "${answer}" == "Yes" ]] ; then
+  if [[ $( echo "${answer}" | tr A-Z a-z ) == "yes" ]] ; then
     echo "User answered 'Yes'."
     echo
 
@@ -714,6 +725,20 @@ function cleanup()
   fi
 }
 
+function assertDialogExists()
+{
+  which dialog &>/dev/null   
+  r=$?
+  [ $r -ne 0 ] && error "dialog does not exist.  Must install \`dialog\`: (yum install dialog / brew install dialog / apt-get dialog)." && exit 8
+}
+
+function assertGsUtilExists()
+{
+  which gsutil &>/dev/null   
+  r=$?
+  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+}
+
 # List the output files for a given run.
 # Will list all output files that are not:
 #     *.log
@@ -724,8 +749,8 @@ function cleanup()
 #     output
 function list-outputs() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   local id=$1
   local cromwellServer=$2
 
@@ -733,9 +758,7 @@ function list-outputs()
 
   local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
 
-  which gsutil &>/dev/null   
-  r=$?
-  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+  assertGsUtilExists
 
   error "Output files from job ${cromwellServer}:${id} : "
 
@@ -752,8 +775,8 @@ function list-outputs()
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 function fetch-logs() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   local id=$1
   local cromwellServer=$2
 
@@ -761,9 +784,7 @@ function fetch-logs()
 
   local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
 
-  which gsutil &>/dev/null   
-  r=$?
-  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+  assertGsUtilExists
 
   mkdir -p ${localServerFolder}
 
@@ -788,8 +809,8 @@ function fetch-logs()
 # Includes all logs and output files
 function fetch-all() 
 {
-  turtle
   assertCanCommunicateWithServer $2
+  turtle
   local id=$1
   local cromwellServer=$2
 
@@ -797,9 +818,7 @@ function fetch-all()
 
   local localServerFolder="${CROMSHELL_CONFIG_DIR}/$( echo "${cromwellServer}" | sed -e 's#ht.*://##g' )/${id}"
 
-  which gsutil &>/dev/null   
-  r=$?
-  [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
+  assertGsUtilExists
 
   mkdir -p ${localServerFolder}
 
@@ -863,6 +882,19 @@ function notify()
   # Make sure our workflow ID is populated:
   populateWorkflowIdAndServerUrl ${WORKFLOW_ID}
 
+  # Make sure we have a workflow server defined.
+  # This is important if we're on a remote server for the notification
+  # daemon.
+  if [[ ${#WORKFLOW_SERVER_URL} -eq 0 ]] ; then
+    if [[ ${#1} -ne 0 ]] ; then
+      WORKFLOW_SERVER_URL="${1}"
+      shift
+    else
+      error 'Error: Could not determine the cromwell server url!'
+      exit 2
+    fi
+  fi
+
   # Do some wizardry here to spin off the notification daemon on a remote server:
   if [[ "${hostServer}" != "${HOSTNAME}" ]] ; then
     turtle
@@ -880,8 +912,9 @@ function notify()
     echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
   else
     error "Spinning off notification to ${email} thread for"
-    error "    workflow: ${WORKFLOW_ID}" 
-    error "    on Cromwell server: ${CROMWELL_URL} ..."
+    error "    workflow:             ${WORKFLOW_ID}" 
+    error "    from Cromwell server: ${WORKFLOW_SERVER_URL}"
+    error "..."
     nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; _notifyHelper ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
     echo "Spun off thread on PID $!"
   fi
@@ -924,6 +957,212 @@ function runSubCommandOnWorkflowId()
   return $r
 }
 
+function dialogAskUserIfUrlIsOK()
+{
+  local BACKTITLE=$1
+  local url=$2
+  local menuFile=$3
+
+  # Dialog to validate that the user has entered the correct thing:
+  dialog --clear --backtitle "${BACKTITLE}" --title "Cromwell URL Verification" \
+    --yesno "Oh my!  It looks like your server is: \n\
+\n\
+${url}\n\
+\n\
+Is this correct?" 10 75 2>${menuFile}
+  local r=$?
+
+  return $r 
+}
+
+function checkForUserQuitDialogEarly()
+{
+  # If the user gets cold feet, let them go softly into the night.
+  if [[ $1 -ne 0 ]] ; then
+    clear 
+    error "   User aborted setup."
+    error ""
+    turtle
+    error ""
+    error "  Please come back soon!"
+    exit 6
+  fi
+}
+
+function setupCromshellDialog()
+{
+  assertDialogExists
+
+  local menuFile=$( makeTemp )
+  local splashTextFile=$( makeTemp )
+
+  # Menu variables:
+  local TITLE="Welcome to Cromshell!"
+  local BACKTITLE="Cromshell First Time Setup"
+  local URL_QUESTION_TEXT="What is the URL of the Cromwell server you use to execute your jobs?"
+  local r
+
+  # Set up our logo:
+  turtle &> ${menuFile} 
+  sed 's#^#     #g' ${menuFile} > ${splashTextFile}
+  
+  # Splash screen:
+  dialog --beep --exit-label "Continue" --backtitle "${BACKTITLE}" --title "${TITLE}" --textbox ${splashTextFile} 12 43
+  r=$?
+
+  # URL input dialog:
+  dialog --clear --backtitle "${BACKTITLE}" --title "${TITLE}" \
+    --inputbox "This seems to be your first time running me, Cromshell! \n\
+(Please excuse me if it isn't!  I seem to have forgotten some of your information!)\n\
+\n\
+I am your personal, personable, and wonderful extension of the Cromwell API right here on the command-line.\n\
+\n\
+There are a few small questions I need you to answer before I can make your cromwell dreams come true.\n\
+\n\
+${URL_QUESTION_TEXT}" 20 75 2> ${menuFile} 
+  r=$?
+
+  checkForUserQuitDialogEarly $r
+
+  local hasGoodUrl=false
+
+  # Get the URL from the menu file:
+  url=$( cat ${menuFile} | sed -e 's#^[ \t]*##g' -e 's#[ \t]*$##g' )
+
+  # Dialog to validate that the user has entered the correct thing:
+  dialogAskUserIfUrlIsOK "${BACKTITLE}" "${url}" "${menuFile}"
+  r=$?
+
+  # See if the user is OK with their URL:
+  if [[ $r -eq 0 ]] ; then 
+    hasGoodUrl=true
+  fi
+
+  # Until we have a good URL, we need to keep asking the user.
+  while ! $hasGoodUrl ; do 
+
+    # URL input dialog:
+    dialog --clear \
+      --backtitle "${BACKTITLE}" \
+      --title "Cromwell URL Verification" \
+      --inputbox "Oh, I'm terribly sorry for that.  Let's try again! \n\
+\n\
+${URL_QUESTION_TEXT}" 10 75 2> ${menuFile} 
+    r=$?
+
+    checkForUserQuitDialogEarly $r
+
+    # Get the URL from the menu file:
+    url=$( cat ${menuFile} | sed -e 's#^[ \t]*##g' -e 's#[ \t]*$##g' )
+
+    # Dialog to validate that the user has entered the correct thing:
+    dialogAskUserIfUrlIsOK "${BACKTITLE}" "${url}" "${menuFile}"
+    r=$?
+
+    # See if the user is OK with their URL:
+    if [[ $r -eq 0 ]] ; then 
+      hasGoodUrl=true
+    fi
+  done
+  
+  # Put the URL in the file:
+  echo "${url}" > ${CROMWELL_SERVER_FILE}
+
+  # Thank the user for their input and let them know 
+  # they are ready to run:
+  echo -e "" > ${splashTextFile}
+  echo -e "OK.  I have set your Cromwell server to be:" >> ${splashTextFile}
+  echo -e "" >> ${splashTextFile}
+  echo -e "${url}" >> ${splashTextFile}
+  echo -e "" >> ${splashTextFile}
+  echo -e "You should be ALL SET!" >> ${splashTextFile}
+  echo -e "Please run me again to start the executions." >> ${splashTextFile}
+
+  dialog --clear --beep --exit-label "Continue" --backtitle "${BACKTITLE}" --title "${TITLE}" --textbox ${splashTextFile} 13 75
+  r=$?
+
+  clear
+
+  return 0
+}
+
+function setupCromshell() 
+{
+  echo "--------------------------------------------------"
+  echo -e "   __        __   _                          "
+  echo -e "   \\ \\      / /__| | ___ ___  _ __ ___   ___ "
+  echo -e "    \\ \\ /\\ / / _ \\ |/ __/ _ \\| '_ \` _ \\ / _ \\"
+  echo -e "     \\ V  V /  __/ | (_| (_) | | | | | |  __/"
+  echo -e "      \\_/\\_/ \\___|_|\\___\\___/|_| |_| |_|\\___|"
+  echo -e "                                             "
+  echo -e "                    _        "
+  echo -e "                   | |_ ___  "
+  echo -e "                   | __/ _ \\ "
+  echo -e "                   | || (_) |"
+  echo -e "                    \\__\\___/ "
+  echo -e "                             "
+  echo -e "   ____                         _          _ _ "
+  echo -e "  / ___|_ __ ___  _ __ ___  ___| |__   ___| | |"
+  echo -e " | |   | '__/ _ \\| '_ \` _ \\/ __| '_ \\ / _ \\ | |"
+  echo -e " | |___| | | (_) | | | | | \__ \ | | |  __/ | |"
+  echo -e "  \\____|_|  \\___/|_| |_| |_|___/_| |_|\\___|_|_|"
+  echo -e "                                               "
+  
+  echo
+  turtle
+  echo
+
+  echo "--------------------------------------------------"
+
+  echo
+  echo 'This seems to be your first time running me, Cromshell!'
+  echo "(Please excuse me if it isn't!  I seem to have forgotten"
+  echo 'some of your information!)'
+  echo ''
+  echo "I am your personal, personable, and wonderful extension of "
+  echo "the Cromwell API right here on the command-line."
+  echo ""
+  echo "There are a few small questions I need you to answer before"
+  echo "I can make your cromwell dreams come true."
+  echo
+  echo "--------------------------------------------------"
+  echo
+
+  # Get the server they need to connect to:
+  local choseServer=false
+  while ! $choseServer ; do
+    echo "What is the URL of the Cromwell server you use to execute"
+    echo "your jobs?"
+
+    # Read in the URL:
+    read -p "Cromwell URL, please: " url
+    echo
+
+    # Force the user to acknowledge their input:
+    getAnswerFromUser "Oh my!  It looks like your server is: ${url}$(echo $'\nIs this correct')" 'Yes No' answer
+
+    if [[ $( echo "${answer}" | tr A-Z a-z ) == "yes" ]] ; then
+      choseServer=true
+    else
+      echo "Oh, I'm terribly sorry for that.  Let's try again!"
+      echo
+      echo
+    fi
+  done
+
+  echo
+  echo "OK.  I'm now setting your Cromwell server to be: ${url}"
+  echo -n "Don't worry - this won't hurt a bit..."
+  
+  # Put the URL in the file:
+  echo "${url}" > ${CROMWELL_SERVER_FILE}
+  echo "DONE"
+
+  echo
+  echo "OK, you should be ALL SET!"
+  echo "Please run me again to start the executions."
+}
+
 ################################################################################
 
 # Do all the interactive stuff if the script is called by a user.
@@ -936,6 +1175,22 @@ if ${ISCALLEDBYUSER} ; then
   # Get our sub-command:
   SUB_COMMAND=${1}
   shift
+  
+  # Check if we need to set this up.
+  # Note: because of how `notify` works, we can't require the setup for the notify action.
+  if ${CROMWELL_NEEDS_SETUP} && [[ "${SUB_COMMAND}" != "notify" ]] ; then
+    
+    # We need to setup this install.
+    # Now let's set it up:
+    which dialog &> /dev/null
+    r=$?
+     if [[ $r -eq 0 ]] ; then
+      setupCromshellDialog
+    else
+      setupCromshell
+    fi
+    exit 0
+  fi
 
   # Validate our sub-command:
   case ${SUB_COMMAND} in
