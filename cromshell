@@ -300,7 +300,7 @@ function matchWorkflowId()
 {
   local rv=1
   
-  if [[ "${1}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] ; then
+  if [[ "${1}" =~ ^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$ ]] ; then
     rv=0
   fi
 
@@ -351,7 +351,7 @@ function populateWorkflowIdAndServerUrl()
   local userSpecifiedId=$1
   
   # If the user specified a negative number, get the nth last workflow:
-  if [[ $userSpecifiedId == -* ]]; then
+  if [[ $userSpecifiedId =~ ^-[[:digit:]]+$ ]]; then
     local row=${userSpecifiedId#-}
     assertHavePreviouslySubmittedAJob
     WORKFLOW_ID=$(tail -n $row $CROMWELL_SUBMISSIONS_FILE | head -n 1 | awk '{print $3}' )
@@ -699,6 +699,20 @@ function fetch-all()
   return 0
 }
 
+function assertValidEmail() 
+{
+  # Make sure the user gave us a good email address:
+  echo "$1" | grep -q  '@' 
+  r=$?
+  if [ $r -ne 0 ] ; then
+    error "Error: invalid email address: $1"
+    error ""
+    simpleUsage notify
+    echo "Try \`$SCRIPTNAME -h' for more information."
+    exit 5
+  fi
+}
+
 # Spin off a task in the background that will check periodically if the workflow ID is 
 # complete.
 # When it is, send an email to the email address specified.
@@ -714,7 +728,7 @@ function notify()
 
   # Is the next argument our workflow ID?
   # Workflow IDs are standard UUIDs or negative numbers:
-  if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ ${1} == -* ]] ; then
+  if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ ${1} =~ ^-[[:digit:]]+$ ]] ; then
     # Get the workflow ID:
     populateWorkflowIdAndServerUrl $1
     shift
@@ -729,15 +743,7 @@ function notify()
   fi
 
   # Make sure the user gave us a good email address:
-  echo "$1" | grep -q  '@' 
-  r=$?
-  if [ $r -ne 0 ] ; then
-    error "Error: invalid email address: $1"
-    error ""
-    simpleUsage notify
-    echo "Try \`$SCRIPTNAME -h' for more information."
-    exit 5
-  fi
+  assertValidEmail $1
   email=$1
   shift
 
@@ -761,7 +767,7 @@ function notify()
     echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
   else
     error "Spinning off notification to ${email} thread for"
-		error "    workflow: ${WORKFLOW_ID}" 
+    error "    workflow: ${WORKFLOW_ID}" 
     error "    on Cromwell server: ${CROMWELL_URL} ..."
     nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; _notifyHelper ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
     echo "Spun off thread on PID $!"
@@ -814,31 +820,12 @@ if ${ISCALLEDBYUSER} ; then
   # Check the remaining arguments for help and display it if we have to: 
   checkForComplexHelpArgument $@
 
-  # Get top-level arguments to script itself:
-  while getopts "h" opt ; do
-    case ${opt} in
-      h) 
-        usage
-        exit 0
-        ;;
-      *)
-        simpleUsage
-        exit 3
-        ;;
-    esac
-  done
-  shift $((OPTIND-1)) 
-
   # Get our sub-command:
   SUB_COMMAND=${1}
   shift
 
   # Validate our sub-command:
   case ${SUB_COMMAND} in
-    --help|-help|help)
-      usage
-      exit 0
-      ;;  
     submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
       # This is a good sub-command, so we do not need to do anything. 
       ;;
