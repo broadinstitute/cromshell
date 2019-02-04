@@ -59,6 +59,8 @@ WORKFLOW_ID=''
 WORKFLOW_SERVER_URL=''
 OPTIONS=''
 
+TERMINAL_STATES="Succeeded Failed Aborted"
+
 ################################################################################
 
 function turtle() 
@@ -127,48 +129,56 @@ function simpleUsage()
 function usage() 
 {
   simpleUsage
-  echo -e
+  echo -e ""
   echo -e "CROMWELL_URL=$CROMWELL_URL"
-  echo
+  echo -e ""
   echo -e "If no workflow-id is specified then the last submitted workflow-id is assumed."
   echo -e "Alternatively, negative numbers can be used to refer to previous workflows."
-  echo
+  echo -e ""
   echo -e "  example usage:"
   echo -e "      cromshell submit workflow.wdl inputs.json options.json dependencies.zip"
   echo -e "      cromshell status"
   echo -e "      cromshell logs -2"
-  echo
+  echo -e ""
   echo -e "Supported Subcommands:"
-  echo -e "  Start/Stop workflows"
+  echo -e ""
+  echo -e "  Start/Stop workflows:"
   echo -e "   submit <wdl> <inputs_json> [options_json] [included_wdl_zip_file] Submit a new workflow"
   echo -e "        included_wdl_zip_file  Zip file containing any WDL files included in the input WDL"
-  echo -e "   abort [workflow-id] [[workflow-id]...]                            Abort a running workflow"
+  echo -e ""
+  echo -e "   abort [workflow-id] [[workflow-id]...]                            Abort a running workflow."
   echo -e
   echo -e "  Query workflow status:"
-  echo -e "   status [workflow-id] [[workflow-id]...]                           Check the status of a workflow"
-  echo -e "   metadata [workflow-id] [[workflow-id]...]                         Get the full metadata of a workflow"
-  echo -e "   slim-metadata [workflow-id] [[workflow-id]...]                    Get a subset of the metadata from a workflow"
-  echo -e "   execution-status-count [workflow-id] [[workflow-id]...]           Get the summarized status of all jobs in the workflow"
-  echo -e "   timing [workflow-id] [[workflow-id]...]                           Open the timing diagram in a browser"
+  echo -e "   status [workflow-id] [[workflow-id]...]                           Check the status of a workflow."
+  echo -e "   metadata [workflow-id] [[workflow-id]...]                         Get the full metadata of a workflow."
+  echo -e "   slim-metadata [workflow-id] [[workflow-id]...]                    Get a subset of the metadata from a workflow."
+  echo -e "   execution-status-count [workflow-id] [[workflow-id]...]           Get the summarized status of all jobs in the workflow."
+  echo -e "   timing [workflow-id] [[workflow-id]...]                           Open the timing diagram in a browser."
   echo -e
-  echo -e "  Logs"
-  echo -e "   logs [workflow-id] [[workflow-id]...]                             List the log files produced by a workflow"
-  echo -e "   fetch-logs [workflow-id] [[workflow-id]...]                       Download all logs produced by a workflow"
+  echo -e "  Logs:"
+  echo -e "   logs [workflow-id] [[workflow-id]...]                             List the log files produced by a workflow."
+  echo -e "   fetch-logs [workflow-id] [[workflow-id]...]                       Download all logs produced by a workflow."
   echo -e
-  echo -e "  Job Outputs"
-  echo -e "   list-outputs [workflow-id] [[workflow-id]...]                     List all output files produced by a workflow"
-  echo -e "   fetch-all [workflow-id] [[workflow-id]...]                        Download all output files produced by a workflow"
+  echo -e "  Job Outputs:"
+  echo -e "   list-outputs [workflow-id] [[workflow-id]...]                     List all output files produced by a workflow."
+  echo -e "   fetch-all [workflow-id] [[workflow-id]...]                        Download all output files produced by a workflow."
   echo -e
-  echo    "  Get email notification on job completion"
+  echo -e "  Get email notification on job completion:"
   echo -e "   notify [workflow-id] [daemon-server] email [cromwell-server]"
-  echo -e "        email          email address to which to send the notification"
-  echo -e "        daemon-server  server to run the notification daemon on"
-  echo
+  echo -e "        email             Email address to which to send the notification."
+  echo -e "        daemon-server     Server on which to run the notification daemon."
+  echo -e ""
   echo -e "  Display a list jobs submitted through cromshell:"
   echo -e "   list [-c] [-u]                                            "
-  echo -e "         -c    Color the output by completion status"
-  echo -e "         -u    Check completion status of all unfinished jobs"
-  echo -e
+  echo -e "         -c               Color the output by completion status."
+  echo -e "         -u               Check completion status of all unfinished jobs."
+  echo -e "" 
+  echo -e "  Clean up local cached list:"
+  echo -e "   cleanup [-s STATUS]    Remove completed jobs from local list."
+  echo -e "                          Will remove all jobs from the local list that are in a completed state,"
+  echo -e "                          where a completed state is one of: $(echo ${TERMINAL_STATES} | tr ' ' ',' )" 
+  echo -e "         -s STATUS        If provided, will only remove jobs with the given STATUS from the local list."
+  echo -e ""
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
   echo -e "  ANYTHING_BUT_ZERO  FAILURE/ERROR"
@@ -219,7 +229,6 @@ function printVar()
 # alias below it.
 function _checkPipeStatus()
 {
-
   local hadFailure=false
 
   for (( i = 0 ; i < ${#RC[@]} ; i++ )) ; do 
@@ -271,7 +280,6 @@ function checkForComplexHelpArgument()
   done
 }
 
-
 ################################################################################
 # Cromshell-specific Utility Functions:
 
@@ -299,7 +307,7 @@ function handleArgs_workflow_ids()
 function matchWorkflowId() 
 {
   local rv=1
-  
+
   if [[ "${1}" =~ ^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$ ]] ; then
     rv=0
   fi
@@ -319,6 +327,26 @@ function invalidSubCommand()
   fi
   echo "Try \`$SCRIPTNAME -h' for more information."
   exit 3;
+}
+
+function getAnswerFromUser()
+{
+  local prompt="${1}" 
+  local acceptableValues="${2}"
+  local responseVar="${3}" 
+
+  local haveGoodValue=false
+  while ! $haveGoodValue ; do
+    read -p "${prompt} [$( echo ${acceptableValues} | sed 's# #/#g' )] : " ${responseVar}
+
+    for okVal in ${acceptableValues} ; do
+      if [[ "${!responseVar}" == "${okVal}" ]] ; then
+        haveGoodValue=true
+      fi
+    done
+
+    ! $haveGoodValue && error "Please enter one of the following (CASE SENSITIVE): $( echo ${acceptableValues} | sed 's# #/#g' )" && error ""
+  done
 }
 
 function assertCanCommunicateWithServer
@@ -349,7 +377,7 @@ function populateLastWorkflowId()
 function populateWorkflowIdAndServerUrl()
 {
   local userSpecifiedId=$1
-  
+
   # If the user specified a negative number, get the nth last workflow:
   if [[ $userSpecifiedId =~ ^-[[:digit:]]+$ ]]; then
     local row=${userSpecifiedId#-}
@@ -362,14 +390,14 @@ function populateWorkflowIdAndServerUrl()
     if [ -n "$userSpecifiedId" ]; then 
       WORKFLOW_ID=$userSpecifiedId 
       WORKFLOW_SERVER_URL=${CROMWELL_URL}
-  
+
       # Attempt to get the workflow server from the submission database:  
       local tmpFile=$( makeTemp )
       grep ${WORKFLOW_ID} ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
       r=$?
       [ $r -eq 0 ] && WORKFLOW_SERVER_URL=$( awk '{print $2}' ${tmpFile} )
 
-    # If the user specified nothing, get the last workflow ID:  
+      # If the user specified nothing, get the last workflow ID:  
     else
       populateLastWorkflowId
       WORKFLOW_SERVER_URL=$(tail -n1 $CROMWELL_SUBMISSIONS_FILE | awk '{print $2}' )
@@ -401,7 +429,7 @@ function submit()
   [ $r -ne 0 ] && error "FAILED TO SUBMIT JOB" && return $r
 
   local id=$(echo $response | cut -d"," -f1 | cut -d":" -f2 | sed s/\"//g | sed s/\ //g)
-  
+
   local runDir=${CROMSHELL_CONFIG_DIR}/${FOLDER_URL}/${id}
   mkdir -p ${runDir}
 
@@ -520,7 +548,7 @@ function list()
 {
   local doColor=false
   local doUpdate=false
- 
+
   # Handle Arguments:
   local OPTIND
   while getopts "cu" opt ; do
@@ -551,20 +579,20 @@ function list()
     cp ${CROMWELL_SUBMISSIONS_FILE} ${tmpFile}
 
     while read line ; do 
-        id=$( echo "$line" | awk '{print $3}' )
-        # Only update if the ID field is, in fact, a valid ID:
-        if [[ $(matchWorkflowId ${id}) -eq 0 ]] ; then
-          srv=$( echo "$line" | awk '{print $2}' )
-          runSt=$( echo "$line" | awk '{print $5}' )
-          
-          # get the status of the run if it has not completed:
-          if [[ "${runSt}" != "Failed" ]] && [[ "${runSt}" != "Aborted" ]] && [[ "${runSt}" != "Succeeded" ]] ; then
-            status ${id} ${srv} &> /dev/null
-          fi
+      id=$( echo "$line" | awk '{print $3}' )
+      # Only update if the ID field is, in fact, a valid ID:
+      if [[ $(matchWorkflowId ${id}) -eq 0 ]] ; then
+        srv=$( echo "$line" | awk '{print $2}' )
+        runSt=$( echo "$line" | awk '{print $5}' )
+
+        # get the status of the run if it has not completed:
+        if [[ "${runSt}" != "Failed" ]] && [[ "${runSt}" != "Aborted" ]] && [[ "${runSt}" != "Succeeded" ]] ; then
+          status ${id} ${srv} &> /dev/null
         fi
+      fi
     done < ${tmpFile}
   fi
- 
+
   # If we have to colorize the output, we do so:
   if $doColor ; then
 
@@ -572,7 +600,7 @@ function list()
     cat ${CROMWELL_SUBMISSIONS_FILE} | column -t > ${tmpFile}
 
     while read line ; do 
-  
+
       # Check for header line:
       echo "${line}" | grep -q '^DATE' 
       r=$?
@@ -599,6 +627,91 @@ function list()
     cat ${CROMWELL_SUBMISSIONS_FILE} | column -t
   fi
   return $?
+}
+
+function cleanup() 
+{
+  local st="" 
+
+  # Handle Arguments:
+  local OPTIND
+  while getopts "s:" opt ; do
+    case ${opt} in 
+      s)
+        local isGood=false
+        for okVal in ${TERMINAL_STATES} ; do 
+          if [[ "${OPTARG}" == "${okVal}" ]] ; then 
+            isGood=true
+          fi
+        done 
+
+        if ! $isGood ; then
+          invalidSubCommand cleanup STATUS ${OPTARG}
+        fi
+
+        st=${OPTARG}
+        ;;
+      *)
+        invalidSubCommand cleanup flag ${OPTARG}
+        ;; 
+    esac 
+  done
+  shift $((OPTIND-1)) 
+
+  # Make sure we don't have any extra arguments here:
+  if [[ $# -ne 0 ]] ; then
+    invalidSubCommand cleanup flag "${@}"
+  fi  
+
+  # Get all states if we don't specify one:  
+  if [[ ${#st} -eq 0 ]] ; then   
+    st=${TERMINAL_STATES}
+  fi
+
+  # Display the logo:
+  turtle
+
+  echo  
+  echo "State(s) selected: ${st}"
+  echo
+
+  getAnswerFromUser "Are you sure you want to CLEAR ALL RECORDS from these states: ${st}" 'Yes No' answer
+  
+  if [[ "${answer}" == "Yes" ]] ; then
+    echo "User answered 'Yes'."
+    echo
+
+    #Backup the file:
+    echo "Creating backup of records file:"
+    cp -v ${CROMWELL_SUBMISSIONS_FILE} ${CROMWELL_SUBMISSIONS_FILE}.$(date +%Y%m%dT%H%M%S ).bak
+    echo
+
+    # Remove the lines:
+    local tmpFile=$( makeTemp )
+    for s in ${st} ; do
+      echo -n "Removing records with state: ${s}"
+
+      # Go through each line and filter by status, which is the last column:
+      while read line ; do 
+        lineStatus=$( echo $line | awk '{print $NF}' )
+        if [[ "${lineStatus}" != "${s}" ]] ; then
+          echo $line
+        fi  
+      done < ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
+    
+      # Copy the temp file to the final file location for the next 
+      # iteration or for when we're done
+      cp ${tmpFile} ${CROMWELL_SUBMISSIONS_FILE}
+
+      echo -e '\t\tDONE!'
+    done 
+
+    echo 'Your cromshell logs are now clean.'
+    return 0
+  else
+    echo "Not clearing logs.  User aborted..."
+    return 1
+  fi
 }
 
 # List the output files for a given run.
@@ -667,7 +780,7 @@ function fetch-logs()
   gsutil rsync -rP -x '^(?!.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script).*' ${remoteFolder}/ ${localServerFolder}/.
 
   error "Files copied to local folder: ${localServerFolder}"
-  
+
   return 0
 }
 
@@ -695,7 +808,7 @@ function fetch-all()
   gsutil rsync -rP ${remoteFolder}/ ${localServerFolder}/.
 
   error "Files copied to local folder: ${localServerFolder}"
-  
+
   return 0
 }
 
@@ -826,7 +939,7 @@ if ${ISCALLEDBYUSER} ; then
 
   # Validate our sub-command:
   case ${SUB_COMMAND} in
-    submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
+    cleanup|submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
       # This is a good sub-command, so we do not need to do anything. 
       ;;
     *)
@@ -843,7 +956,7 @@ if ${ISCALLEDBYUSER} ; then
   # Handle specific sub-command args and and call our sub-command:
   echo "Sub-Command: ${SUB_COMMAND}"
   case ${SUB_COMMAND} in 
-    submit|list|notify)
+    cleanup|submit|list|notify)
       ${SUB_COMMAND} $@
       rv=$?
       ;;
