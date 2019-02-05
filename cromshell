@@ -337,15 +337,15 @@ function getAnswerFromUser()
 
   local haveGoodValue=false
   while ! $haveGoodValue ; do
-    read -p "${prompt} [$( echo ${acceptableValues} | sed 's# #/#g' )] : " ${responseVar}
+    read -p "${prompt} [$( echo ${acceptableValues} | tr ' ' '/' )] : " ${responseVar}
 
     for okVal in ${acceptableValues} ; do
-      if [[ "${!responseVar}" == "${okVal}" ]] ; then
+      if [[ "$( echo ${!responseVar} | tr a-z A-Z)" == "$( echo ${okVal} | tr a-z A-Z)" ]] ; then
         haveGoodValue=true
       fi
     done
 
-    ! $haveGoodValue && error "Please enter one of the following (CASE SENSITIVE): $( echo ${acceptableValues} | sed 's# #/#g' )" && error ""
+    ! $haveGoodValue && error "Please enter one of the following: $( echo ${acceptableValues} | tr ' ' '/' )" && error ""
   done
 }
 

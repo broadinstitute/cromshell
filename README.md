@@ -69,7 +69,15 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
    * `list` *`[-c]` `[-u]`*                                            
      * *`-c`*    Color the output by completion status
      * *`-u`*    Check completion status of all unfinished jobs
-   
+
+   #### Clean up local cached list
+   * `cleanup` *`[-s STATUS]`*    
+     * Remove completed jobs from local list.
+       Will remove all jobs from the local list that are in a completed state,
+       where a completed state is one of: Succeeded, Failed, Aborted 
+     * *`-s STATUS`*     If provided, will only remove jobs with the given STATUS from the local list.
+  
+    
  ### Features:
  * Running `submit` will create a new folder in the `~/.cromshell/${CROMWELL_URL}/` directory named with the cromwell job id of the newly submitted job.  
  It will copy your wdl and json inputs into the folder for reproducibility.  

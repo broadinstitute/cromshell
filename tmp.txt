@@ -1,6 +1,0 @@
-gs://broad-dsde-methods/cromwell-execution-36/RemoveInfoFieldAnnotationsFromVcf/5344e5fb-47ec-4b7f-8006-73204abba690/call-SelectVariantsTask/shard-0/gnomad.exomes.r2.1.sites.liftoverToHg38.INFO_ANNOTATIONS_FIXED.vcf.gz
-gs://broad-dsde-methods/cromwell-execution-36/RemoveInfoFieldAnnotationsFromVcf/5344e5fb-47ec-4b7f-8006-73204abba690/call-SelectVariantsTask/shard-0/gnomad.exomes.r2.1.sites.liftoverToHg38.INFO_ANNOTATIONS_FIXED.vcf.gz.tbi
-gs://broad-dsde-methods/cromwell-execution-36/RemoveInfoFieldAnnotationsFromVcf/5344e5fb-47ec-4b7f-8006-73204abba690/call-SelectVariantsTask/shard-0/gnomad.exomes.r2.1.sites.liftoverToHg38.vcf.gz.timingInformation.txt
-gs://broad-dsde-methods/cromwell-execution-36/RemoveInfoFieldAnnotationsFromVcf/5344e5fb-47ec-4b7f-8006-73204abba690/call-SelectVariantsTask/shard-1/gnomad.genomes.r2.1.sites.liftoverToHg38.INFO_ANNOTATIONS_FIXED.vcf.gz
-gs://broad-dsde-methods/cromwell-execution-36/RemoveInfoFieldAnnotationsFromVcf/5344e5fb-47ec-4b7f-8006-73204abba690/call-SelectVariantsTask/shard-1/gnomad.genomes.r2.1.sites.liftoverToHg38.INFO_ANNOTATIONS_FIXED.vcf.gz.tbi
-gs://broad-dsde-methods/cromwell-execution-36/RemoveInfoFieldAnnotationsFromVcf/5344e5fb-47ec-4b7f-8006-73204abba690/call-SelectVariantsTask/shard-1/gnomad.genomes.r2.1.sites.liftoverToHg38.vcf.gz.timingInformation.txt
