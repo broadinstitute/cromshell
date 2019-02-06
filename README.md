@@ -84,4 +84,4 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
  * It keeps track of your most recently submitted jobs by storing their ids in `./cromshell/`  
  You may ommit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs, e.g. "-1" will track the last job, "-2" will track the one before that, and so on.
  * You can override the default cromwell server by setting the environmental variable `CROMWELL_URL` to the appropriate URL.
- * Most commands takes multiple workflow-id's, but only accepts the explicit ids when multiple ids are provided, i.e. `./cromwell status -1 -2 -3` won't work.
+ * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromwell status -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
