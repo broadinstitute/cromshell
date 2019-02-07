@@ -1199,7 +1199,12 @@ if ${ISINTERACTIVESHELL} ; then
       # This is a good sub-command, so we do not need to do anything. 
       ;;
     *)
-      invalidSubCommand '' "sub-command" "${SUB_COMMAND}"
+      if [[ ${#SUB_COMMAND} -eq 0 ]]; then
+        simpleUsage 
+        exit 0
+      else   
+        invalidSubCommand '' "sub-command" "${SUB_COMMAND}"
+      fi
       ;; 
   esac
 
