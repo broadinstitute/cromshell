@@ -11,8 +11,8 @@ MAXARGS=99
 PREREQUISITES="curl jq mail column"
 
 # Determine if this shell is interactive:
-ISCALLEDBYUSER=true
-[[ "${BASH_SOURCE[0]}" != "${0}" ]] && ISCALLEDBYUSER=false
+ISINTERACTIVESHELL=true
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && ISINTERACTIVESHELL=false
 
 # Required for the aliased call to checkPipeStatus:
 shopt -s expand_aliases
@@ -1167,7 +1167,7 @@ function setupCromshell()
 
 # Do all the interactive stuff if the script is called by a user.
 # The bash equivalent to `if __name__ == '__main__':
-if ${ISCALLEDBYUSER} ; then
+if ${ISINTERACTIVESHELL} ; then
 
   # Check the remaining arguments for help and display it if we have to: 
   checkForComplexHelpArgument $@
@@ -1178,7 +1178,8 @@ if ${ISCALLEDBYUSER} ; then
   
   # Check if we need to set this up.
   # Note: because of how `notify` works, we can't require the setup for the notify action.
-  if ${CROMWELL_NEEDS_SETUP} && [[ "${SUB_COMMAND}" != "notify" ]] ; then
+  #if ${CROMWELL_NEEDS_SETUP} && [[ "${SUB_COMMAND}" != "notify" ]] ; then
+  if ${CROMWELL_NEEDS_SETUP} ; then
     
     # We need to setup this install.
     # Now let's set it up:
