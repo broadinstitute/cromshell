@@ -74,8 +74,8 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
    * `cleanup` *`[-s STATUS]`*    
      * Remove completed jobs from local list.
        Will remove all jobs from the local list that are in a completed state,
-       where a completed state is one of: Succeeded, Failed, Aborted 
-     * *`-s STATUS`*     If provided, will only remove jobs with the given STATUS from the local list.
+       where a completed state is one of: `Succeeded`, `Failed`, `Aborted`
+     * *`-s STATUS`*     If provided, will only remove jobs with the given `STATUS` from the local list.
   
     
  ### Features:
