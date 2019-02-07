@@ -945,7 +945,7 @@ if ${ISCALLEDBYUSER} ; then
     *)
       if [[ ${#SUB_COMMAND} -eq 0 ]]; then
         simpleUsage 
-	exit 0
+        exit 0
       else   
         invalidSubCommand '' "sub-command" "${SUB_COMMAND}"
       fi
