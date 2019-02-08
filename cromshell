@@ -756,8 +756,27 @@ function list()
 
   # If we need to update the data, do so here:
   if $doUpdate ; then
-    error "Updating cached status list"
+    error "Updating cached status list..."
     local tmpFile srv id runSt 
+
+    # Use tput to save the cursor position:
+    tput sc
+
+    # The turtle starts 7 rows above where the cursor is at this point,
+    # so if we need to move it, we have to move the cursor there before
+    # we output anything:
+    tput cuu 7
+
+    # Reserve the name for a file whose non-existence will cause 
+    # the following loop to exit.
+    # This is good because all temp files made with `makeTemp` 
+    # are automatically removed at exit, so this sub-process
+    # will always die gracefully.
+    local flagFile=$(makeTemp)
+    echo 'TEST' > ${flagFile}
+
+    # Kick off a turtle spinner...
+    _turtleSpinner ${flagFile}
 
     # Make a copy of our file because we'll be modifying it:
     tmpFile=$( makeTemp )
@@ -776,6 +795,13 @@ function list()
         fi
       fi
     done < ${tmpFile}
+
+    # Remove the flag file to kill the spinner and wait for it to finish:
+    rm ${flagFile}
+    wait
+
+    # Restore cursor position:
+    tput rc
   fi
 
   # If we have to colorize the output, we do so:
