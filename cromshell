@@ -8,7 +8,7 @@ SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
 MAXARGS=99
-PREREQUISITES="curl jq mail column"
+PREREQUISITES="curl jq mail column tput rev"
 
 # Determine if this shell is interactive:
 ISINTERACTIVESHELL=true
@@ -52,6 +52,7 @@ FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' )
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
+CURL_MAX_TIMEOUT=10
 
 PING_CMD='ping -c1 -W1 -w10'
 if [[ $( uname ) == "Darwin" ]] ; then
@@ -100,7 +101,7 @@ function turtleDead()
 function simpleUsage()
 {
   if [[ $# -ne 0 ]] ; then
-    usage | grep ${1} | sed -e 's#\(.*]\).*#\1#g' -e "s#^[ \\t]*#Usage:    ${SCRIPTNAME} #g"
+    usage | grep "  ${1} " | sed -e 's#\(.*]\).*#\1#g' -e "s#^[ \\t]*#Usage:    ${SCRIPTNAME} #g"
   else
     echo -e "Usage:    ${SCRIPTNAME} SUB-COMMAND [options]"
     echo -e "Run and inspect workflows on a Cromwell server."
@@ -125,7 +126,9 @@ function usage()
   echo -e "Supported Subcommands:"
   echo -e ""
   echo -e "  Start/Stop workflows:"
-  echo -e "   submit <wdl> <inputs_json> [options_json] [included_wdl_zip_file] Submit a new workflow"
+  echo -e "   submit [-w] <wdl> <inputs_json> [options_json] [included_wdl_zip_file] Submit a new workflow"
+  echo -e "        -w                     Wait for workflow to transition from 'Submitted' to some other status"
+  echo -e "                               before ${SCRIPTNAME} exits"
   echo -e "        included_wdl_zip_file  Zip file containing any WDL files included in the input WDL"
   echo -e ""
   echo -e "   abort [workflow-id] [[workflow-id]...]                            Abort a running workflow."
@@ -402,12 +405,178 @@ function populateWorkflowIdAndServerUrl()
   fi
 }
 
+function _turtleSpinner()
+{
+  # Require a flag file to be given to this function.
+  # This keeps it safe.
+  if [[ $# -ne 1 ]] ; then
+    return 1
+  fi
+
+  local flagFile=$1
+
+  # Let's be fancy and make turtles that are walking while we wait:
+  local tmpTurtFile=$( makeTemp )
+  local turtFile=$( makeTemp )
+  local turtRFile=$( makeTemp )
+  turtle &> ${tmpTurtFile}
+  sed 's#^  ##g' ${tmpTurtFile} > ${turtFile}
+  rev ${turtFile} | sed -e 's$/$#$g' -e 's#\\#/#g' -e 's$#$\\$g' -e 's#(#)#g' -e 's#)#(#g' > ${turtRFile}
+
+  # Set up some loop variables:
+  local i=3
+  local incrementString="+1"
+  local curTurtFile=${turtFile}
+
+  # Let's loop while the ${flagFile} exists.
+  # Note that this will be spun off into its own thread:
+  while [ -f ${flagFile} ] ; do
+    # Create padding for turtle:
+    padding=$( printf "%${i}s" "" )
+
+    # Display our turtle, moved a little to the right:
+    cat ${curTurtFile} | sed -e "s#^#${padding}#g"
+    sleep 0.1
+
+    # Move the cursor back up to the top line of the turtle
+    # so we create the illusion of movement:
+    tput cuu 6
+
+    # Now we update our loop variables in a clever way
+    # so that the turtle will go back and forth.
+    let i=i${incrementString}
+    if [ $i -eq 15 ] ; then 
+      incrementString="-1" 
+      curTurtFile=${turtRFile}
+    elif [ $i -eq 0 ] ; then
+      incrementString="+1" 
+      curTurtFile=${turtFile}
+    fi
+
+  done & # The & here spins this off as a background thread/process
+}
+
+function waitOnSubmittedStatus() 
+{
+  local id=$1
+  local cromwellServerUrl=$2
+
+  echo "Waiting on status to progress from 'Submitted' ..."
+  echo
+
+  # Use tput to save the cursor position:
+  tput sc
+
+  # The turtle starts 9 rows above where the cursor is at this point,
+  # so if we need to move it, we have to move the cursor there before
+  # we output anything:
+  tput cuu 9
+
+  # Reserve the name for a file whose non-existence will cause 
+  # the following loop to exit.
+  # This is good because all temp files made with `makeTemp` 
+  # are automatically removed at exit, so this sub-process
+  # will always die gracefully.
+  local flagFile=$(makeTemp)
+  echo 'TEST' > ${flagFile}
+
+  # Kick off a turtle spinner...
+  _turtleSpinner ${flagFile}
+
+  # Now we check the status periodically and if we get a new one
+  # Other than `Submitted` we can tell the other process to finish.
+  local gotNewStatus=false
+  local isDone=false
+  local nChecks=0
+  local statusFile=$( makeTemp )
+  local r
+  while ! $isDone ; do
+    # Wait for a little bit so we don't kill the server:
+    sleep 2
+
+    # Check the status of our last submission:
+    status ${id} ${cromwellServerUrl} &> ${statusFile}
+    r=$?  
+    grep -q '^[ \t]*"status": "Submitted",' ${statusFile}
+
+    # We could no longer field the status as `Submitted`, so we're done.
+    if [ $? -eq 1 ] && [ $r -ne 2 ] ; then
+      gotNewStatus=true
+    fi
+
+    # Check if our status changed yet:   
+    if $gotNewStatus ; then
+      isDone=true
+ 
+      # Delete the flag file to end the display process:
+      rm -f ${flagFile}
+
+      # Wait for the _turtleSpinner to exit:
+      wait
+
+      # Clear out the lines from our fancy animation:
+      tput el;echo;tput el;echo;tput el;echo;tput el;echo;tput el;echo;tput el;echo;tput el;echo;tput el;echo
+      tput cuu 8
+
+      # Display the status file:
+      cat ${statusFile} | sed 's#^Using ##g'
+  
+    # If we have waited too long, then we quit:
+    elif [[ $nChecks -ge 10 ]] ; then
+      isDone=true
+      
+      # Delete the flag file to end the display process:
+      rm -f ${flagFile}
+      
+      # Wait for the _turtleSpinner to exit:
+      wait
+
+      echo "{\"id\":\"${id}\",\"status\":\"Submitted\"}"
+      error "WARNING: Could not validate submission status with server.  Try again later."
+      break
+    fi
+
+    let nChecks=$nChecks+1
+  done
+
+  # Restore cursor position:
+  tput rc
+  
+  # Add a line for padding:
+  echo
+  
+  # Send a proper return code:
+  if $gotNewStatus ; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Submit a workflow and arguments to the Cromwell Server
 function submit() 
 {
+  local doWait=false
+    
+  # Handle Arguments:
+  local OPTIND
+  while getopts "w" opt ; do
+    case ${opt} in 
+      w)
+        doWait=true
+        ;;
+      *)
+        invalidSubCommand submit flag ${OPTARG}
+        ;; 
+    esac 
+  done
+  shift $((OPTIND-1)) 
+ 
+  # ---------------------------------------- 
+
   assertCanCommunicateWithServer $CROMWELL_URL
 
-  local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
+  local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
 
   # Check to make sure that we actually submitted the job correctly 
@@ -449,6 +618,11 @@ function submit()
 
   echo -e "$(date +%Y%m%d_%H%M%S)\t${CROMWELL_URL}\t${id}\t$(basename ${1})\tSubmitted" >> ${CROMWELL_SUBMISSIONS_FILE}
 
+  # Now that we've submitted our task, we should see if we have to wait:
+  if $doWait ; then
+    waitOnSubmittedStatus ${id} ${CROMWELL_URL}
+  fi
+
   return 0
 }
 
@@ -459,7 +633,7 @@ function status()
 
   assertCanCommunicateWithServer $2
   local f=$( makeTemp )
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/status > $f
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s ${2}/api/workflows/v1/${1}/status > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
 
   grep -qE '"Failed"|"Aborted"|"fail"' $f
@@ -487,7 +661,7 @@ function logs()
 {
   assertCanCommunicateWithServer $2
   turtle
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -497,7 +671,7 @@ function metadata()
 {
   assertCanCommunicateWithServer $2
   turtle
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -507,7 +681,7 @@ function slim-metadata()
 {
   assertCanCommunicateWithServer $2
   turtle
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true" | jq .
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -518,7 +692,7 @@ function execution-status-count()
   assertCanCommunicateWithServer $2
   turtle
   f=$( makeTemp )
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 9
 
   # Make sure the query succeeded:
@@ -548,7 +722,7 @@ function abort()
 {
   assertCanCommunicateWithServer $2
   turtle
-  response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
+  response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
   echo $response  
   return $r
@@ -582,8 +756,27 @@ function list()
 
   # If we need to update the data, do so here:
   if $doUpdate ; then
-    error "Updating cached status list"
+    error "Updating cached status list..."
     local tmpFile srv id runSt 
+
+    # Use tput to save the cursor position:
+    tput sc
+
+    # The turtle starts 7 rows above where the cursor is at this point,
+    # so if we need to move it, we have to move the cursor there before
+    # we output anything:
+    tput cuu 7
+
+    # Reserve the name for a file whose non-existence will cause 
+    # the following loop to exit.
+    # This is good because all temp files made with `makeTemp` 
+    # are automatically removed at exit, so this sub-process
+    # will always die gracefully.
+    local flagFile=$(makeTemp)
+    echo 'TEST' > ${flagFile}
+
+    # Kick off a turtle spinner...
+    _turtleSpinner ${flagFile}
 
     # Make a copy of our file because we'll be modifying it:
     tmpFile=$( makeTemp )
@@ -602,6 +795,13 @@ function list()
         fi
       fi
     done < ${tmpFile}
+
+    # Remove the flag file to kill the spinner and wait for it to finish:
+    rm ${flagFile}
+    wait
+
+    # Restore cursor position:
+    tput rc
   fi
 
   # If we have to colorize the output, we do so:

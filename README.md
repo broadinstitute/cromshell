@@ -33,8 +33,11 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 
   
    ####  Start/Stop workflows
-   * `submit` *`workflow.wdl`* *`inputs.json`* `[options json]` `[included wdls]`
+   * `submit` `[-w]` *`<wdl>`* *`<inputs_json>`* `[options_json]` `[included_wdl_zip_file]`
      * Submit a new workflow
+     * *`-w`*                     Wait for workflow to transition from 'Submitted' to some other status
+                                  before ${SCRIPTNAME} exits
+     * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
    * `abort` *`[workflow-id] [[workflow-id]...]`*                   
      * Abort a running workflow
    #### Query workflow status:
