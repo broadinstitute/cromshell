@@ -508,7 +508,7 @@ function waitOnSubmittedStatus()
     if $gotNewStatus ; then
       isDone=true
  
-      # Create the flag file to end the display process:
+      # Delete the flag file to end the display process:
       rm -f ${flagFile}
 
       # Wait for the _turtleSpinner to exit:
@@ -525,7 +525,7 @@ function waitOnSubmittedStatus()
     elif [[ $nChecks -ge 10 ]] ; then
       isDone=true
       
-      # Create the flag file to end the display process:
+      # Delete the flag file to end the display process:
       rm -f ${flagFile}
       
       # Wait for the _turtleSpinner to exit:
