@@ -1383,7 +1383,7 @@ if ${ISINTERACTIVESHELL} ; then
     case ${opt} in 
       t)
         # Ensure that the value given to -t is numerical:
-        echo ${OPTARG} | grep -q '^[0-9][0-9]*$' 
+        echo ${OPTARG} | grep -q -E '^[0-9]+$' 
         rv=$?
         [ $rv -ne 0 ] && invalidSubCommand '' "flag value (${OPTARG})" "-${opt} argument must be an integer."
 

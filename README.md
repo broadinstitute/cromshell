@@ -31,9 +31,10 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 ```
 
 ### Supported Flags:
-  * `-t` `TIMEOUT`   Set the curl connect timeout to TIMEOUT seconds.
-                         Also sets the curl max timeout to 2*TIMEOUT seconds.
-                         TIMEOUT must be an integer.
+  * `-t` `TIMEOUT`
+	  * Set the curl connect timeout to `TIMEOUT` seconds.
+    * Also sets the curl max timeout to `2*TIMEOUT` seconds.
+    * `TIMEOUT` must be an integer.
 
 ### Supported Subcommands:
 
