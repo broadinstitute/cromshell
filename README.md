@@ -26,8 +26,14 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 ```
          cromshell submit workflow.wdl inputs.json options.json dependencies.zip
          cromshell status
+         cromshell -t 20 metadata
          cromshell logs -2
 ```
+
+### Supported Flags:
+  * `-t` `TIMEOUT`   Set the curl connect timeout to TIMEOUT seconds.
+                         Also sets the curl max timeout to 2*TIMEOUT seconds.
+                         TIMEOUT must be an integer.
 
 ### Supported Subcommands:
 
