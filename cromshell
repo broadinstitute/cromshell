@@ -52,7 +52,7 @@ FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' )
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
-CURL_MAX_TIMEOUT=10
+let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
 
 PING_CMD='ping -c1 -W1 -w10'
 if [[ $( uname ) == "Darwin" ]] ; then
@@ -103,7 +103,7 @@ function simpleUsage()
   if [[ $# -ne 0 ]] ; then
     usage | grep "  ${1} " | sed -e 's#\(.*]\).*#\1#g' -e "s#^[ \\t]*#Usage:    ${SCRIPTNAME} #g"
   else
-    echo -e "Usage:    ${SCRIPTNAME} SUB-COMMAND [options]"
+    echo -e "Usage:    ${SCRIPTNAME} [-t TIMEOUT] SUB-COMMAND [options]"
     echo -e "Run and inspect workflows on a Cromwell server."
   fi
 }
@@ -121,7 +121,13 @@ function usage()
   echo -e "  example usage:"
   echo -e "      cromshell submit workflow.wdl inputs.json options.json dependencies.zip"
   echo -e "      cromshell status"
+  echo -e "      cromshell -t 50 status"
   echo -e "      cromshell logs -2"
+  echo -e ""
+  echo -e "Supported Flags:"
+  echo -e "  -t TIMEOUT             Set the curl connect timeout to TIMEOUT seconds."
+  echo -e "                         Also sets the curl max timeout to 2*TIMEOUT seconds."
+  echo -e "                         TIMEOUT must be an integer."
   echo -e ""
   echo -e "Supported Subcommands:"
   echo -e ""
@@ -1371,6 +1377,29 @@ if ${ISINTERACTIVESHELL} ; then
 
   # Check the remaining arguments for help and display it if we have to: 
   checkForComplexHelpArgument $@
+
+  # Get flags:
+  while getopts ":t:" opt ; do
+    case ${opt} in 
+      t)
+        # Ensure that the value given to -t is numerical:
+        echo ${OPTARG} | grep -q '^[0-9][0-9]*$' 
+        rv=$?
+        [ $rv -ne 0 ] && invalidSubCommand '' "flag value (${OPTARG})" "-${opt} argument must be an integer."
+
+        # Set our timeouts:
+        CURL_CONNECT_TIMEOUT=${OPTARG}
+        let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
+        ;;
+      :)
+        invalidSubCommand '' 'flag value' "-${opt} requires an argument."
+        ;;
+      *)
+        invalidSubCommand '' flag ${OPTARG}
+        ;; 
+    esac 
+  done
+  shift $((OPTIND-1)) 
 
   # Get our sub-command:
   SUB_COMMAND=${1}
