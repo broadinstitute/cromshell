@@ -1107,8 +1107,9 @@ function notify()
     error "Creating notification daemon on host ${hostServer} ..."
 
     # Send the script to the server:
-    scp ${SCRIPTDIR}/${SCRIPTNAME} ${hostServer}:~/. &> /dev/null
-    [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && exit 7
+		local tmpOut=$( makeTemp )
+    scp ${SCRIPTDIR}/${SCRIPTNAME} ${hostServer}:~/. &> ${tmpOut}
+    [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && error "$(cat ${tmpOut})" && exit 7
 
     # Spin off notification process on the server:
     results=$( ssh ${hostServer} "~/${SCRIPTNAME} notify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" )
