@@ -23,11 +23,6 @@ COLOR_UNDERLINED='\033[1;4m'
 COLOR_FAILED='\033[1;37;41m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
-################################################################################
-
-COLOR_FAILED='\033[1;37;41m'
-COLOR_SUCCEEDED='\033[1;30;42m'
-COLOR_RUNNING='\033[0;30;46m'
 
 ################################################################################
 
@@ -88,14 +83,12 @@ function turtle()
 
 function turtleDead()
 {
-  export RED='\033[0;31m'
-  export NC='\033[0m'
-  error "${RED}    ,,    ,,     ,,       ${NC}"
-  error "${RED}    \\‾\\,-/‾/====/‾/,     ${NC}"
-  error "${RED}     \\/=<‾><‾><‾><‾>-,   ${NC}"
-  error "${RED}     / (\\‾\\‾|‾/‾/‾/‾     ${NC}"
-  error "${RED}    \\‾x/ ˙'-;-;-'˙       ${NC}"
-  error "${RED}     ‾‾                  ${NC}"
+  error "${COLOR_FAILED}    ,,    ,,     ,,      ${COLOR_NORM}"
+  error "${COLOR_FAILED}    \\‾\\,-/‾/====/‾/,     ${COLOR_NORM}"
+  error "${COLOR_FAILED}     \\/=<‾><‾><‾><‾>-,   ${COLOR_NORM}"
+  error "${COLOR_FAILED}     / (\\‾\\‾|‾/‾/‾/‾     ${COLOR_NORM}"
+  error "${COLOR_FAILED}    \\‾x/ ˙'-;-;-'˙       ${COLOR_NORM}"
+  error "${COLOR_FAILED}     ‾‾                  ${COLOR_NORM}"
 }
 
 ################################################################################
