@@ -88,12 +88,14 @@ function turtle()
 
 function turtleDead()
 {
-  error "    ,,    ,,     ,,       "
-  error "    \\‾\\,-/‾/====/‾/,     "
-  error "     \\/=<‾><‾><‾><‾>-,   "
-  error "     / (\\‾\\‾|‾/‾/‾/‾     "
-  error "    \\‾x/ ˙'-;-;-'˙       "
-  error "     ‾‾                  "
+  export RED='\033[0;31m'
+  export NC='\033[0m'
+  error "${RED}    ,,    ,,     ,,       ${NC}"
+  error "${RED}    \\‾\\,-/‾/====/‾/,     ${NC}"
+  error "${RED}     \\/=<‾><‾><‾><‾>-,   ${NC}"
+  error "${RED}     / (\\‾\\‾|‾/‾/‾/‾     ${NC}"
+  error "${RED}    \\‾x/ ˙'-;-;-'˙       ${NC}"
+  error "${RED}     ‾‾                  ${NC}"
 }
 
 ################################################################################
@@ -179,7 +181,7 @@ function usage()
 #Display a message to std error:
 function error() 
 {
-  echo "$1" 1>&2 
+  echo -e "$1" 1>&2 
 }
 
 # Make a better temp file that gets cleaned up on script exit:
