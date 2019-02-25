@@ -23,11 +23,6 @@ COLOR_UNDERLINED='\033[1;4m'
 COLOR_FAILED='\033[1;37;41m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
-################################################################################
-
-COLOR_FAILED='\033[1;37;41m'
-COLOR_SUCCEEDED='\033[1;30;42m'
-COLOR_RUNNING='\033[0;30;46m'
 
 ################################################################################
 
@@ -88,12 +83,12 @@ function turtle()
 
 function turtleDead()
 {
-  error "    ,,    ,,     ,,       "
-  error "    \\‾\\,-/‾/====/‾/,     "
-  error "     \\/=<‾><‾><‾><‾>-,   "
-  error "     / (\\‾\\‾|‾/‾/‾/‾     "
-  error "    \\‾x/ ˙'-;-;-'˙       "
-  error "     ‾‾                  "
+  error "${COLOR_FAILED}    ,,    ,,     ,,      ${COLOR_NORM}"
+  error "${COLOR_FAILED}    \\‾\\,-/‾/====/‾/,     ${COLOR_NORM}"
+  error "${COLOR_FAILED}     \\/=<‾><‾><‾><‾>-,   ${COLOR_NORM}"
+  error "${COLOR_FAILED}     / (\\‾\\‾|‾/‾/‾/‾     ${COLOR_NORM}"
+  error "${COLOR_FAILED}    \\‾x/ ˙'-;-;-'˙       ${COLOR_NORM}"
+  error "${COLOR_FAILED}     ‾‾                  ${COLOR_NORM}"
 }
 
 ################################################################################
@@ -179,7 +174,7 @@ function usage()
 #Display a message to std error:
 function error() 
 {
-  echo "$1" 1>&2 
+  echo -e "$1" 1>&2 
 }
 
 # Make a better temp file that gets cleaned up on script exit:
