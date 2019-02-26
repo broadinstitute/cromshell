@@ -193,10 +193,28 @@ function cleanTempVars()
   rm -f ${TMPFILELIST}
 }
 
+# Track the given subprocess in our list so we can kill it when we exit.
+SUBPROCESSLIST=''
+function trackSubProcess() 
+{
+  SUBPROCESSLIST="${SUBPROCESSLIST} $1"
+}
+
+# Function to kill subprocesses created by this script.
+function killSubProcesses()
+{
+  # Disown the subprocesses so we don't see the kill message on exit:
+  [[ ${#SUBPROCESSLIST} -gt 0 ]] && disown ${SUBPROCESSLIST} &> /dev/null
+
+  # Kill them dead if they're still running:
+  [[ ${#SUBPROCESSLIST} -gt 0 ]] && kill -9 ${SUBPROCESSLIST} &> /dev/null
+}
+
 # Function to be called at exit:
 function at_exit()
 {
   cleanTempVars
+  killSubProcesses
 }
 # Make sure we clean up on exit:
 trap at_exit EXIT 
@@ -455,6 +473,9 @@ function _turtleSpinner()
     fi
 
   done & # The & here spins this off as a background thread/process
+
+  # Track the sub-process so we can kill it if we exit early:
+  trackSubProcess $!
 }
 
 function waitOnSubmittedStatus() 
@@ -1102,7 +1123,7 @@ function notify()
     error "Creating notification daemon on host ${hostServer} ..."
 
     # Send the script to the server:
-		local tmpOut=$( makeTemp )
+    local tmpOut=$( makeTemp )
     scp ${SCRIPTDIR}/${SCRIPTNAME} ${hostServer}:~/. &> ${tmpOut}
     [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && error "$(cat ${tmpOut})" && exit 7
 
