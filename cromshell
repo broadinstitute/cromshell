@@ -1388,6 +1388,11 @@ function setupCromshell()
 
 ################################################################################
 
+#Activate user plugin if it exists
+if [[ -f ${CROMSHELL_CONFIG_DIR}/plugin.sh ]]; then
+  source ${CROMSHELL_CONFIG_DIR}/plugin.sh
+fi
+
 # Do all the interactive stuff if the script is called by a user.
 # The bash equivalent to `if __name__ == '__main__':
 if ${ISINTERACTIVESHELL} ; then
