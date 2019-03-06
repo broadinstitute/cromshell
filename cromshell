@@ -1459,7 +1459,7 @@ if ${ISINTERACTIVESHELL} ; then
   [[ $r -ne 0 ]] && exit 6
 
   # Handle specific sub-command args and and call our sub-command:
-  echo "Sub-Command: ${SUB_COMMAND}"
+  error "Sub-Command: ${SUB_COMMAND}"
   case ${SUB_COMMAND} in 
     cleanup|submit|list|notify)
       ${SUB_COMMAND} $@
