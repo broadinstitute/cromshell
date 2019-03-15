@@ -984,13 +984,16 @@ function list-outputs()
 
   error "Output files from job ${cromwellServer}:${id} : "
 
-	tmpFolder=$(mktemp -d)
+  tmpFolder=$(mktemp -d)
 
   # The -n flag just lists what would have happened if the copy occurred
   # we use this to our advantage to list the files we want:
   gsutil rsync -rP -n -x '.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script|.*output' ${remoteFolder}/ ${tmpFolder}/. 2>&1 | \
     grep 'Would copy' | \
     sed 's#Would copy \(.*\) to .*#\1#g'
+
+  # Clean up our mess
+  rmdir ${tmpFolder}
 
   return 0
 }
