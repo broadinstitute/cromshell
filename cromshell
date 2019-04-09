@@ -45,6 +45,7 @@ fi
 export CROMWELL_URL=${CROMWELL_URL:-"${CROMWELL_SERVER_FROM_FILE}"}
 FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
+CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
@@ -703,7 +704,7 @@ function slim-metadata()
 {
   assertCanCommunicateWithServer $2
   turtle
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true" | jq .
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -711,21 +712,23 @@ function slim-metadata()
 # Get the status of the given job and how many times it was run
 function execution-status-count() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer "$2"
   turtle
   f=$( makeTemp )
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s ${2}/api/workflows/v1/$1/metadata?${CROMWELL_METADATA_PARAMETERS} > $f
-  [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 9
+  if ! curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "$2/api/workflows/v1/$1/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > "$f" ; then
+    error "Could not connect to Cromwell server." && return 9
+  fi
 
   # Make sure the query succeeded:
-  if [[ "$( cat $f | jq '.status' | sed -e 's#^"##g' -e 's#"$##g' )" == 'fail' ]] ; then
-    reason=$( cat $f | jq '.message' | sed -e 's#^"##g' -e 's#"$##g' )
+  if [[ "$( < "$f" jq '.status' | sed -e 's#^"##g' -e 's#"$##g' )" == 'fail' ]] ; then
+    reason=$( < "$f" jq '.message' | sed -e 's#^"##g' -e 's#"$##g' )
     error "Error: Query to cromwell server failed: ${reason}"
     return 11
   fi
 
   # Make it pretty for the user:
-  cat $f | jq '.calls | to_entries | map({(.key): .value | flatten | group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add})'
+  # {tasks:{status: count}}
+  jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "$f"
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
   return $?
 }
