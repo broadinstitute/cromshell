@@ -109,7 +109,7 @@ function usage()
 {
   simpleUsage
   echo -e ""
-  echo -e "CROMWELL_URL=$CROMWELL_URL"
+  echo -e "CROMWELL_URL=${CROMWELL_URL}"
   echo -e ""
   echo -e "If no workflow-id is specified then the last submitted workflow-id is assumed."
   echo -e "Alternatively, negative numbers can be used to refer to previous workflows."
@@ -175,7 +175,7 @@ function usage()
 #Display a message to std error:
 function error() 
 {
-  echo -e "$1" 1>&2 
+  echo -e "${1}" 1>&2 
 }
 
 # Make a better temp file that gets cleaned up on script exit:
@@ -184,8 +184,8 @@ function makeTemp()
 {
   local f
   f=$( mktemp )
-  TMPFILELIST="${TMPFILELIST} $f"
-  echo $f
+  TMPFILELIST="${TMPFILELIST} ${f}"
+  echo ${f}
 }
 
 # Function to clean our temp files:
@@ -198,7 +198,7 @@ function cleanTempVars()
 SUBPROCESSLIST=''
 function trackSubProcess() 
 {
-  SUBPROCESSLIST="${SUBPROCESSLIST} $1"
+  SUBPROCESSLIST="${SUBPROCESSLIST} ${1}"
 }
 
 # Function to kill subprocesses created by this script.
@@ -223,7 +223,7 @@ trap at_exit EXIT
 # Print the name and value of a simple variable:
 function printVar()
 {
-  error "$1 = ${!1}"
+  error "${1} = ${!1}"
 }
 
 # Checks the bash built-in PIPESTATUS variable for any failures
@@ -278,8 +278,8 @@ function checkPrerequisites
 
 function checkForComplexHelpArgument() 
 {
-  for arg in $@ ; do
-    case $arg in 
+  for arg in ${@} ; do
+    case ${arg} in 
       -h|--h|-\?|--\?|--help|-help|help) usage; exit 0;;
     esac
   done
@@ -323,12 +323,12 @@ function matchWorkflowId()
 
 function invalidSubCommand()
 {
-  error "${SCRIPTNAME} $1: invalid $2: $3"
+  error "${SCRIPTNAME} ${1}: invalid ${2}: ${3}"
   error ""
   if [[ ${#1} -eq 0 ]] ; then
     simpleUsage
   else
-    simpleUsage $1
+    simpleUsage ${1}
   fi
   echo "Try \`$SCRIPTNAME -h' for more information."
   exit 3;
@@ -357,7 +357,7 @@ function getAnswerFromUser()
 function assertCanCommunicateWithServer
 {
   # Make sure we can talk to the cromwell server:
-  serverName=$( echo ${1}| sed 's#.*://##g'| sed 's#:[0-9]*##g' )
+  serverName=$( echo ${1} | sed 's#.*://##g'| sed 's#:[0-9]*##g' )
   $PING_CMD $serverName &> /dev/null
   r=$?
   if [[ $r -ne 0 ]] ; then 
@@ -385,7 +385,7 @@ function populateLastWorkflowId()
 
 function populateWorkflowIdAndServerUrl()
 {
-  local userSpecifiedId=$1
+  local userSpecifiedId=${1}
 
   # If the user specified a negative number, get the nth last workflow:
   if [[ $userSpecifiedId =~ ^-[[:digit:]]+$ ]]; then
@@ -396,8 +396,8 @@ function populateWorkflowIdAndServerUrl()
   else
     # If the user specified anything at this point, assume that it 
     # is a workflow UUID:
-    if [ -n "$userSpecifiedId" ]; then 
-      WORKFLOW_ID=$userSpecifiedId 
+    if [ -n "${userSpecifiedId}" ]; then 
+      WORKFLOW_ID=${userSpecifiedId} 
       WORKFLOW_SERVER_URL=${CROMWELL_URL}
 
       # Attempt to get the workflow server from the submission database:  
@@ -433,7 +433,7 @@ function _turtleSpinner()
     return 1
   fi
 
-  local flagFile=$1
+  local flagFile=${1}
 
   # Let's be fancy and make turtles that are walking while we wait:
   local tmpTurtFile=$( makeTemp )
@@ -485,8 +485,8 @@ function _turtleSpinner()
 
 function waitOnSubmittedStatus() 
 {
-  local id=$1
-  local cromwellServerUrl=$2
+  local id=${1}
+  local cromwellServerUrl=${2}
 
   echo "Waiting on status to progress from 'Submitted' ..."
   echo
@@ -601,9 +601,9 @@ function submit()
  
   # ---------------------------------------- 
 
-  assertCanCommunicateWithServer $CROMWELL_URL
+  assertCanCommunicateWithServer ${CROMWELL_URL}
 
-  local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
+  local response=$(curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT} -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
 
   # Check to make sure that we actually submitted the job correctly 
@@ -658,12 +658,12 @@ function status()
 {
   local retVal=0
 
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   local f=$( makeTemp )
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s ${2}/api/workflows/v1/${1}/status > $f
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
 
-  grep -qE '"Failed"|"Aborted"|"fail"' $f
+  grep -qE '"Failed"|"Aborted"|"fail"' ${f}
   r=$?
   [[ $r -eq 0 ]] && retVal=1
 
@@ -673,11 +673,11 @@ function status()
     turtle
   fi
 
-  cat $f | jq . 
+  cat ${f} | jq . 
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
   # Update ${CROMWELL_SUBMISSIONS_FILE}:
-  local st=$( cat $f | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
+  local st=$( cat ${f} | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
   sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${st}#g" ${CROMWELL_SUBMISSIONS_FILE}
 
   return $retVal
@@ -686,7 +686,7 @@ function status()
 # Get the logs of a Cromwell job UUID
 function logs() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
@@ -696,7 +696,7 @@ function logs()
 # Get the metadata for a Cromwell job UUID
 function metadata() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
@@ -706,9 +706,9 @@ function metadata()
 # Get the metadata in condensed form for a Cromwell job UUID
 function slim-metadata() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s "${2}/api/workflows/v1/$1/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" | jq .
+  curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT} --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS} | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -716,23 +716,23 @@ function slim-metadata()
 # Get the status of the given job and how many times it was run
 function execution-status-count() 
 {
-  assertCanCommunicateWithServer "$2"
+  assertCanCommunicateWithServer ${2}
   turtle
   f=$( makeTemp )
-  if ! curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "$2/api/workflows/v1/$1/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > "$f" ; then
-    error "Could not connect to Cromwell server." && return 9
-  fi
+  curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT} --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS} > ${f}
+	r=$?
+  [ $r -ne 0 ] && error "Could not connect to Cromwell server." && return 9
 
   # Make sure the query succeeded:
-  if [[ "$( < "$f" jq '.status' | sed -e 's#^"##g' -e 's#"$##g' )" == 'fail' ]] ; then
-    reason=$( < "$f" jq '.message' | sed -e 's#^"##g' -e 's#"$##g' )
+  if [[ "$( cat ${f} | jq '.status' | sed -e 's#^"##g' -e 's#"$##g' )" == 'fail' ]] ; then
+    reason=$( cat ${f} | jq '.message' | sed -e 's#^"##g' -e 's#"$##g' )
     error "Error: Query to cromwell server failed: ${reason}"
     return 11
   fi
 
   # Make it pretty for the user:
   # {tasks:{status: count}}
-  jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "$f"
+  jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' ${f}
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -749,7 +749,7 @@ function timing()
 # Cancel a running job.
 function abort() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
@@ -978,7 +978,7 @@ function assertGsUtilExists()
 #     output
 function list-outputs() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   local id=$1
   local cromwellServer=$2
@@ -1009,7 +1009,7 @@ function list-outputs()
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 function fetch-logs() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   local id=$1
   local cromwellServer=$2
@@ -1043,10 +1043,10 @@ function fetch-logs()
 # Includes all logs and output files
 function fetch-all() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
-  local id=$1
-  local cromwellServer=$2
+  local id=${1}
+  local cromwellServer=${2}
 
   local remoteFolder=$( metadata ${id} ${cromwellServer} | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
 
