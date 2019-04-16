@@ -23,6 +23,10 @@ COLOR_UNDERLINED='\033[1;4m'
 COLOR_FAILED='\033[1;37;41m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
+TASK_COLOR_RUNNING='\033[0;34m'
+TASK_COLOR_SUCCEEDED='\033[0;32m'
+TASK_COLOR_FAILING='\033[0;33m'
+TASK_COLOR_FAILED='\033[0;31m'
 
 ################################################################################
 
@@ -30,7 +34,7 @@ COLOR_RUNNING='\033[0;30;46m'
 CROMSHELL_CONFIG_DIR=${HOME}/.cromshell
 mkdir -p ${CROMSHELL_CONFIG_DIR}
 CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
-[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS" > ${CROMWELL_SUBMISSIONS_FILE} 
+[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS" > ${CROMWELL_SUBMISSIONS_FILE}
 
 # Find the CROMWELL Server:
 CROMWELL_SERVER_FILE=${CROMSHELL_CONFIG_DIR}/cromwell_server.config
@@ -43,12 +47,14 @@ fi
 
 # read env var, or use default server URL
 export CROMWELL_URL=${CROMWELL_URL:-"${CROMWELL_SERVER_FROM_FILE}"}
-FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
+FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' )
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
-CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true"
+CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&includeKey=status&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
+PRETTY_EXECUTION_STATUS_EXPAND_SUB_WORKFLOWS=false
+PRETTY_EXECUTION_STATUS_COUNT=false
 
 PING_CMD='ping -c1 -W1 -w10'
 if [[ $( uname ) == "Darwin" ]] ; then
@@ -67,7 +73,7 @@ TERMINAL_STATES="Succeeded Failed Aborted"
 
 ################################################################################
 
-function turtle() 
+function turtle()
 {
   if [[ -z $1 ]]; then
     eye="'"
@@ -78,8 +84,8 @@ function turtle()
   error "       .,-;-;-,. /${eye}_\\    "
   error "     _/_/_/_|_\\_\\) /     "
   error "   '-<_><_><_><_>=/\\     "
-  error "     \`/_/====/_/-'\\_\\    " 
-  error "      \"\"     \"\"    \"\"    " 
+  error "     \`/_/====/_/-'\\_\\    "
+  error "      \"\"     \"\"    \"\"    "
 }
 
 function turtleDead()
@@ -105,7 +111,7 @@ function simpleUsage()
 }
 
 #Define a usage function:
-function usage() 
+function usage()
 {
   simpleUsage
   echo -e ""
@@ -159,11 +165,11 @@ function usage()
   echo -e "   list [-c] [-u]                                            "
   echo -e "         -c               Color the output by completion status."
   echo -e "         -u               Check completion status of all unfinished jobs."
-  echo -e "" 
+  echo -e ""
   echo -e "  Clean up local cached list:"
   echo -e "   cleanup [-s STATUS]    Remove completed jobs from local list."
   echo -e "                          Will remove all jobs from the local list that are in a completed state,"
-  echo -e "                          where a completed state is one of: $(echo ${TERMINAL_STATES} | tr ' ' ',' )" 
+  echo -e "                          where a completed state is one of: $(echo ${TERMINAL_STATES} | tr ' ' ',' )"
   echo -e "         -s STATUS        If provided, will only remove jobs with the given STATUS from the local list."
   echo -e ""
   echo -e "Return values:"
@@ -173,9 +179,9 @@ function usage()
 }
 
 #Display a message to std error:
-function error() 
+function error()
 {
-  echo -e "$1" 1>&2 
+  echo -e "$1" 1>&2
 }
 
 # Make a better temp file that gets cleaned up on script exit:
@@ -196,7 +202,7 @@ function cleanTempVars()
 
 # Track the given subprocess in our list so we can kill it when we exit.
 SUBPROCESSLIST=''
-function trackSubProcess() 
+function trackSubProcess()
 {
   SUBPROCESSLIST="${SUBPROCESSLIST} $1"
 }
@@ -218,7 +224,7 @@ function at_exit()
   killSubProcesses
 }
 # Make sure we clean up on exit:
-trap at_exit EXIT 
+trap at_exit EXIT
 
 # Print the name and value of a simple variable:
 function printVar()
@@ -228,22 +234,22 @@ function printVar()
 
 # Checks the bash built-in PIPESTATUS variable for any failures
 # If given strings will output the string corresponding to the failure
-# position in PIPESTATUS of any failures in the chain of commands 
+# position in PIPESTATUS of any failures in the chain of commands
 # that occurred.
-# This function should be called as `checkPipeStatus` as per the 
+# This function should be called as `checkPipeStatus` as per the
 # alias below it.
 function _checkPipeStatus()
 {
   local hadFailure=false
 
-  for (( i = 0 ; i < ${#RC[@]} ; i++ )) ; do 
+  for (( i = 0 ; i < ${#RC[@]} ; i++ )) ; do
     st=${RC[i]}
     if [ $st -ne 0 ] ; then
       # If we were passed a description string for this error in the pipe, then we print it:
       let argIndex=$i+1
       description=${!argIndex}
       [[ ${#description} -ne 0 ]] && error "$description"
-      hadFailure=true  
+      hadFailure=true
     fi
   done
 
@@ -276,10 +282,10 @@ function checkPrerequisites
   return 0
 }
 
-function checkForComplexHelpArgument() 
+function checkForComplexHelpArgument()
 {
   for arg in $@ ; do
-    case $arg in 
+    case $arg in
       -h|--h|-\?|--\?|--help|-help|help) usage; exit 0;;
     esac
   done
@@ -309,7 +315,7 @@ function handleArgs_workflow_ids()
   fi
 }
 
-function matchWorkflowId() 
+function matchWorkflowId()
 {
   local rv=1
 
@@ -336,9 +342,9 @@ function invalidSubCommand()
 
 function getAnswerFromUser()
 {
-  local prompt="${1}" 
+  local prompt="${1}"
   local acceptableValues="${2}"
-  local responseVar="${3}" 
+  local responseVar="${3}"
 
   local haveGoodValue=false
   while ! $haveGoodValue ; do
@@ -360,9 +366,9 @@ function assertCanCommunicateWithServer
   serverName=$( echo ${1}| sed 's#.*://##g'| sed 's#:[0-9]*##g' )
   $PING_CMD $serverName &> /dev/null
   r=$?
-  if [[ $r -ne 0 ]] ; then 
-    turtleDead 
-    error "Error: Cannot communicate with Cromwell server: $serverName" 
+  if [[ $r -ne 0 ]] ; then
+    turtleDead
+    error "Error: Cannot communicate with Cromwell server: $serverName"
     exit 4
   fi
 }
@@ -377,7 +383,7 @@ function assertHavePreviouslySubmittedAJob()
   fi
 }
 
-function populateLastWorkflowId() 
+function populateLastWorkflowId()
 {
   assertHavePreviouslySubmittedAJob
   WORKFLOW_ID=$( tail -n1 ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $3}' )
@@ -394,19 +400,19 @@ function populateWorkflowIdAndServerUrl()
     WORKFLOW_ID=$(tail -n $row $CROMWELL_SUBMISSIONS_FILE | head -n 1 | awk '{print $3}' )
     WORKFLOW_SERVER_URL=$(tail -n $row $CROMWELL_SUBMISSIONS_FILE | head -n 1 | awk '{print $2}' )
   else
-    # If the user specified anything at this point, assume that it 
+    # If the user specified anything at this point, assume that it
     # is a workflow UUID:
-    if [ -n "$userSpecifiedId" ]; then 
-      WORKFLOW_ID=$userSpecifiedId 
+    if [ -n "$userSpecifiedId" ]; then
+      WORKFLOW_ID=$userSpecifiedId
       WORKFLOW_SERVER_URL=${CROMWELL_URL}
 
-      # Attempt to get the workflow server from the submission database:  
+      # Attempt to get the workflow server from the submission database:
       local tmpFile=$( makeTemp )
       grep ${WORKFLOW_ID} ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
       r=$?
       [ $r -eq 0 ] && WORKFLOW_SERVER_URL=$( awk '{print $2}' ${tmpFile} )
 
-      # If the user specified nothing, get the last workflow ID:  
+      # If the user specified nothing, get the last workflow ID:
     else
       populateLastWorkflowId
       WORKFLOW_SERVER_URL=$(tail -n1 $CROMWELL_SUBMISSIONS_FILE | awk '{print $2}' )
@@ -465,11 +471,11 @@ function _turtleSpinner()
     # Now we update our loop variables in a clever way
     # so that the turtle will go back and forth.
     let i=i${incrementString}
-    if [ $i -eq 15 ] ; then 
-      incrementString="-1" 
+    if [ $i -eq 15 ] ; then
+      incrementString="-1"
       curTurtFile=${turtRFile}
     elif [ $i -eq 0 ] ; then
-      incrementString="+1" 
+      incrementString="+1"
       curTurtFile=${turtFile}
     fi
 
@@ -479,7 +485,7 @@ function _turtleSpinner()
   trackSubProcess $!
 }
 
-function waitOnSubmittedStatus() 
+function waitOnSubmittedStatus()
 {
   local id=$1
   local cromwellServerUrl=$2
@@ -495,9 +501,9 @@ function waitOnSubmittedStatus()
   # we output anything:
   tput cuu 9
 
-  # Reserve the name for a file whose non-existence will cause 
+  # Reserve the name for a file whose non-existence will cause
   # the following loop to exit.
-  # This is good because all temp files made with `makeTemp` 
+  # This is good because all temp files made with `makeTemp`
   # are automatically removed at exit, so this sub-process
   # will always die gracefully.
   local flagFile=$(makeTemp)
@@ -519,7 +525,7 @@ function waitOnSubmittedStatus()
 
     # Check the status of our last submission:
     status ${id} ${cromwellServerUrl} &> ${statusFile}
-    r=$?  
+    r=$?
     grep -q '^[ \t]*"status": "Submitted",' ${statusFile}
 
     # We could no longer field the status as `Submitted`, so we're done.
@@ -527,10 +533,10 @@ function waitOnSubmittedStatus()
       gotNewStatus=true
     fi
 
-    # Check if our status changed yet:   
+    # Check if our status changed yet:
     if $gotNewStatus ; then
       isDone=true
- 
+
       # Delete the flag file to end the display process:
       rm -f ${flagFile}
 
@@ -543,14 +549,14 @@ function waitOnSubmittedStatus()
 
       # Display the status file:
       cat ${statusFile} | sed 's#^Using ##g'
-  
+
     # If we have waited too long, then we quit:
     elif [[ $nChecks -ge 10 ]] ; then
       isDone=true
-      
+
       # Delete the flag file to end the display process:
       rm -f ${flagFile}
-      
+
       # Wait for the _turtleSpinner to exit:
       wait
 
@@ -564,10 +570,10 @@ function waitOnSubmittedStatus()
 
   # Restore cursor position:
   tput rc
-  
+
   # Add a line for padding:
   echo
-  
+
   # Send a proper return code:
   if $gotNewStatus ; then
     return 0
@@ -577,34 +583,34 @@ function waitOnSubmittedStatus()
 }
 
 # Submit a workflow and arguments to the Cromwell Server
-function submit() 
+function submit()
 {
   local doWait=false
-    
+
   # Handle Arguments:
   local OPTIND
   while getopts "w" opt ; do
-    case ${opt} in 
+    case ${opt} in
       w)
         doWait=true
         ;;
       *)
         invalidSubCommand submit flag ${OPTARG}
-        ;; 
-    esac 
+        ;;
+    esac
   done
-  shift $((OPTIND-1)) 
- 
-  # ---------------------------------------- 
+  shift $((OPTIND-1))
+
+  # ----------------------------------------
 
   assertCanCommunicateWithServer $CROMWELL_URL
 
   local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
 
-  # Check to make sure that we actually submitted the job correctly 
+  # Check to make sure that we actually submitted the job correctly
   # and the server ate it well:
-   
+
   # Did the Curl call fail?
   [ $r -ne 0 ] && error "FAILED TO SUBMIT JOB" && return $r
 
@@ -632,8 +638,8 @@ function submit()
 
   # If we get here, we successfully submitted the job and should track it locally:
   turtle
-  echo "${response}" 
-  
+  echo "${response}"
+
   local runDir=${CROMSHELL_CONFIG_DIR}/${FOLDER_URL}/${id}
   mkdir -p ${runDir}
 
@@ -669,7 +675,7 @@ function status()
     turtle
   fi
 
-  cat $f | jq . 
+  cat $f | jq .
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
   # Update ${CROMWELL_SUBMISSIONS_FILE}:
@@ -680,27 +686,27 @@ function status()
 }
 
 # Get the logs of a Cromwell job UUID
-function logs() 
+function logs()
 {
   assertCanCommunicateWithServer $2
   turtle
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq . 
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s ${2}/api/workflows/v1/${1}/logs | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
 
 # Get the metadata for a Cromwell job UUID
-function metadata() 
+function metadata()
 {
   assertCanCommunicateWithServer $2
   turtle
-  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq . 
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
 
 # Get the metadata in condensed form for a Cromwell job UUID
-function slim-metadata() 
+function slim-metadata()
 {
   assertCanCommunicateWithServer $2
   turtle
@@ -710,7 +716,7 @@ function slim-metadata()
 }
 
 # Get the status of the given job and how many times it was run
-function execution-status-count() 
+function execution-status-count()
 {
   assertCanCommunicateWithServer "$2"
   turtle
@@ -726,15 +732,81 @@ function execution-status-count()
     return 11
   fi
 
-  # Make it pretty for the user:
-  # {tasks:{status: count}}
-  jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "$f"
-  checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
-  return $?
+  if ${PRETTY_EXECUTION_STATUS_COUNT}; then
+   # Make it pretty for the user:
+    pretty-execution-status ${1} ${f}
+  else
+    # Make it json for a computer:
+    # {tasks:{status: count}}
+    jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "$f"
+    checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
+    return $?
+  fi
 }
 
+# Almost the same as execution-status-count, but prettier!
+# Can optionally expand sub-workflows
+function pretty-execution-status() {
+  local -r workflowId=${1} metadataFile=${2}
+  local -r workflowStatus=$(jq -r .status ${metadataFile})
+  echo -e "${COLOR_UNDERLINED}${workflowId}\t${workflowStatus}${COLOR_NORM}"
+  printWorklowStatus ${metadataFile}
+}
+
+# Print a workflow (or sub-workflow) pretty-execution-status summary
+printWorklowStatus() {
+  local -r metadataFile=${1} indent=${2:-""}
+  local -r -a tasks=($(jq -r '.calls | keys | .[]' ${metadataFile}))
+
+  for task in ${tasks[@]}; do
+    if $(jq '.calls["'${task}'"][0] | has("subWorkflowMetadata")' ${metadataFile}) && ${PRETTY_EXECUTION_STATUS_EXPAND_SUB_WORKFLOWS}; then
+      local -r subWorkflowName=${task}
+      echo -e "\tSubWorkflow ${subWorkflowName}"
+
+      for i in $(seq 0 $(($(jq -r '.calls["'${subWorkflowName}'"] | length ' ${metadataFile}) - 1))); do
+        tmpSubWorkflowMetadataFile=$(makeTemp)
+        jq '.calls["'${subWorkflowName}'"]['${i}'].subWorkflowMetadata' ${metadataFile} > ${tmpSubWorkflowMetadataFile}
+        checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
+
+        printWorklowStatus ${tmpSubWorkflowMetadataFile} "${indent}\t"
+      done
+    else
+      printTaskStatus ${task} ${metadataFile} ${indent}
+    fi
+  done
+}
+
+# Print a tasks status and summarize the statuses of shards
+function printTaskStatus() {
+  local -r task=${1} metadataFile=${2} indent=${3}
+  tmpStatusesFile=$(makeTemp)
+
+  jq -r '.calls["'${task}'"] | group_by(.executionStatus) | map({status: .[0].executionStatus, count: length})[]' ${metadataFile} > ${tmpStatusesFile}
+  checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
+
+
+  shardsDone=$(jq -r 'select(.status=="Done") | .count' ${tmpStatusesFile})
+  shardsRunning=$(jq -r 'select(.status=="Running") | .count' ${tmpStatusesFile})
+  shardsFailed=$(jq -r 'select(.status=="Failed") | .count' ${tmpStatusesFile})
+  shardsRetried=$(jq -r 'select(.status=="RetryableFailure") | .count' ${tmpStatusesFile})
+
+  taskStatus=''
+  if [[ ${shardsFailed} -eq 0 ]] && [[ ${shardsRunning} -eq 0 ]]; then
+    taskStatus=${TASK_COLOR_SUCCEEDED}
+  elif [[ ${shardsRunning} -ne 0 ]] && [[ ${shardsFailed} -ne 0 ]]; then
+    taskStatus=${TASK_COLOR_FAILING} # Running but will fail
+  elif [[ ${shardsRunning} -ne 0 ]]; then
+    taskStatus=${TASK_COLOR_RUNNING}
+  else
+    taskStatus=${TASK_COLOR_FAILED}
+  fi
+
+  echo -e "${taskStatus}${indent}\t${task}\t${shardsRunning:-0} Running, ${shardsDone:-0} Done, ${shardsRetried:-0} Preempted ${shardsFailed:-0} Failed${COLOR_NORM}"
+}
+
+
 # Bring up a browser window to view timing information on the job.
-function timing() 
+function timing()
 {
   turtle
   echo "Opening timing information in a web browser for job ID: ${1}"
@@ -743,13 +815,13 @@ function timing()
 }
 
 # Cancel a running job.
-function abort() 
+function abort()
 {
   assertCanCommunicateWithServer $2
   turtle
   response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
-  echo $response  
+  echo $response
   return $r
 }
 
@@ -762,7 +834,7 @@ function list()
   # Handle Arguments:
   local OPTIND
   while getopts "cu" opt ; do
-    case ${opt} in 
+    case ${opt} in
       c)
         doColor=true
         ;;
@@ -771,10 +843,10 @@ function list()
         ;;
       *)
         invalidSubCommand list flag ${OPTARG}
-        ;; 
-    esac 
+        ;;
+    esac
   done
-  shift $((OPTIND-1)) 
+  shift $((OPTIND-1))
 
   # Display the logo:
   turtle
@@ -782,7 +854,7 @@ function list()
   # If we need to update the data, do so here:
   if $doUpdate ; then
     error "Updating cached status list..."
-    local tmpFile srv id runSt 
+    local tmpFile srv id runSt
 
     # Use tput to save the cursor position:
     tput sc
@@ -792,9 +864,9 @@ function list()
     # we output anything:
     tput cuu 7
 
-    # Reserve the name for a file whose non-existence will cause 
+    # Reserve the name for a file whose non-existence will cause
     # the following loop to exit.
-    # This is good because all temp files made with `makeTemp` 
+    # This is good because all temp files made with `makeTemp`
     # are automatically removed at exit, so this sub-process
     # will always die gracefully.
     local flagFile=$(makeTemp)
@@ -807,7 +879,7 @@ function list()
     tmpFile=$( makeTemp )
     cp ${CROMWELL_SUBMISSIONS_FILE} ${tmpFile}
 
-    while read line ; do 
+    while read line ; do
       id=$( echo "$line" | awk '{print $3}' )
       # Only update if the ID field is, in fact, a valid ID:
       if [[ $(matchWorkflowId ${id}) -eq 0 ]] ; then
@@ -832,54 +904,54 @@ function list()
   # If we have to colorize the output, we do so:
   if $doColor ; then
 
-    local tmpFile=$( makeTemp )  
+    local tmpFile=$( makeTemp )
     cat ${CROMWELL_SUBMISSIONS_FILE} | column -t > ${tmpFile}
 
-    while read line ; do 
+    while read line ; do
 
       # Check for header line:
-      echo "${line}" | grep -q '^DATE' 
+      echo "${line}" | grep -q '^DATE'
       r=$?
       [ $r -eq 0 ] && echo -e "${COLOR_UNDERLINED}${line}${COLOR_NORM}" && continue
 
       # Check for failed jobs and color those lines:
-      echo "${line}" | grep -q 'Failed' 
+      echo "${line}" | grep -q 'Failed'
       r=$?
       [ $r -eq 0 ] && echo -e "${COLOR_FAILED}${line}${COLOR_NORM}" && continue
 
       # Check for successful jobs and color those lines:
-      echo "${line}" | grep -q 'Succeeded' 
+      echo "${line}" | grep -q 'Succeeded'
       r=$?
       [ $r -eq 0 ] && echo -e "${COLOR_SUCCEEDED}${line}${COLOR_NORM}" && continue
 
       # Check for running jobs and color those lines:
-      echo "${line}" | grep -q 'Running' 
+      echo "${line}" | grep -q 'Running'
       r=$?
       [ $r -eq 0 ] && echo -e "${COLOR_RUNNING}${line}${COLOR_NORM}" && continue
 
-      echo "${line}"  
-    done < ${tmpFile} 
-  else  
+      echo "${line}"
+    done < ${tmpFile}
+  else
     cat ${CROMWELL_SUBMISSIONS_FILE} | column -t
   fi
   return $?
 }
 
-function cleanup() 
+function cleanup()
 {
-  local st="" 
+  local st=""
 
   # Handle Arguments:
   local OPTIND
   while getopts "s:" opt ; do
-    case ${opt} in 
+    case ${opt} in
       s)
         local isGood=false
-        for okVal in ${TERMINAL_STATES} ; do 
-          if [[ "${OPTARG}" == "${okVal}" ]] ; then 
+        for okVal in ${TERMINAL_STATES} ; do
+          if [[ "${OPTARG}" == "${okVal}" ]] ; then
             isGood=true
           fi
-        done 
+        done
 
         if ! $isGood ; then
           invalidSubCommand cleanup STATUS ${OPTARG}
@@ -889,30 +961,30 @@ function cleanup()
         ;;
       *)
         invalidSubCommand cleanup flag ${OPTARG}
-        ;; 
-    esac 
+        ;;
+    esac
   done
-  shift $((OPTIND-1)) 
+  shift $((OPTIND-1))
 
   # Make sure we don't have any extra arguments here:
   if [[ $# -ne 0 ]] ; then
     invalidSubCommand cleanup flag "${@}"
-  fi  
+  fi
 
-  # Get all states if we don't specify one:  
-  if [[ ${#st} -eq 0 ]] ; then   
+  # Get all states if we don't specify one:
+  if [[ ${#st} -eq 0 ]] ; then
     st=${TERMINAL_STATES}
   fi
 
   # Display the logo:
   turtle
 
-  echo  
+  echo
   echo "State(s) selected: ${st}"
   echo
 
   getAnswerFromUser "Are you sure you want to CLEAR ALL RECORDS from these states: ${st}" 'Yes No' answer
-  
+
   if [[ $( echo "${answer}" | tr A-Z a-z ) == "yes" ]] ; then
     echo "User answered 'Yes'."
     echo
@@ -928,19 +1000,19 @@ function cleanup()
       echo -n "Removing records with state: ${s}"
 
       # Go through each line and filter by status, which is the last column:
-      while read line ; do 
+      while read line ; do
         lineStatus=$( echo $line | awk '{print $NF}' )
         if [[ "${lineStatus}" != "${s}" ]] ; then
           echo $line
-        fi  
+        fi
       done < ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
-    
-      # Copy the temp file to the final file location for the next 
+
+      # Copy the temp file to the final file location for the next
       # iteration or for when we're done
       cp ${tmpFile} ${CROMWELL_SUBMISSIONS_FILE}
 
       echo -e '\t\tDONE!'
-    done 
+    done
 
     echo 'Your cromshell logs are now clean.'
     return 0
@@ -952,14 +1024,14 @@ function cleanup()
 
 function assertDialogExists()
 {
-  which dialog &>/dev/null   
+  which dialog &>/dev/null
   r=$?
   [ $r -ne 0 ] && error "dialog does not exist.  Must install \`dialog\`: (yum install dialog / brew install dialog / apt-get dialog)." && exit 8
 }
 
 function assertGsUtilExists()
 {
-  which gsutil &>/dev/null   
+  which gsutil &>/dev/null
   r=$?
   [ $r -ne 0 ] && error "gsutil does not exist.  Must install google cloud utilities." && exit 8
 }
@@ -972,7 +1044,7 @@ function assertGsUtilExists()
 #     stderr
 #     script
 #     output
-function list-outputs() 
+function list-outputs()
 {
   assertCanCommunicateWithServer $2
   turtle
@@ -1003,7 +1075,7 @@ function list-outputs()
 
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
-function fetch-logs() 
+function fetch-logs()
 {
   assertCanCommunicateWithServer $2
   turtle
@@ -1037,7 +1109,7 @@ function fetch-logs()
 
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 # Includes all logs and output files
-function fetch-all() 
+function fetch-all()
 {
   assertCanCommunicateWithServer $2
   turtle
@@ -1061,10 +1133,10 @@ function fetch-all()
   return 0
 }
 
-function assertValidEmail() 
+function assertValidEmail()
 {
   # Make sure the user gave us a good email address:
-  echo "$1" | grep -q  '@' 
+  echo "$1" | grep -q  '@'
   r=$?
   if [ $r -ne 0 ] ; then
     error "Error: invalid email address: $1"
@@ -1075,7 +1147,7 @@ function assertValidEmail()
   fi
 }
 
-# Spin off a task in the background that will check periodically if the workflow ID is 
+# Spin off a task in the background that will check periodically if the workflow ID is
 # complete.
 # When it is, send an email to the email address specified.
 function notify()
@@ -1143,7 +1215,7 @@ function notify()
     echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
   else
     error "Spinning off notification to ${email} thread for"
-    error "    workflow:             ${WORKFLOW_ID}" 
+    error "    workflow:             ${WORKFLOW_ID}"
     error "    from Cromwell server: ${WORKFLOW_SERVER_URL}"
     error "..."
     nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; _notifyHelper ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
@@ -1161,19 +1233,19 @@ function _notifyHelper()
   assertCanCommunicateWithServer ${cromwellServer}
   local separator="=================================================="
 
-  while true ; do 
+  while true ; do
     completionStatus=$( status $id ${cromwellServer} 2>/dev/null | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
-    echo $completionStatus | grep -qE "Succeeded|Failed|Aborted" 
+    echo $completionStatus | grep -qE "Succeeded|Failed|Aborted"
     r=${PIPESTATUS[1]}
     if [ $r -eq 0 ] ; then
-      workflowFile=$( grep '$id' ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $4}' ) 
+      workflowFile=$( grep '$id' ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $4}' )
       metaData=$( metadata $id ${cromwellServer} )
-      echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email} 
+      echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email}
       break
     fi
     # wait for 10 seconds:
     sleep 10
-  done 
+  done
 }
 
 function runSubCommandOnWorkflowId()
@@ -1182,7 +1254,7 @@ function runSubCommandOnWorkflowId()
   populateWorkflowIdAndServerUrl $1
   error "Using workflow-id == $WORKFLOW_ID"
   error "Using workflow server URL == $WORKFLOW_SERVER_URL"
-  ${SUB_COMMAND} ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL} 
+  ${SUB_COMMAND} ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL}
   r=$?
   echo
   return $r
@@ -1203,14 +1275,14 @@ ${url}\n\
 Is this correct?" 10 75 2>${menuFile}
   local r=$?
 
-  return $r 
+  return $r
 }
 
 function checkForUserQuitDialogEarly()
 {
   # If the user gets cold feet, let them go softly into the night.
   if [[ $1 -ne 0 ]] ; then
-    clear 
+    clear
     error "   User aborted setup."
     error ""
     turtle
@@ -1234,9 +1306,9 @@ function setupCromshellDialog()
   local r
 
   # Set up our logo:
-  turtle &> ${menuFile} 
+  turtle &> ${menuFile}
   sed 's#^#     #g' ${menuFile} > ${splashTextFile}
-  
+
   # Splash screen:
   dialog --beep --exit-label "Continue" --backtitle "${BACKTITLE}" --title "${TITLE}" --textbox ${splashTextFile} 12 43
   r=$?
@@ -1250,7 +1322,7 @@ I am your personal, personable, and wonderful extension of the Cromwell API righ
 \n\
 There are a few small questions I need you to answer before I can make your cromwell dreams come true.\n\
 \n\
-${URL_QUESTION_TEXT}" 20 75 2> ${menuFile} 
+${URL_QUESTION_TEXT}" 20 75 2> ${menuFile}
   r=$?
 
   checkForUserQuitDialogEarly $r
@@ -1265,12 +1337,12 @@ ${URL_QUESTION_TEXT}" 20 75 2> ${menuFile}
   r=$?
 
   # See if the user is OK with their URL:
-  if [[ $r -eq 0 ]] ; then 
+  if [[ $r -eq 0 ]] ; then
     hasGoodUrl=true
   fi
 
   # Until we have a good URL, we need to keep asking the user.
-  while ! $hasGoodUrl ; do 
+  while ! $hasGoodUrl ; do
 
     # URL input dialog:
     dialog --clear \
@@ -1278,7 +1350,7 @@ ${URL_QUESTION_TEXT}" 20 75 2> ${menuFile}
       --title "Cromwell URL Verification" \
       --inputbox "Oh, I'm terribly sorry for that.  Let's try again! \n\
 \n\
-${URL_QUESTION_TEXT}" 10 75 2> ${menuFile} 
+${URL_QUESTION_TEXT}" 10 75 2> ${menuFile}
     r=$?
 
     checkForUserQuitDialogEarly $r
@@ -1291,15 +1363,15 @@ ${URL_QUESTION_TEXT}" 10 75 2> ${menuFile}
     r=$?
 
     # See if the user is OK with their URL:
-    if [[ $r -eq 0 ]] ; then 
+    if [[ $r -eq 0 ]] ; then
       hasGoodUrl=true
     fi
   done
-  
+
   # Put the URL in the file:
   echo "${url}" > ${CROMWELL_SERVER_FILE}
 
-  # Thank the user for their input and let them know 
+  # Thank the user for their input and let them know
   # they are ready to run:
   echo -e "" > ${splashTextFile}
   echo -e "OK.  I have set your Cromwell server to be:" >> ${splashTextFile}
@@ -1317,7 +1389,7 @@ ${URL_QUESTION_TEXT}" 10 75 2> ${menuFile}
   return 0
 }
 
-function setupCromshell() 
+function setupCromshell()
 {
   echo "--------------------------------------------------"
   echo -e "   __        __   _                          "
@@ -1338,7 +1410,7 @@ function setupCromshell()
   echo -e " | |___| | | (_) | | | | | \__ \ | | |  __/ | |"
   echo -e "  \\____|_|  \\___/|_| |_| |_|___/_| |_|\\___|_|_|"
   echo -e "                                               "
-  
+
   echo
   turtle
   echo
@@ -1384,7 +1456,7 @@ function setupCromshell()
   echo
   echo "OK.  I'm now setting your Cromwell server to be: ${url}"
   echo -n "Don't worry - this won't hurt a bit..."
-  
+
   # Put the URL in the file:
   echo "${url}" > ${CROMWELL_SERVER_FILE}
   echo "DONE"
@@ -1400,15 +1472,15 @@ function setupCromshell()
 # The bash equivalent to `if __name__ == '__main__':
 if ${ISINTERACTIVESHELL} ; then
 
-  # Check the remaining arguments for help and display it if we have to: 
+  # Check the remaining arguments for help and display it if we have to:
   checkForComplexHelpArgument $@
 
   # Get flags:
-  while getopts ":t:" opt ; do
-    case ${opt} in 
+  while getopts ":t:xp" opt ; do
+    case ${opt} in
       t)
         # Ensure that the value given to -t is numerical:
-        echo ${OPTARG} | grep -q -E '^[0-9]+$' 
+        echo ${OPTARG} | grep -q -E '^[0-9]+$'
         rv=$?
         [ $rv -ne 0 ] && invalidSubCommand '' "flag value (${OPTARG})" "-${opt} argument must be an integer."
 
@@ -1416,20 +1488,28 @@ if ${ISINTERACTIVESHELL} ; then
         CURL_CONNECT_TIMEOUT=${OPTARG}
         let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
         ;;
+      x)
+        # Expand sub-workflows in the execution-status-count (pretty mode) command
+        PRETTY_EXECUTION_STATUS_EXPAND_SUB_WORKFLOWS=true
+        ;;
+      p)
+        # Make execution-status-count pretty!
+        PRETTY_EXECUTION_STATUS_COUNT=true
+        ;;
       :)
         invalidSubCommand '' 'flag value' "-${opt} requires an argument."
         ;;
       *)
         invalidSubCommand '' flag ${OPTARG}
-        ;; 
-    esac 
+        ;;
+    esac
   done
-  shift $((OPTIND-1)) 
+  shift $((OPTIND-1))
 
   # Get our sub-command:
   SUB_COMMAND=${1}
   shift
-  
+
   # Check if we need to set this up.
   # Note: because of how `notify` works, we can't require the setup for the notify action.
   if ${CROMWELL_NEEDS_SETUP} && [[ "${SUB_COMMAND}" != "notify" ]] ; then
@@ -1447,28 +1527,28 @@ if ${ISINTERACTIVESHELL} ; then
 
   # Validate our sub-command:
   case ${SUB_COMMAND} in
-    cleanup|submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
-      # This is a good sub-command, so we do not need to do anything. 
+    cleanup|submit|status|logs|execution-status-count|pretty-execution-status|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
+      # This is a good sub-command, so we do not need to do anything.
       ;;
     *)
       if [[ ${#SUB_COMMAND} -eq 0 ]]; then
-        simpleUsage 
+        simpleUsage
         exit 0
-      else   
+      else
         invalidSubCommand '' "sub-command" "${SUB_COMMAND}"
       fi
-      ;; 
+      ;;
   esac
 
   # Now that we have checked for help arguments, we can
   # make sure we have all the required commands:
-  checkPrerequisites $PREREQUISITES 
+  checkPrerequisites $PREREQUISITES
   r=$?
   [[ $r -ne 0 ]] && exit 6
 
   # Handle specific sub-command args and and call our sub-command:
   error "Sub-Command: ${SUB_COMMAND}"
-  case ${SUB_COMMAND} in 
+  case ${SUB_COMMAND} in
     cleanup|submit|list|notify)
       ${SUB_COMMAND} $@
       rv=$?
@@ -1477,7 +1557,7 @@ if ${ISINTERACTIVESHELL} ; then
       # All other tools just take a list of workflow IDs:
       handleArgs_workflow_ids $@
 
-      for WORKFLOW_ID in ${WORKFLOW_ID_LIST} ; do 
+      for WORKFLOW_ID in ${WORKFLOW_ID_LIST} ; do
         runSubCommandOnWorkflowId ${WORKFLOW_ID}
         rv=$?
       done
