@@ -53,8 +53,6 @@ CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backend
 
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
-PRETTY_EXECUTION_STATUS_EXPAND_SUB_WORKFLOWS=false
-PRETTY_EXECUTION_STATUS_COUNT=false
 
 PING_CMD='ping -c1 -W1 -w10'
 if [[ $( uname ) == "Darwin" ]] ; then
@@ -718,6 +716,25 @@ function slim-metadata()
 # Get the status of the given job and how many times it was run
 function execution-status-count()
 {
+  # Handle Arguments:
+  local OPTIND
+  local doPretty=false
+  local doExpandSubWorkflows=false
+  while getopts "px" opt ; do
+    case ${opt} in
+      p)
+        doPretty=true
+        ;;
+      x)
+        doExpandSubWorkflows=true
+        ;;
+      *)
+        invalidSubCommand execution-status-count flag ${OPTARG}
+        ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
   assertCanCommunicateWithServer "$2"
   turtle
   f=$( makeTemp )
@@ -732,9 +749,9 @@ function execution-status-count()
     return 11
   fi
 
-  if ${PRETTY_EXECUTION_STATUS_COUNT}; then
+  if ${doPretty}; then
    # Make it pretty for the user:
-    pretty-execution-status ${1} ${f}
+   pretty-execution-status ${1} ${f} ${doExpandSubWorkflows}
   else
     # Make it json for a computer:
     # {tasks:{status: count}}
@@ -746,20 +763,22 @@ function execution-status-count()
 
 # Almost the same as execution-status-count, but prettier!
 # Can optionally expand sub-workflows
-function pretty-execution-status() {
-  local -r workflowId=${1} metadataFile=${2}
+function pretty-execution-status()
+{
+  local -r workflowId=${1} metadataFile=${2} expandSubWorkflows=${3:-false}
   local -r workflowStatus=$(jq -r .status ${metadataFile})
   echo -e "${COLOR_UNDERLINED}${workflowId}\t${workflowStatus}${COLOR_NORM}"
-  printWorklowStatus ${metadataFile}
+  printWorklowStatus ${metadataFile} "" ${expandSubWorkflows}
 }
 
 # Print a workflow (or sub-workflow) pretty-execution-status summary
-printWorklowStatus() {
-  local -r metadataFile=${1} indent=${2:-""}
+printWorklowStatus()
+{
+  local -r metadataFile=${1} indent=${2:-""} expandSubWorkflows=${3}
   local -r -a tasks=($(jq -r '.calls | keys | .[]' ${metadataFile}))
 
   for task in ${tasks[@]}; do
-    if $(jq '.calls["'${task}'"][0] | has("subWorkflowMetadata")' ${metadataFile}) && ${PRETTY_EXECUTION_STATUS_EXPAND_SUB_WORKFLOWS}; then
+    if $(jq '.calls["'${task}'"][0] | has("subWorkflowMetadata")' ${metadataFile}) && ${expandSubWorkflows}; then
       local -r subWorkflowName=${task}
       echo -e "\tSubWorkflow ${subWorkflowName}"
 
@@ -768,7 +787,7 @@ printWorklowStatus() {
         jq '.calls["'${subWorkflowName}'"]['${i}'].subWorkflowMetadata' ${metadataFile} > ${tmpSubWorkflowMetadataFile}
         checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
-        printWorklowStatus ${tmpSubWorkflowMetadataFile} "${indent}\t"
+        printWorklowStatus ${tmpSubWorkflowMetadataFile} "${indent}\t" ${expandSubWorkflows}
       done
     else
       printTaskStatus ${task} ${metadataFile} ${indent}
@@ -777,7 +796,8 @@ printWorklowStatus() {
 }
 
 # Print a tasks status and summarize the statuses of shards
-function printTaskStatus() {
+function printTaskStatus()
+{
   local -r task=${1} metadataFile=${2} indent=${3}
   tmpStatusesFile=$(makeTemp)
 
@@ -1252,9 +1272,11 @@ function runSubCommandOnWorkflowId()
 {
   # Get the workflow ID:
   populateWorkflowIdAndServerUrl $1
+  shift
+  local -r -a subCommandArgs=($@)
   error "Using workflow-id == $WORKFLOW_ID"
   error "Using workflow server URL == $WORKFLOW_SERVER_URL"
-  ${SUB_COMMAND} ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL}
+  ${SUB_COMMAND} "${subCommandArgs[@]}" ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL}
   r=$?
   echo
   return $r
@@ -1488,14 +1510,6 @@ if ${ISINTERACTIVESHELL} ; then
         CURL_CONNECT_TIMEOUT=${OPTARG}
         let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
         ;;
-      x)
-        # Expand sub-workflows in the execution-status-count (pretty mode) command
-        PRETTY_EXECUTION_STATUS_EXPAND_SUB_WORKFLOWS=true
-        ;;
-      p)
-        # Make execution-status-count pretty!
-        PRETTY_EXECUTION_STATUS_COUNT=true
-        ;;
       :)
         invalidSubCommand '' 'flag value' "-${opt} requires an argument."
         ;;
@@ -1527,7 +1541,7 @@ if ${ISINTERACTIVESHELL} ; then
 
   # Validate our sub-command:
   case ${SUB_COMMAND} in
-    cleanup|submit|status|logs|execution-status-count|pretty-execution-status|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
+    cleanup|submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
       # This is a good sub-command, so we do not need to do anything.
       ;;
     *)
@@ -1554,11 +1568,24 @@ if ${ISINTERACTIVESHELL} ; then
       rv=$?
       ;;
     *)
-      # All other tools just take a list of workflow IDs:
-      handleArgs_workflow_ids $@
+      # All other tools just take a list of workflow IDs
 
+      # We need to separate workflow IDs from sub-command arguments
+      args=($@)
+      workflowIds=()
+      subCommandArgs=()
+      for i in "${!args[@]}"; do
+        arg="${args[$i]}"
+        if matchWorkflowId "${arg}" > /dev/null; then
+          workflowIds+=("${arg}")
+        else
+          subCommandArgs+=("${arg}")
+        fi
+      done
+
+      handleArgs_workflow_ids "${workflowIds[@]}"
       for WORKFLOW_ID in ${WORKFLOW_ID_LIST} ; do
-        runSubCommandOnWorkflowId ${WORKFLOW_ID}
+        runSubCommandOnWorkflowId ${WORKFLOW_ID} "${subCommandArgs[@]}"
         rv=$?
       done
       ;;
