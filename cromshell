@@ -441,7 +441,7 @@ function _turtleSpinner()
   local turtRFile=$( makeTemp )
   turtle &> ${tmpTurtFile}
   sed 's#^  ##g' ${tmpTurtFile} > ${turtFile}
-  rev ${turtFile} | sed -e 's$/$#$g' -e 's#\\#/#g' -e 's$#$\\$g' -e 's#(#)#g' -e 's#)#(#g' > ${turtRFile}
+  rev ${turtFile} | sed -e 's$/$#$g' -e 's#\\#/#g' -e 's$#$\\$g' -e 's#(#)#g' -e 's#)#(#g' -e 's#>#a#g' -e 's#<#>#g' -e 's#a#<#g' > ${turtRFile}
 
   # Set up some loop variables:
   local i=3
