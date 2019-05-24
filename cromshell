@@ -441,7 +441,11 @@ function _turtleSpinner()
   local turtRFile=$( makeTemp )
   turtle &> ${tmpTurtFile}
   sed 's#^  ##g' ${tmpTurtFile} > ${turtFile}
-  rev ${turtFile} | sed -e 's$/$#$g' -e 's#\\#/#g' -e 's$#$\\$g' -e 's#(#)#g' -e 's#)#(#g' -e 's#>#a#g' -e 's#<#>#g' -e 's#a#<#g' > ${turtRFile}
+  #Since we're switching pairs characters we need to do the switch in several steps
+  #ex: /\ -> TMP\ -> TMP/ -> \/
+  rev ${turtFile} | sed -e 's#/#TMP#g' -e 's#\\#/#g' -e 's#TMP#\\#g' \
+      -e 's#(#TMP#g' -e 's#)#(#g' -e 's#TMP#)#g' \
+      -e 's#>#TMP#g' -e 's#<#>#g' -e 's#TMP#<#g' > ${turtRFile}
 
   # Set up some loop variables:
   local i=3
