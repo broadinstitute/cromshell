@@ -720,7 +720,7 @@ function execution-status-count()
   turtle
   f=$( makeTemp )
   curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT} --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS} > ${f}
-	r=$?
+  r=$?
   [ $r -ne 0 ] && error "Could not connect to Cromwell server." && return 9
 
   # Make sure the query succeeded:
