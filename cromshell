@@ -23,6 +23,10 @@ COLOR_UNDERLINED='\033[1;4m'
 COLOR_FAILED='\033[1;37;41m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
+TASK_COLOR_RUNNING='\033[0;34m'
+TASK_COLOR_SUCCEEDED='\033[0;32m'
+TASK_COLOR_FAILING='\033[0;33m'
+TASK_COLOR_FAILED='\033[0;31m'
 
 ################################################################################
 
@@ -45,7 +49,7 @@ fi
 export CROMWELL_URL=${CROMWELL_URL:-"${CROMWELL_SERVER_FROM_FILE}"}
 FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
-CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&expandSubWorkflows=true"
+ CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&includeKey=status&includeKey=callRoot&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
@@ -716,6 +720,25 @@ function slim-metadata()
 # Get the status of the given job and how many times it was run
 function execution-status-count() 
 {
+  # Handle Arguments:
+  local OPTIND
+  local doPretty=false
+  local doExpandSubWorkflows=false
+  while getopts "px" opt ; do
+    case ${opt} in
+      p)
+        doPretty=true
+        ;;
+      x)
+        doExpandSubWorkflows=true
+        ;;
+      *)
+        invalidSubCommand execution-status-count flag ${OPTARG}
+        ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
   assertCanCommunicateWithServer "$2"
   turtle
   f=$( makeTemp )
@@ -730,11 +753,79 @@ function execution-status-count()
     return 11
   fi
 
-  # Make it pretty for the user:
-  # {tasks:{status: count}}
-  jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "$f"
+  if ${doPretty}; then
+    # Make it pretty for the user:
+    pretty-execution-status ${1} ${f} ${doExpandSubWorkflows}
+  else
+    # Make it json for a computer:
+    # {tasks:{status: count}}
+    jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "$f"
+    checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
+    return $?
+  fi
+}
+
+# Almost the same as execution-status-count, but prettier!
+# Can optionally expand sub-workflows
+function pretty-execution-status()
+{
+  local -r workflowId=${1} metadataFile=${2} expandSubWorkflows=${3:-false}
+  local -r workflowStatus=$(jq -r .status ${metadataFile})
+  echo -e "${COLOR_UNDERLINED}${workflowId}\t${workflowStatus}${COLOR_NORM}"
+  printWorklowStatus ${metadataFile} "" ${expandSubWorkflows}
+}
+
+# Print a workflow (or sub-workflow) pretty-execution-status summary
+printWorklowStatus()
+{
+  local -r metadataFile=${1} indent=${2:-""} expandSubWorkflows=${3}
+  local -r -a tasks=($(jq -r '.calls | keys | .[]' ${metadataFile}))
+
+  for task in ${tasks[@]}; do
+    if $(jq '.calls["'${task}'"][0] | has("subWorkflowMetadata")' ${metadataFile}) && ${expandSubWorkflows}; then
+      local -r subWorkflowName=${task}
+      echo -e "\tSubWorkflow ${subWorkflowName}"
+
+      for i in $(seq 0 $(($(jq -r '.calls["'${subWorkflowName}'"] | length ' ${metadataFile}) - 1))); do
+        tmpSubWorkflowMetadataFile=$(makeTemp)
+        jq '.calls["'${subWorkflowName}'"]['${i}'].subWorkflowMetadata' ${metadataFile} > ${tmpSubWorkflowMetadataFile}
+        checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
+
+        printWorklowStatus ${tmpSubWorkflowMetadataFile} "${indent}\t" ${expandSubWorkflows}
+      done
+    else
+      printTaskStatus ${task} ${metadataFile} ${indent}
+    fi
+  done
+}
+
+# Print a tasks status and summarize the statuses of shards
+function printTaskStatus()
+{
+  local -r task=${1} metadataFile=${2} indent=${3}
+  tmpStatusesFile=$(makeTemp)
+
+  jq -r '.calls["'${task}'"] | group_by(.executionStatus) | map({status: .[0].executionStatus, count: length})[]' ${metadataFile} > ${tmpStatusesFile}
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
-  return $?
+
+
+  shardsDone=$(jq -r 'select(.status=="Done") | .count' ${tmpStatusesFile})
+  shardsRunning=$(jq -r 'select(.status=="Running") | .count' ${tmpStatusesFile})
+  shardsFailed=$(jq -r 'select(.status=="Failed") | .count' ${tmpStatusesFile})
+  shardsRetried=$(jq -r 'select(.status=="RetryableFailure") | .count' ${tmpStatusesFile})
+
+  taskStatus=''
+  if [[ ${shardsFailed} -eq 0 ]] && [[ ${shardsRunning} -eq 0 ]]; then
+    taskStatus=${TASK_COLOR_SUCCEEDED}
+  elif [[ ${shardsRunning} -ne 0 ]] && [[ ${shardsFailed} -ne 0 ]]; then
+    taskStatus=${TASK_COLOR_FAILING} # Running but will fail
+  elif [[ ${shardsRunning} -ne 0 ]]; then
+    taskStatus=${TASK_COLOR_RUNNING}
+  else
+    taskStatus=${TASK_COLOR_FAILED}
+  fi
+
+  echo -e "${taskStatus}${indent}\t${task}\t${shardsRunning:-0} Running, ${shardsDone:-0} Done, ${shardsRetried:-0} Preempted ${shardsFailed:-0} Failed${COLOR_NORM}"
 }
 
 # Bring up a browser window to view timing information on the job.
@@ -1184,9 +1275,11 @@ function runSubCommandOnWorkflowId()
 {
   # Get the workflow ID:
   populateWorkflowIdAndServerUrl $1
+  shift
+  local -r -a subCommandArgs=($@)
   error "Using workflow-id == $WORKFLOW_ID"
   error "Using workflow server URL == $WORKFLOW_SERVER_URL"
-  ${SUB_COMMAND} ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL} 
+  ${SUB_COMMAND} "${subCommandArgs[@]}" ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL}
   r=$?
   echo
   return $r
@@ -1478,11 +1571,23 @@ if ${ISINTERACTIVESHELL} ; then
       rv=$?
       ;;
     *)
-      # All other tools just take a list of workflow IDs:
-      handleArgs_workflow_ids $@
+      # We need to separate workflow IDs from sub-command arguments
+      args=($@)
+      workflowIds=()
+      subCommandArgs=()
+      for i in "${!args[@]}"; do
+        arg="${args[$i]}"
+        if matchWorkflowId "${arg}" > /dev/null; then
+          workflowIds+=("${arg}")
+        else
+          subCommandArgs+=("${arg}")
+        fi
+      done
+
+      handleArgs_workflow_ids "${workflowIds[@]}"
 
       for WORKFLOW_ID in ${WORKFLOW_ID_LIST} ; do 
-        runSubCommandOnWorkflowId ${WORKFLOW_ID}
+        runSubCommandOnWorkflowId ${WORKFLOW_ID} "${subCommandArgs[@]}"
         rv=$?
       done
       ;;
