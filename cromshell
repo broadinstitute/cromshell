@@ -1501,7 +1501,7 @@ if ${ISINTERACTIVESHELL} ; then
   checkForComplexHelpArgument $@
 
   # Get flags:
-  while getopts ":t:xp" opt ; do
+  while getopts ":t:" opt ; do
     case ${opt} in 
       t)
         # Ensure that the value given to -t is numerical:
@@ -1571,8 +1571,6 @@ if ${ISINTERACTIVESHELL} ; then
       rv=$?
       ;;
     *)
-      # All other tools just take a list of workflow IDs
-
       # We need to separate workflow IDs from sub-command arguments
       args=($@)
       workflowIds=()
