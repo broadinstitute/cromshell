@@ -54,7 +54,7 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
      * Get the full metadata of a workflow
    * `slim-metadata` *`[workflow-id] [[workflow-id]...]`*           
      * Get a subset of the metadata from a workflow
-   * `execution-status-count` *`[-px] [workflow-id] [[workflow-id]...]`*   
+   * `execution-status-count` *`[-p] [-x] [workflow-id] [[workflow-id]...]`*   
      * Get the summarized status of all jobs in the workflow
      * `-p` prints a pretty summary of the execution status instead of JSON
      * `-x` expands sub-workflows for more detailed summarization
