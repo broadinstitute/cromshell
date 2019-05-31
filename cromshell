@@ -143,7 +143,9 @@ function usage()
   echo -e "   status [workflow-id] [[workflow-id]...]                           Check the status of a workflow."
   echo -e "   metadata [workflow-id] [[workflow-id]...]                         Get the full metadata of a workflow."
   echo -e "   slim-metadata [workflow-id] [[workflow-id]...]                    Get a subset of the metadata from a workflow."
-  echo -e "   execution-status-count [workflow-id] [[workflow-id]...]           Get the summarized status of all jobs in the workflow."
+  echo -e "   execution-status-count [-p] [-x] [workflow-id] [[workflow-id]...] Get the summarized status of all jobs in the workflow."
+  echo -e "         -p               Enable pretty-printing."
+  echo -e "         -x               Expand sub-workflow information."
   echo -e "   timing [workflow-id] [[workflow-id]...]                           Open the timing diagram in a browser."
   echo -e
   echo -e "  Logs:"
@@ -294,7 +296,7 @@ function checkForComplexHelpArgument()
 
 # Handle arguments just expecting workflow IDs:
 # Will populate the $WORKFLOW_ID_LIST global variable or exit.
-function handleArgs_workflow_ids()
+function extract_workflow_ids_from_args()
 {
   #Read args:
   if [ $# -eq 0 ] ; then
@@ -311,6 +313,18 @@ function handleArgs_workflow_ids()
       shift
     done
   fi
+}
+
+function matchRelativeWorkflowId() 
+{
+  local rv=1
+
+  if [[ "${1}" =~ ^-[[:xdigit:]]*$ ]] ; then
+    rv=0
+  fi
+
+  echo ${rv}
+  return ${rv}
 }
 
 function matchWorkflowId() 
@@ -724,7 +738,10 @@ function execution-status-count()
   local OPTIND
   local doPretty=false
   local doExpandSubWorkflows=false
-  while getopts "px" opt ; do
+   
+  local workflowIDs=""
+
+  while getopts ":px" opt ; do
     case ${opt} in
       p)
         doPretty=true
@@ -732,37 +749,65 @@ function execution-status-count()
       x)
         doExpandSubWorkflows=true
         ;;
-      *)
-        invalidSubCommand execution-status-count flag ${OPTARG}
+      \?)
+        # This is an unexpected argument.
+        if [[ $(matchWorkflowId ${OPTARG}) -eq 0 ]] ; then 
+          # This is a workflow ID!  
+          # Add it to the list:
+          workflowIDs="${workflowIDs} ${OPTARG}"
+        elif [[ $( matchRelativeWorkflowId "-${OPTARG}" ) -eq 0 ]] ; then
+          # This is a workflow ID!  
+          # Add it to the list:
+          # NOTE: for the relative match we need to add back in the leading `-`
+          workflowIDs="${workflowIDs} -${OPTARG}"
+        else
+          # This is not a workflow ID!
+          # Throw an error!
+          invalidSubCommand execution-status-count flag ${opt}
+        fi
+        ;;
+      :)
+        # This is a flag missing an argument!
+        invalidSubCommand execution-status-count "missing flag for argument" ${OPTARG}
         ;;
     esac
   done
   shift $((OPTIND-1))
 
-  assertCanCommunicateWithServer "$2"
-  turtle
-  f=$( makeTemp )
-  if ! curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "$2/api/workflows/v1/$1/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > "$f" ; then
-    error "Could not connect to Cromwell server." && return 9
-  fi
+  # Get our workflow IDs in shape:
+  extract_workflow_ids_from_args ${workflowIDs}
 
-  # Make sure the query succeeded:
-  if [[ "$( < "$f" jq '.status' | sed -e 's#^"##g' -e 's#"$##g' )" == 'fail' ]] ; then
-    reason=$( < "$f" jq '.message' | sed -e 's#^"##g' -e 's#"$##g' )
-    error "Error: Query to cromwell server failed: ${reason}"
-    return 11
-  fi
+	# Go through each workflow ID and get the info we want:
+  for wfid in ${WORKFLOW_ID_LIST} ; do 
 
-  if ${doPretty}; then
-    # Make it pretty for the user:
-    pretty-execution-status ${1} ${f} ${doExpandSubWorkflows}
-  else
-    # Make it json for a computer:
-    # {tasks:{status: count}}
-    jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "$f"
-    checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
-    return $?
-  fi
+    populateWorkflowIdAndServerUrl ${wfid}
+    error "Using workflow-id == $WORKFLOW_ID"
+    error "Using workflow server URL == $WORKFLOW_SERVER_URL"
+
+    assertCanCommunicateWithServer "${WORKFLOW_SERVER_URL}"
+    local tempFile=$( makeTemp )
+    if ! curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > "${tempFile}" ; then
+      error "Could not connect to Cromwell server." && return 9
+    fi
+
+    # Make sure the query succeeded:
+    if [[ "$( < "${tempFile}" jq '.status' | sed -e 's#^"##g' -e 's#"$##g' )" == 'fail' ]] ; then
+      reason=$( < "${tempFile}" jq '.message' | sed -e 's#^"##g' -e 's#"$##g' )
+      error "Error: Query to cromwell server failed: ${reason}"
+      return 11
+    fi
+
+    if ${doPretty}; then
+      # Make it pretty for the user:
+      pretty-execution-status ${WORKFLOW_ID} ${tempFile} ${doExpandSubWorkflows}
+    else
+      # Make it json for a computer:
+      # {tasks:{status: count}}
+      jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "${tempFile}"
+      checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
+      return $?
+    fi
+  done
 }
 
 # Almost the same as execution-status-count, but prettier!
@@ -1185,7 +1230,7 @@ function notify()
 
   # Is the next argument our workflow ID?
   # Workflow IDs are standard UUIDs or negative numbers:
-  if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ ${1} =~ ^-[[:digit:]]+$ ]] ; then
+  if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ $( matchRelativeWorkflowId ${1} ) -eq 0 ]] ; then
     # Get the workflow ID:
     populateWorkflowIdAndServerUrl $1
     shift
@@ -1276,10 +1321,9 @@ function runSubCommandOnWorkflowId()
   # Get the workflow ID:
   populateWorkflowIdAndServerUrl $1
   shift
-  local -r -a subCommandArgs=($@)
   error "Using workflow-id == $WORKFLOW_ID"
   error "Using workflow server URL == $WORKFLOW_SERVER_URL"
-  ${SUB_COMMAND} "${subCommandArgs[@]}" ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL}
+  ${SUB_COMMAND} ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL}
   r=$?
   echo
   return $r
@@ -1566,28 +1610,17 @@ if ${ISINTERACTIVESHELL} ; then
   # Handle specific sub-command args and and call our sub-command:
   error "Sub-Command: ${SUB_COMMAND}"
   case ${SUB_COMMAND} in 
-    cleanup|submit|list|notify)
+    # These are the sub-commands that take arguments other than workflow IDs:
+    cleanup|submit|list|notify|execution-status-count)
       ${SUB_COMMAND} $@
       rv=$?
       ;;
+    # Handle sub-commands that only take workflow IDs:  
     *)
-      # We need to separate workflow IDs from sub-command arguments
-      args=($@)
-      workflowIds=()
-      subCommandArgs=()
-      for i in "${!args[@]}"; do
-        arg="${args[$i]}"
-        if matchWorkflowId "${arg}" > /dev/null; then
-          workflowIds+=("${arg}")
-        else
-          subCommandArgs+=("${arg}")
-        fi
-      done
-
-      handleArgs_workflow_ids "${workflowIds[@]}"
+      extract_workflow_ids_from_args $@
 
       for WORKFLOW_ID in ${WORKFLOW_ID_LIST} ; do 
-        runSubCommandOnWorkflowId ${WORKFLOW_ID} "${subCommandArgs[@]}"
+        runSubCommandOnWorkflowId ${WORKFLOW_ID} 
         rv=$?
       done
       ;;
