@@ -601,7 +601,10 @@ function waitOnSubmittedStatus()
 # Submit a workflow and arguments to the Cromwell Server
 function submit() 
 {
-  local doWait=false
+	# Args: 
+	# submit [-w] <wdl> <inputs_json> [options_json] [included_wdl_zip_file]
+	
+	local doWait=false
     
   # Handle Arguments:
   local OPTIND
@@ -618,6 +621,24 @@ function submit()
   shift $((OPTIND-1)) 
  
   # ---------------------------------------- 
+
+	# Check that our input files exist:
+	if [[ ${#1} -ne 0 ]] && [ ! -f ${1} ] ; then
+		error "ERROR: Input WDL file does not exist: ${1}"
+		exit 20
+	fi
+	if [[ ${#2} -ne 0 ]] && [ ! -f ${2} ] ; then
+		error "ERROR: Input JSON arguments file does not exist: ${2}"
+		exit 20
+	fi
+	if [[ ${#3} -ne 0 ]] && [ ! -f ${3} ] ; then
+		error "ERROR: Input JSON OPTIONS file does not exist: ${3}"
+		exit 20
+	fi
+	if [[ ${#4} -ne 0 ]] && [ ! -f ${4} ] ; then
+		error "ERROR: Input INCLUDE ZIP file does not exist: ${4}"
+		exit 20
+	fi
 
   assertCanCommunicateWithServer $CROMWELL_URL
 
