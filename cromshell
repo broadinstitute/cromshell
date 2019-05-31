@@ -282,7 +282,44 @@ function checkPrerequisites
   return 0
 }
 
-function checkForComplexHelpArgument() 
+function assertRequiredFileIsNonEmpty()
+{
+
+  local fileName=$1
+  local fileDescription=$2
+  if [[ -z ${fileName} ]]
+	then
+		error "Error: required file ${fileDescription} was not specified."
+		exit 6
+	else
+		if [[ -f ${fileName} ]]
+		then
+			if [[ -s ${fileName} ]]
+			then
+				return 0
+			else
+				error "Error: file ${fileName} is an empty file."
+				exit 6
+			fi
+		else
+			error "Error: file ${fileName} does not exist."
+			exit 6;
+		fi
+	fi
+}
+
+function assertOptionalFileIsNonEmpty()
+{
+	local fileName=$1
+	if [[ -z ${fileName} ]]
+	then
+		return 0
+	else
+		assertRequiredFileIsNonEmpty ${fileName}
+	fi
+}
+
+function checkForComplexHelpArgument()
 {
   for arg in $@ ; do
     case $arg in 
@@ -621,7 +658,17 @@ function submit()
 
   assertCanCommunicateWithServer $CROMWELL_URL
 
-  local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
+  local wdl=${1}
+  local json=${2}
+  local optionsJson=${3}
+  local dependenciesZip=${4}
+
+  assertRequiredFileIsNonEmpty "$wdl" "wdl"
+  assertRequiredFileIsNonEmpty "$json" "input json"
+  assertOptionalFileIsNonEmpty "$optionsJson"
+  assertOptionalFileIsNonEmpty "$dependenciesZip"
+
+  local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s -F workflowSource=@${wdl}  ${2:+ -F workflowInputs=@${json}} ${3:+ -F workflowOptions=@${optionsJson}} ${4:+ -F workflowDependencies=@${depdenciesZip}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
 
   # Check to make sure that we actually submitted the job correctly 
