@@ -282,7 +282,36 @@ function checkPrerequisites
   return 0
 }
 
-function checkForComplexHelpArgument() 
+function assertRequiredFileIsNonEmpty()
+{
+  local fileName=$1
+  local fileDescription=$2
+  if [[ -z ${fileName} ]]; then
+    error "ERROR: ${fileDescription} must be specified."
+  exit 6
+  else
+    if [[ -f ${fileName} ]]; then
+      if [[ ! -s ${fileName} ]]; then
+        error "ERROR: ${fileDescription} is empty: ${fileName}"
+        exit 6
+      fi
+    else
+      error "ERROR: ${fileDescription} does not exist: ${fileName}"
+      exit 6;
+    fi
+  fi
+}
+
+function assertOptionalFileIsNonEmpty()
+{
+  local fileName=$1
+  local fileDescription=$2
+  if [[ ! -z ${fileName} ]] ; then
+    assertRequiredFileIsNonEmpty "${fileName}" "${fileDescription}"
+  fi
+}
+
+function checkForComplexHelpArgument()
 {
   for arg in $@ ; do
     case $arg in 
@@ -617,11 +646,28 @@ function submit()
   done
   shift $((OPTIND-1)) 
  
-  # ---------------------------------------- 
+  # ----------------------------------------
+
+  if [[ $# -lt 2 ]] ; then
+    error "ERROR: submit requires at least a WDL and JSON file."
+    error ""
+    simpleUsage submit
+    exit 21
+  fi
+
+  local wdl=${1}
+  local json=${2}
+  local optionsJson=${3}
+  local dependenciesZip=${4}
+
+  assertRequiredFileIsNonEmpty "${wdl}" "WDL"
+  assertRequiredFileIsNonEmpty "${json}" "Input JSON"
+  assertOptionalFileIsNonEmpty "${optionsJson}" "Options JSON"
+  assertOptionalFileIsNonEmpty "${dependenciesZip}" "Dependencies Zip"
 
   assertCanCommunicateWithServer $CROMWELL_URL
 
-  local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s -F workflowSource=@${1}  ${2:+ -F workflowInputs=@${2}} ${3:+ -F workflowOptions=@${3}} ${4:+ -F workflowDependencies=@${4}} ${CROMWELL_URL}/api/workflows/v1)
+  local response=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s -F workflowSource=@${wdl}  ${2:+ -F workflowInputs=@${json}} ${3:+ -F workflowOptions=@${optionsJson}} ${4:+ -F workflowDependencies=@${depdenciesZip}} ${CROMWELL_URL}/api/workflows/v1)
   local r=$?
 
   # Check to make sure that we actually submitted the job correctly 
