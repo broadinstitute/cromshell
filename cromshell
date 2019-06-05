@@ -1071,7 +1071,7 @@ function cleanup()
           invalidSubCommand cleanup STATUS ${OPTARG}
         fi
 
-        st=${OPTARG}
+        st="${st} ${OPTARG}"
         ;;
       *)
         invalidSubCommand cleanup flag ${OPTARG}
@@ -1086,19 +1086,40 @@ function cleanup()
   fi  
 
   # Get all states if we don't specify one:  
-  if [[ ${#st} -eq 0 ]] ; then   
+  if [[ ${#st} -eq 0 ]] ; then
     st=${TERMINAL_STATES}
   fi
 
   # Display the logo:
   turtle
-
-  echo  
-  echo "State(s) selected: ${st}"
   echo
 
-  getAnswerFromUser "Are you sure you want to CLEAR ALL RECORDS from these states: ${st}" 'Yes No' answer
-  
+  # Remove the lines:
+  local tmpFile=$( makeTemp )
+  local tmpFile_remove=$( makeTemp )
+
+  echo "I'm looking for records with the following states: ${st}"
+  echo
+  while read line ; do
+    for s in ${st} ; do
+      # Go through each line and filter by status, which is the last column:
+        lineStatus=$( echo $line | awk '{print $NF}' )
+        if [[ "${lineStatus}" == "${s}" ]] ; then
+          echo $line >> ${tmpFile_remove}
+          continue 2
+        fi
+    done
+    echo $line >> ${tmpFile}
+  done < ${CROMWELL_SUBMISSIONS_FILE}
+
+  echo "The following records are about to be removed:"
+  echo
+
+    cat ${tmpFile_remove}| column -t
+
+  echo
+  getAnswerFromUser "Are you sure you want to CLEAR the listed records? " 'Yes No' answer
+
   if [[ $( echo "${answer}" | tr A-Z a-z ) == "yes" ]] ; then
     echo "User answered 'Yes'."
     echo
@@ -1106,27 +1127,11 @@ function cleanup()
     #Backup the file:
     echo "Creating backup of records file:"
     cp -v ${CROMWELL_SUBMISSIONS_FILE} ${CROMWELL_SUBMISSIONS_FILE}.$(date +%Y%m%dT%H%M%S ).bak
-    echo
+  echo
 
-    # Remove the lines:
-    local tmpFile=$( makeTemp )
-    for s in ${st} ; do
-      echo -n "Removing records with state: ${s}"
-
-      # Go through each line and filter by status, which is the last column:
-      while read line ; do 
-        lineStatus=$( echo $line | awk '{print $NF}' )
-        if [[ "${lineStatus}" != "${s}" ]] ; then
-          echo $line
-        fi  
-      done < ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
-    
-      # Copy the temp file to the final file location for the next 
-      # iteration or for when we're done
-      cp ${tmpFile} ${CROMWELL_SUBMISSIONS_FILE}
-
-      echo -e '\t\tDONE!'
-    done 
+     # Copy the temp file to the final file location for the next
+     # iteration or for when we're done
+     cp ${tmpFile} ${CROMWELL_SUBMISSIONS_FILE}
 
     echo 'Your cromshell logs are now clean.'
     return 0
@@ -1135,6 +1140,7 @@ function cleanup()
     return 1
   fi
 }
+
 
 function assertDialogExists()
 {
