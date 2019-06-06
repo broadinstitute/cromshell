@@ -336,7 +336,7 @@ function extract_workflow_ids_from_args()
   else
     while [ $# -gt 0 ] ; do
       populateWorkflowIdAndServerUrl ${1}
-      WORKFLOW_ID_LIST="${WORKFLOW_ID_LIST} ${1}"
+      WORKFLOW_ID_LIST="${WORKFLOW_ID_LIST} ${WORKFLOW_ID}"
 
       #Get next argument in $1:
       shift
@@ -434,8 +434,8 @@ function populateWorkflowIdAndServerUrl()
 {
   local userSpecifiedId=$1
 
-  # If the user specified a negative number, get the nth last workflow:
-  if [[ $userSpecifiedId =~ ^-[[:digit:]]+$ ]]; then
+  # If the user specified relative workflow ID:
+  if [[ $(matchRelativeWorkflowId ${userSpecifiedId}) -eq 0 ]] ; then 
     local row=${userSpecifiedId#-}
     assertHavePreviouslySubmittedAJob
     WORKFLOW_ID=$(tail -n $row $CROMWELL_SUBMISSIONS_FILE | head -n 1 | awk '{print $3}' )
@@ -781,50 +781,48 @@ function slim-metadata()
 function execution-status-count() 
 {
   # Handle Arguments:
-  local OPTIND
   local doPretty=false
   local doExpandSubWorkflows=false
    
   local workflowIDs=""
 
-  while getopts ":px" opt ; do
-    case ${opt} in
-      p)
+  # Handling args this way to properly be able to detect negative workflow IDs and
+  # workflow IDs themselves.
+  # (getopt gets confused when you mix positional and flag args)
+  for arg in ${@} ; do
+    case ${arg} in
+      -p)
         doPretty=true
         ;;
-      x)
+      -x)
         doExpandSubWorkflows=true
         ;;
-      \?)
-        # This is an unexpected argument.
-        if [[ $(matchWorkflowId ${OPTARG}) -eq 0 ]] ; then 
+      -[0-9]*)
           # This is a workflow ID!  
           # Add it to the list:
-          workflowIDs="${workflowIDs} ${OPTARG}"
-        elif [[ $( matchRelativeWorkflowId "-${OPTARG}" ) -eq 0 ]] ; then
+          workflowIDs="${workflowIDs} ${arg}"
+          ;;
+      *)
+        if [[ $(matchWorkflowId ${arg}) -eq 0 ]] ; then
           # This is a workflow ID!  
           # Add it to the list:
-          # NOTE: for the relative match we need to add back in the leading `-`
-          workflowIDs="${workflowIDs} -${OPTARG}"
+          workflowIDs="${workflowIDs} ${arg}"
         else
-          # This is not a workflow ID!
-          # Throw an error!
-          invalidSubCommand execution-status-count flag ${opt}
+          # This is a flag missing an argument!
+          invalidSubCommand execution-status-count "missing flag for argument" ${arg}
         fi
-        ;;
-      :)
-        # This is a flag missing an argument!
-        invalidSubCommand execution-status-count "missing flag for argument" ${OPTARG}
         ;;
     esac
   done
   shift $((OPTIND-1))
 
+
   # Get our workflow IDs in shape:
   extract_workflow_ids_from_args ${workflowIDs}
 
-	# Go through each workflow ID and get the info we want:
-  for wfid in ${WORKFLOW_ID_LIST} ; do 
+  # Go through each workflow ID and get the info we want:
+  for wfid in $WORKFLOW_ID_LIST ; do 
+
 
     populateWorkflowIdAndServerUrl ${wfid}
     error "Using workflow-id == $WORKFLOW_ID"
@@ -833,14 +831,13 @@ function execution-status-count()
     assertCanCommunicateWithServer "${WORKFLOW_SERVER_URL}"
     local tempFile=$( makeTemp )
     if ! curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > "${tempFile}" ; then
-      error "Could not connect to Cromwell server." && return 9
+      error "Error: Could not connect to Cromwell server." 
     fi
 
     # Make sure the query succeeded:
     if [[ "$( < "${tempFile}" jq '.status' | sed -e 's#^"##g' -e 's#"$##g' )" == 'fail' ]] ; then
       reason=$( < "${tempFile}" jq '.message' | sed -e 's#^"##g' -e 's#"$##g' )
       error "Error: Query to cromwell server failed: ${reason}"
-      return 11
     fi
 
     if ${doPretty}; then
@@ -851,7 +848,6 @@ function execution-status-count()
       # {tasks:{status: count}}
       jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "${tempFile}"
       checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
-      return $?
     fi
   done
 }
