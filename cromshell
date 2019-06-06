@@ -816,7 +816,6 @@ function execution-status-count()
   done
   shift $((OPTIND-1))
 
-  printVar workflowIDs
 
   # Get our workflow IDs in shape:
   extract_workflow_ids_from_args ${workflowIDs}
@@ -824,7 +823,6 @@ function execution-status-count()
   # Go through each workflow ID and get the info we want:
   for wfid in $WORKFLOW_ID_LIST ; do 
 
-    printVar wfid
 
     populateWorkflowIdAndServerUrl ${wfid}
     error "Using workflow-id == $WORKFLOW_ID"
