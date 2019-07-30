@@ -737,7 +737,6 @@ function status()
 
   # Hold our status string here:
   local workflowStatus=$( cat $f | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
-  #echo "ST1 = ${workflowStatus}"
 
   if [[ $retVal -eq 1 ]]; then
     turtleDead
@@ -749,7 +748,7 @@ function status()
     local tmpMetadata=$( makeTemp )
 
     # Get execution status count and filter the metadata down:
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" | jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' > ${tmpExecutionStatusCount}
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "${2}/api/workflows/v1/${1}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" | jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' > ${tmpExecutionStatusCount}
     grep -vE '{|}' ${tmpExecutionStatusCount} > ${tmpMetadata}
 
     # Check for failures:
@@ -760,7 +759,6 @@ function status()
     else
       turtleDead
       workflowStatus="WILL_FAIL"
-      #echo "ST2 = ${workflowStatus}"
       f=${tmpExecutionStatusCount}
     fi
   else
@@ -772,8 +770,6 @@ function status()
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
   # Update ${CROMWELL_SUBMISSIONS_FILE}:
-  #echo "ST3 = ${workflowStatus}"
-  #echo "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g"
   sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g" ${CROMWELL_SUBMISSIONS_FILE}
 
   return $retVal
