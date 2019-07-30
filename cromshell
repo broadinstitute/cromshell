@@ -18,11 +18,15 @@ ISINTERACTIVESHELL=true
 shopt -s expand_aliases
 
 ################################################################################
+
 COLOR_NORM='\033[0m'
 COLOR_UNDERLINED='\033[1;4m'
 COLOR_FAILED='\033[1;37;41m'
+COLOR_WILL_FAIL='\033[1;31;47m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
+COLOR_ABORTED='\033[0;30;43m'
+
 TASK_COLOR_RUNNING='\033[0;34m'
 TASK_COLOR_SUCCEEDED='\033[0;32m'
 TASK_COLOR_FAILING='\033[0;33m'
@@ -731,18 +735,46 @@ function status()
   r=$?
   [[ $r -eq 0 ]] && retVal=1
 
+  # Hold our status string here:
+  local workflowStatus=$( cat $f | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
+  #echo "ST1 = ${workflowStatus}"
+
   if [[ $retVal -eq 1 ]]; then
     turtleDead
+  elif [[ "${workflowStatus}" == "Running" ]] ; then
+    # OK, status claims this workflow is running fine, but we need to check to see
+    # if there are any failed sub-processes.
+    # To do this, we use the `execution-status-count` logic with some filtering:
+    local tmpExecutionStatusCount=$( makeTemp )
+    local tmpMetadata=$( makeTemp )
+
+    # Get execution status count and filter the metadata down:
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" | jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' > ${tmpExecutionStatusCount}
+    grep -vE '{|}' ${tmpExecutionStatusCount} > ${tmpMetadata}
+
+    # Check for failures:
+    grep -q 'Fail' ${tmpMetadata}
+    if [[ $? -ne 0 ]] ; then
+      # We could not find 'Fail' in our metadata, so our original status is correct. 
+      turtle
+    else
+      turtleDead
+      workflowStatus="WILL_FAIL"
+      #echo "ST2 = ${workflowStatus}"
+      f=${tmpExecutionStatusCount}
+    fi
   else
     turtle
   fi
 
+  # Display status to user:
   cat $f | jq . 
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
   # Update ${CROMWELL_SUBMISSIONS_FILE}:
-  local st=$( cat $f | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
-  sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${st}#g" ${CROMWELL_SUBMISSIONS_FILE}
+  #echo "ST3 = ${workflowStatus}"
+  #echo "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g"
+  sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g" ${CROMWELL_SUBMISSIONS_FILE}
 
   return $retVal
 }
@@ -1024,10 +1056,20 @@ function list()
       r=$?
       [ $r -eq 0 ] && echo -e "${COLOR_UNDERLINED}${line}${COLOR_NORM}" && continue
 
+      # Check for jobs that WILL FAIL and color those lines:
+      echo "${line}" | grep -q 'WILL_FAIL' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_WILL_FAIL}${line}${COLOR_NORM}" && continue
+      
       # Check for failed jobs and color those lines:
       echo "${line}" | grep -q 'Failed' 
       r=$?
       [ $r -eq 0 ] && echo -e "${COLOR_FAILED}${line}${COLOR_NORM}" && continue
+
+      # Check for Aborted jobs and color those lines:
+      echo "${line}" | grep -q 'Aborted' 
+      r=$?
+      [ $r -eq 0 ] && echo -e "${COLOR_ABORTED}${line}${COLOR_NORM}" && continue
 
       # Check for successful jobs and color those lines:
       echo "${line}" | grep -q 'Succeeded' 
