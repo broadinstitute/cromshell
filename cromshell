@@ -404,8 +404,9 @@ function getAnswerFromUser()
 function assertCanCommunicateWithServer
 {
   # Make sure we can talk to the cromwell server:
-  serverName=$( echo ${1}| sed 's#.*://##g'| sed 's#:[0-9]*##g' )
-  $PING_CMD $serverName &> /dev/null
+	local f=$(makeTemp)
+  curl --connect-timeout $CURL_CONNECT_TIMEOUT --max-time $CURL_MAX_TIMEOUT -s ${1}/api/workflows/v1/backends > $f
+	grep -q 'supportedBackends' $f
   r=$?
   if [[ $r -ne 0 ]] ; then 
     turtleDead 
