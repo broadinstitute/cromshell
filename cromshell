@@ -736,7 +736,7 @@ function status()
   [[ $r -eq 0 ]] && retVal=1
 
   # Hold our status string here:
-  local workflowStatus=$( cat $f | jq . | grep status | sed -e 's#.*: ##g' | tr -d '",' )
+  local workflowStatus=$( cat $f | jq -r .status ) 
 
   if [[ $retVal -eq 1 ]]; then
     turtleDead
@@ -748,12 +748,15 @@ function status()
     local tmpMetadata=$( makeTemp )
 
     # Get execution status count and filter the metadata down:
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "${2}/api/workflows/v1/${1}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" | jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' > ${tmpExecutionStatusCount}
-    grep -vE '{|}' ${tmpExecutionStatusCount} > ${tmpMetadata}
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIMEOUT" --compressed -s "${2}/api/workflows/v1/${1}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > ${tmpMetadata}
+    cat ${tmpMetadata} | jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' > ${tmpExecutionStatusCount}
+
+    # Check for failure states:
+    cat ${tmpMetadata} | jq --exit-status '[ ..|.executionStatus? | values | . == "Failed" ] | any' >  /dev/null
+    r=$?
 
     # Check for failures:
-    grep -q 'Fail' ${tmpMetadata}
-    if [[ $? -ne 0 ]] ; then
+    if [[ $r -ne 0 ]] ; then
       # We could not find 'Fail' in our metadata, so our original status is correct. 
       turtle
     else
