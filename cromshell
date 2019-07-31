@@ -888,11 +888,11 @@ function pretty-execution-status()
   local -r workflowId=${1} metadataFile=${2} expandSubWorkflows=${3:-false}
   local -r workflowStatus=$(jq -r .status ${metadataFile})
   echo -e "${COLOR_UNDERLINED}${workflowId}\t${workflowStatus}${COLOR_NORM}"
-  printWorklowStatus ${metadataFile} "" ${expandSubWorkflows}
+  printWorkflowStatus ${metadataFile} "" ${expandSubWorkflows}
 }
 
 # Print a workflow (or sub-workflow) pretty-execution-status summary
-printWorklowStatus()
+printWorkflowStatus()
 {
   local -r metadataFile=${1} indent=${2:-""} expandSubWorkflows=${3}
   local -r -a tasks=($(jq -r '.calls | keys | .[]' ${metadataFile}))
@@ -907,7 +907,7 @@ printWorklowStatus()
         jq '.calls["'${subWorkflowName}'"]['${i}'].subWorkflowMetadata' ${metadataFile} > ${tmpSubWorkflowMetadataFile}
         checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
-        printWorklowStatus ${tmpSubWorkflowMetadataFile} "${indent}\t" ${expandSubWorkflows}
+        printWorkflowStatus ${tmpSubWorkflowMetadataFile} "${indent}\t" ${expandSubWorkflows}
       done
     else
       printTaskStatus ${task} ${metadataFile} ${indent}
