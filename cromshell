@@ -79,13 +79,8 @@ TERMINAL_STATES="Succeeded Failed Aborted"
 
 function turtle() 
 {
-  if [[ -z $1 ]]; then
-    eye="'"
-  else
-    eye="x"
-  fi
   error "                  __     "
-  error "       .,-;-;-,. /${eye}_\\    "
+  error "       .,-;-;-,. /'_\\    "
   error "     _/_/_/_|_\\_\\) /     "
   error "   '-<_><_><_><_>=/\\     "
   error "     \`/_/====/_/-'\\_\\    " 
