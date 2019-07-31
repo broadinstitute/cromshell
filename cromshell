@@ -1588,8 +1588,8 @@ function setupCromshell()
   echo
 
   # Get the server they need to connect to:
-  local choseServer=false
-  while ! $choseServer ; do
+  local chooseServer=false
+  while ! $chooseServer ; do
     echo "What is the URL of the Cromwell server you use to execute"
     echo "your jobs?"
 
@@ -1601,7 +1601,7 @@ function setupCromshell()
     getAnswerFromUser "Oh my!  It looks like your server is: ${url}$(echo $'\nIs this correct')" 'Yes No' answer
 
     if [[ $( echo "${answer}" | tr A-Z a-z ) == "yes" ]] ; then
-      choseServer=true
+      chooseServer=true
     else
       echo "Oh, I'm terribly sorry for that.  Let's try again!"
       echo
