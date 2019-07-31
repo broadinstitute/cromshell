@@ -114,7 +114,7 @@ function usage()
 {
   simpleUsage
   echo -e ""
-  echo -e "CROMWELL_URL=$CROMWELL_URL"
+  echo -e "CROMWELL_URL=${CROMWELL_URL}"
   echo -e ""
   echo -e "If no workflow-id is specified then the last submitted workflow-id is assumed."
   echo -e "Alternatively, negative numbers can be used to refer to previous workflows."
@@ -182,7 +182,7 @@ function usage()
 #Display a message to std error:
 function error() 
 {
-  echo -e "$1" 1>&2 
+  echo -e "${1}" 1>&2
 }
 
 # Make a better temp file that gets cleaned up on script exit:
@@ -191,7 +191,7 @@ function makeTemp()
 {
   local f
   f=$( mktemp )
-  TMPFILELIST="${TMPFILELIST} $f"
+  TMPFILELIST="${TMPFILELIST} ${f}"
   echo ${f}
 }
 
@@ -205,7 +205,7 @@ function cleanTempVars()
 SUBPROCESSLIST=''
 function trackSubProcess() 
 {
-  SUBPROCESSLIST="${SUBPROCESSLIST} $1"
+  SUBPROCESSLIST="${SUBPROCESSLIST} ${1}"
 }
 
 # Function to kill subprocesses created by this script.
@@ -230,7 +230,7 @@ trap at_exit EXIT
 # Print the name and value of a simple variable:
 function printVar()
 {
-  error "$1 = ${!1}"
+  error "${1} = ${!1}"
 }
 
 # Checks the bash built-in PIPESTATUS variable for any failures
@@ -249,7 +249,7 @@ function _checkPipeStatus()
       # If we were passed a description string for this error in the pipe, then we print it:
       let argIndex=$i+1
       description=${!argIndex}
-      [[ ${#description} -ne 0 ]] && error "$description"
+      [[ ${#description} -ne 0 ]] && error "${description}"
       hadFailure=true  
     fi
   done
@@ -268,7 +268,7 @@ function checkPrerequisites
   for c in ${@} ; do
     which ${c} &> /dev/null
     r=$?
-    [[ ${r} -ne 0 ]] && foundMissing=true && missing="${missing}$c "
+    [[ ${r} -ne 0 ]] && foundMissing=true && missing="${missing}${c} "
   done
 
   if ${foundMissing} ; then
@@ -285,8 +285,8 @@ function checkPrerequisites
 
 function assertRequiredFileIsNonEmpty()
 {
-  local fileName=$1
-  local fileDescription=$2
+  local fileName=${1}
+  local fileDescription=${2}
   if [[ -z ${fileName} ]]; then
     error "ERROR: ${fileDescription} must be specified."
   exit 6
@@ -305,8 +305,8 @@ function assertRequiredFileIsNonEmpty()
 
 function assertOptionalFileIsNonEmpty()
 {
-  local fileName=$1
-  local fileDescription=$2
+  local fileName=${1}
+  local fileDescription=${2}
   if [[ ! -z ${fileName} ]] ; then
     assertRequiredFileIsNonEmpty "${fileName}" "${fileDescription}"
   fi
@@ -339,7 +339,7 @@ function extract_workflow_ids_from_args()
       populateWorkflowIdAndServerUrl ${1}
       WORKFLOW_ID_LIST="${WORKFLOW_ID_LIST} ${WORKFLOW_ID}"
 
-      #Get next argument in $1:
+      #Get next argument in ${1}:
       shift
     done
   fi
@@ -371,14 +371,14 @@ function matchWorkflowId()
 
 function invalidSubCommand()
 {
-  error "${SCRIPTNAME} $1: invalid $2: $3"
+  error "${SCRIPTNAME} ${1}: invalid ${2}: ${3}"
   error ""
   if [[ ${#1} -eq 0 ]] ; then
     simpleUsage
   else
-    simpleUsage $1
+    simpleUsage ${1}
   fi
-  echo "Try \`$SCRIPTNAME -h' for more information."
+  echo "Try \`${SCRIPTNAME} -h' for more information."
   exit 3;
 }
 
@@ -411,7 +411,7 @@ function assertCanCommunicateWithServer
   r=$?
   if [[ ${r} -ne 0 ]] ; then
     turtleDead 
-    error "Error: Cannot communicate with Cromwell server: $serverName" 
+    error "Error: Cannot communicate with Cromwell server: ${serverName}"
     exit 4
   fi
 }
@@ -434,7 +434,7 @@ function populateLastWorkflowId()
 
 function populateWorkflowIdAndServerUrl()
 {
-  local userSpecifiedId=$1
+  local userSpecifiedId=${1}
 
   # If the user specified relative workflow ID:
   if [[ $(matchRelativeWorkflowId ${userSpecifiedId}) -eq 0 ]] ; then 
@@ -464,7 +464,7 @@ function populateWorkflowIdAndServerUrl()
 
   # Validate our workflow ID:
   if [[ $( matchWorkflowId ${WORKFLOW_ID} ) -ne 0 ]] ; then
-    if [[ -n "$userSpecifiedId" ]] ; then
+    if [[ -n "${userSpecifiedId}" ]] ; then
       error "Invalid workflow ID: ${1}"
       error "It is likely that there are not this many records in your cromshell file."
     else
@@ -482,7 +482,7 @@ function _turtleSpinner()
     return 1
   fi
 
-  local flagFile=$1
+  local flagFile=${1}
 
   # Let's be fancy and make turtles that are walking while we wait:
   local tmpTurtFile=$( makeTemp )
@@ -534,8 +534,8 @@ function _turtleSpinner()
 
 function waitOnSubmittedStatus() 
 {
-  local id=$1
-  local cromwellServerUrl=$2
+  local id=${1}
+  local cromwellServerUrl=${2}
 
   echo "Waiting on status to progress from 'Submitted' ..."
   echo
@@ -612,7 +612,7 @@ function waitOnSubmittedStatus()
       break
     fi
 
-    let nChecks=$nChecks+1
+    let nChecks=${nChecks}+1
   done
 
   # Restore cursor position:
@@ -724,7 +724,7 @@ function status()
 {
   local retVal=0
 
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   local f=$( makeTemp )
   curl -s ${2}/api/workflows/v1/${1}/status > ${f}
   [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
@@ -746,7 +746,7 @@ function status()
     local tmpMetadata=$( makeTemp )
 
     # Get execution status count and filter the metadata down:
-    curl --compressed -s "${2}/api/workflows/v1/${1}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > ${tmpMetadata}
+    curl --compressed -s "${2}/api/workflows/v1/${1}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS}" > ${tmpMetadata}
     cat ${tmpMetadata} | jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' > ${tmpExecutionStatusCount}
 
     # Check for failure states:
@@ -779,7 +779,7 @@ function status()
 # Get the logs of a Cromwell job UUID
 function logs() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   curl -s ${2}/api/workflows/v1/${1}/logs | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
@@ -789,7 +789,7 @@ function logs()
 # Get the metadata for a Cromwell job UUID
 function metadata() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   curl --compressed -s ${2}/api/workflows/v1/${1}/metadata?${CROMWELL_METADATA_PARAMETERS} | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
@@ -799,9 +799,9 @@ function metadata()
 # Get the metadata in condensed form for a Cromwell job UUID
 function slim-metadata() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
-  curl --compressed -s "${2}/api/workflows/v1/$1/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" | jq .
+  curl --compressed -s "${2}/api/workflows/v1/${1}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS}" | jq .
   checkPipeStatus "Could not connect to Cromwell server." "Could not parse JSON output from cromwell server."
   return $?
 }
@@ -854,12 +854,12 @@ function execution-status-count()
 
 
     populateWorkflowIdAndServerUrl ${wfid}
-    error "Using workflow-id == $WORKFLOW_ID"
-    error "Using workflow server URL == $WORKFLOW_SERVER_URL"
+    error "Using workflow-id == ${WORKFLOW_ID}"
+    error "Using workflow server URL == ${WORKFLOW_SERVER_URL}"
 
     assertCanCommunicateWithServer "${WORKFLOW_SERVER_URL}"
     local tempFile=$( makeTemp )
-    if ! curl --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?$CROMWELL_SLIM_METADATA_PARAMETERS" > "${tempFile}" ; then
+    if ! curl --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS}" > "${tempFile}" ; then
       error "Error: Could not connect to Cromwell server." 
     fi
 
@@ -1201,10 +1201,10 @@ function assertGsUtilExists()
 #     output
 function list-outputs() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
-  local id=$1
-  local cromwellServer=$2
+  local id=${1}
+  local cromwellServer=${2}
 
   local remoteFolder=$( metadata ${id} ${cromwellServer} 2>/dev/null | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
 
@@ -1232,10 +1232,10 @@ function list-outputs()
 # Get the root log folder from the cloud and put it in the metadata folder for this run
 function fetch-logs() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
-  local id=$1
-  local cromwellServer=$2
+  local id=${1}
+  local cromwellServer=${2}
 
   local remoteFolder=$( metadata ${id} ${cromwellServer} 2>/dev/null| grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
 
@@ -1266,10 +1266,10 @@ function fetch-logs()
 # Includes all logs and output files
 function fetch-all() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
-  local id=$1
-  local cromwellServer=$2
+  local id=${1}
+  local cromwellServer=${2}
 
   local remoteFolder=$( metadata ${id} ${cromwellServer} 2>/dev/null | grep "\"callRoot\":" | head -n1 | awk '{print $2}' | sed "s#\"\\(.*${id}\\).*#\\1#g" )
 
@@ -1291,13 +1291,13 @@ function fetch-all()
 function assertValidEmail() 
 {
   # Make sure the user gave us a good email address:
-  echo "$1" | grep -q  '@' 
+  echo "${1}" | grep -q  '@'
   r=$?
   if [[ ${r} -ne 0 ]] ; then
-    error "Error: invalid email address: $1"
+    error "Error: invalid email address: ${1}"
     error ""
     simpleUsage notify
-    echo "Try \`$SCRIPTNAME -h' for more information."
+    echo "Try \`${SCRIPTNAME} -h' for more information."
     exit 5
   fi
 }
@@ -1311,7 +1311,7 @@ function notify()
     error "Error: You must specify an email address to notify."
     error ""
     simpleUsage notify
-    echo "Try \`$SCRIPTNAME -h' for more information."
+    echo "Try \`${SCRIPTNAME} -h' for more information."
     exit 5
   fi
 
@@ -1319,7 +1319,7 @@ function notify()
   # Workflow IDs are standard UUIDs or negative numbers:
   if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ $( matchRelativeWorkflowId ${1} ) -eq 0 ]] ; then
     # Get the workflow ID:
-    populateWorkflowIdAndServerUrl $1
+    populateWorkflowIdAndServerUrl ${1}
     shift
   fi
 
@@ -1327,13 +1327,13 @@ function notify()
   hostServer="${HOSTNAME}"
 
   if [[ ! "${1}" =~ ^.*@.*  ]] ; then
-    hostServer=$1
+    hostServer=${1}
     shift
   fi
 
   # Make sure the user gave us a good email address:
-  assertValidEmail $1
-  email=$1
+  assertValidEmail ${1}
+  email=${1}
   shift
 
   # Make sure our workflow ID is populated:
@@ -1381,9 +1381,9 @@ function notify()
 # Helper function for the notify command that actually notifies the user:
 function _notifyHelper()
 {
-  local id=$1
-  local email=$2
-  local cromwellServer=$3
+  local id=${1}
+  local email=${2}
+  local cromwellServer=${3}
 
   assertCanCommunicateWithServer ${cromwellServer}
   local separator="=================================================="
@@ -1406,10 +1406,10 @@ function _notifyHelper()
 function runSubCommandOnWorkflowId()
 {
   # Get the workflow ID:
-  populateWorkflowIdAndServerUrl $1
+  populateWorkflowIdAndServerUrl ${1}
   shift
-  error "Using workflow-id == $WORKFLOW_ID"
-  error "Using workflow server URL == $WORKFLOW_SERVER_URL"
+  error "Using workflow-id == ${WORKFLOW_ID}"
+  error "Using workflow server URL == ${WORKFLOW_SERVER_URL}"
   ${SUB_COMMAND} ${WORKFLOW_ID} ${WORKFLOW_SERVER_URL}
   r=$?
   echo
@@ -1418,9 +1418,9 @@ function runSubCommandOnWorkflowId()
 
 function dialogAskUserIfUrlIsOK()
 {
-  local BACKTITLE=$1
-  local url=$2
-  local menuFile=$3
+  local BACKTITLE=${1}
+  local url=${2}
+  local menuFile=${3}
 
   # Dialog to validate that the user has entered the correct thing:
   dialog --clear --backtitle "${BACKTITLE}" --title "Cromwell URL Verification" \
@@ -1437,7 +1437,7 @@ Is this correct?" 10 75 2>${menuFile}
 function checkForUserQuitDialogEarly()
 {
   # If the user gets cold feet, let them go softly into the night.
-  if [[ $1 -ne 0 ]] ; then
+  if [[ ${1} -ne 0 ]] ; then
     clear 
     error "   User aborted setup."
     error ""
