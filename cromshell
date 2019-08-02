@@ -852,14 +852,15 @@ function execution-status-count()
   # Go through each workflow ID and get the info we want:
   for wfid in ${WORKFLOW_ID_LIST} ; do
 
-
     populateWorkflowIdAndServerUrl ${wfid}
     error "Using workflow-id == ${WORKFLOW_ID}"
     error "Using workflow server URL == ${WORKFLOW_SERVER_URL}"
 
     assertCanCommunicateWithServer "${WORKFLOW_SERVER_URL}"
     local tempFile=$( makeTemp )
-    if ! curl --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS}" > "${tempFile}" ; then
+    curl --compressed -s "${WORKFLOW_SERVER_URL}/api/workflows/v1/${WORKFLOW_ID}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS}" > "${tempFile}"
+    local r=$?
+    if [[ ${r} -ne 0 ]]  ; then
       error "Error: Could not connect to Cromwell server." 
     fi
 
@@ -892,7 +893,7 @@ function pretty-execution-status()
 }
 
 # Print a workflow (or sub-workflow) pretty-execution-status summary
-printWorkflowStatus()
+function printWorkflowStatus()
 {
   local -r metadataFile=${1} indent=${2:-""} expandSubWorkflows=${3}
   local -r -a tasks=($(jq -r '.calls | keys | .[]' ${metadataFile}))
@@ -956,7 +957,7 @@ function timing()
 # Cancel a running job.
 function abort() 
 {
-  assertCanCommunicateWithServer $2
+  assertCanCommunicateWithServer ${2}
   turtle
   response=$(curl -X POST --header "Content-Type: application/json" --header "Accept: application/json" "${2}/api/workflows/v1/${1}/abort")
   local r=$?
