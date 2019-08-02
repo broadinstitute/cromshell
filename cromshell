@@ -914,7 +914,7 @@ function printWorkflowStatus()
 
   for task in ${tasks[@]}; do
     if $(jq '.calls["'${task}'"][0] | has("subWorkflowMetadata")' ${metadataFile}) && ${expandSubWorkflows}; then
-      local -r subWorkflowName=${task}
+      local subWorkflowName=${task}
       echo -e "\tSubWorkflow ${subWorkflowName}"
 
       for i in $(seq 0 $(($(jq -r '.calls["'${subWorkflowName}'"] | length ' ${metadataFile}) - 1))); do
