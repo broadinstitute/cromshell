@@ -53,15 +53,10 @@ fi
 export CROMWELL_URL=${CROMWELL_URL:-"${CROMWELL_SERVER_FROM_FILE}"}
 FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
- CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&includeKey=status&includeKey=callRoot&expandSubWorkflows=true"
+CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&includeKey=status&includeKey=callRoot&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
-
-PING_CMD='ping -c1 -W1 -w10'
-if [[ $( uname ) == "Darwin" ]] ; then
-  PING_CMD='ping -c1 -W1000 -t10'
-fi
 
 alias curl='curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
 
