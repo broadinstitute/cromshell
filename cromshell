@@ -53,15 +53,10 @@ fi
 export CROMWELL_URL=${CROMWELL_URL:-"${CROMWELL_SERVER_FROM_FILE}"}
 FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
- CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&includeKey=status&includeKey=callRoot&expandSubWorkflows=true"
+CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&includeKey=status&includeKey=callRoot&expandSubWorkflows=true"
 
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
-
-PING_CMD='ping -c1 -W1 -w10'
-if [[ $( uname ) == "Darwin" ]] ; then
-  PING_CMD='ping -c1 -W1000 -t10'
-fi
 
 alias curl='curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
 
@@ -405,9 +400,9 @@ function getAnswerFromUser()
 function assertCanCommunicateWithServer
 {
   # Make sure we can talk to the cromwell server:
-	local f=$(makeTemp)
-  curl -s ${1}/api/workflows/v1/backends > ${f}
-	grep -q 'supportedBackends' ${f}
+  local f=$(makeTemp)
+  curl -s ${1}/api/workflows/v1/backends > ${f}  
+  grep -q 'supportedBackends' ${f}
   r=$?
   if [[ ${r} -ne 0 ]] ; then
     turtleDead 
@@ -664,13 +659,32 @@ function submit()
 
   assertRequiredFileIsNonEmpty "${wdl}" "WDL"
   assertRequiredFileIsNonEmpty "${json}" "Input JSON"
+
+  # At this point, we should validate our inputs if we can:
+  which womtool &> /dev/null
+  local r=$?
+  if [[ ${r} -eq 0 ]] ; then
+    echo -ne "Validating WDL and JSON before submission..."
+    local tmpValidationOutput=$( makeTemp )
+    womtool validate ${wdl} -i ${json} &> ${tmpValidationOutput}
+    if [[ $? -eq 0 ]] ; then
+      echo -e '\tWDL and JSON are valid.'
+    else
+      echo
+      echo
+      error "ERROR: WDL and JSON files do not validate:"  
+      cat ${tmpValidationOutput} 1>&2
+      exit 8
+    fi
+  fi
+
   assertOptionalFileIsNonEmpty "${optionsJson}" "Options JSON"
   assertOptionalFileIsNonEmpty "${dependenciesZip}" "Dependencies Zip"
 
   assertCanCommunicateWithServer ${CROMWELL_URL}
 
   local response=$(curl -s -F workflowSource=@${wdl}  ${2:+ -F workflowInputs=@${json}} ${3:+ -F workflowOptions=@${optionsJson}} ${4:+ -F workflowDependencies=@${dependenciesZip}} ${CROMWELL_URL}/api/workflows/v1)
-  local r=$?
+  r=$?
 
   # Check to make sure that we actually submitted the job correctly 
   # and the server ate it well:
