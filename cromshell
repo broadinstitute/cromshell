@@ -662,18 +662,18 @@ function submit()
 
   # At this point, we should validate our inputs if we can:
   which womtool &> /dev/null
-  r=$?
+  local r=$?
   if [[ ${r} -eq 0 ]] ; then
     echo -ne "Validating WDL and JSON before submission..."
-		local tmpValidationOutput=$( makeTemp )
+    local tmpValidationOutput=$( makeTemp )
     womtool validate ${wdl} -i ${json} &> ${tmpValidationOutput}
     if [[ $? -eq 0 ]] ; then
-      echo -e '\tSuccess!'
+      echo -e '\tWDL and JSON are valid.'
     else
-      echo -e '\tFailure!'
       echo
-      error "ERROR: WDL and JSON files do not validate:"	
-			cat ${tmpValidationOutput} 1>&2
+      echo
+      error "ERROR: WDL and JSON files do not validate:"  
+      cat ${tmpValidationOutput} 1>&2
       exit 8
     fi
   fi
@@ -684,7 +684,7 @@ function submit()
   assertCanCommunicateWithServer ${CROMWELL_URL}
 
   local response=$(curl -s -F workflowSource=@${wdl}  ${2:+ -F workflowInputs=@${json}} ${3:+ -F workflowOptions=@${optionsJson}} ${4:+ -F workflowDependencies=@${dependenciesZip}} ${CROMWELL_URL}/api/workflows/v1)
-  local r=$?
+  r=$?
 
   # Check to make sure that we actually submitted the job correctly 
   # and the server ate it well:
