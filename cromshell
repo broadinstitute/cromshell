@@ -405,9 +405,9 @@ function getAnswerFromUser()
 function assertCanCommunicateWithServer
 {
   # Make sure we can talk to the cromwell server:
-	local f=$(makeTemp)
-  curl -s ${1}/api/workflows/v1/backends > ${f}
-	grep -q 'supportedBackends' ${f}
+  local f=$(makeTemp)
+  curl -s ${1}/api/workflows/v1/backends > ${f}  
+  grep -q 'supportedBackends' ${f}
   r=$?
   if [[ ${r} -ne 0 ]] ; then
     turtleDead 
@@ -664,6 +664,25 @@ function submit()
 
   assertRequiredFileIsNonEmpty "${wdl}" "WDL"
   assertRequiredFileIsNonEmpty "${json}" "Input JSON"
+
+  # At this point, we should validate our inputs if we can:
+  which womtool &> /dev/null
+  r=$?
+  if [[ ${r} -eq 0 ]] ; then
+    echo -ne "Validating WDL and JSON before submission..."
+		local tmpValidationOutput=$( makeTemp )
+    womtool validate ${wdl} -i ${json} &> ${tmpValidationOutput}
+    if [[ $? -eq 0 ]] ; then
+      echo -e '\tSuccess!'
+    else
+      echo -e '\tFailure!'
+      echo
+      error "ERROR: WDL and JSON files do not validate:"	
+			cat ${tmpValidationOutput} 1>&2
+      exit 8
+    fi
+  fi
+
   assertOptionalFileIsNonEmpty "${optionsJson}" "Options JSON"
   assertOptionalFileIsNonEmpty "${dependenciesZip}" "Dependencies Zip"
 
