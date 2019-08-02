@@ -94,6 +94,12 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
  * Running `submit` will create a new folder in the `~/.cromshell/${CROMWELL_URL}/` directory named with the cromwell job id of the newly submitted job.  
  It will copy your wdl and json inputs into the folder for reproducibility.  
  * It keeps track of your most recently submitted jobs by storing their ids in `./cromshell/`  
- You may ommit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs, e.g. "-1" will track the last job, "-2" will track the one before that, and so on.
+ You may omit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs, e.g. "-1" will track the last job, "-2" will track the one before that, and so on.
  * You can override the default cromwell server by setting the environmental variable `CROMWELL_URL` to the appropriate URL.
  * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromwell status -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
+
+ ### Code Conventions:
+ Please try to follow these conventions when editing cromshell.
+ * Use double brackets for tests ( `[[ ... ]]` instead of `[]`)
+ * Use `{}` when doing dereferencing variables (`${VALUE}`,`${1}` instead of `$VALUE`,`$1`)
+ * Define functions with the `function` keyword (`function doThing()` instead of `doThing()`)
