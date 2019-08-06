@@ -144,8 +144,8 @@ task PassRunsLong {
      command <<<
          set -e
 
-				# Wait for 5 minutes:
-				sleep 300
+				# Wait for 6 minutes:
+				sleep 360
      >>>
 
     # ------------------------------------------------

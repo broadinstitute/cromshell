@@ -761,10 +761,15 @@ function status()
 
     # Get execution status count and filter the metadata down:
     curl --compressed -s "${2}/api/workflows/v1/${1}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS}" > ${tmpMetadata}
-    cat ${tmpMetadata} | jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' > ${tmpExecutionStatusCount}
+    
+    # Commented out due to limitations of jq 1.3 on some machines.  
+    # The following two lines are functionally equivalent:
+    #jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' ${tmpMetadata} > ${tmpExecutionStatusCount}
+    #jq '(.calls | to_entries[] | .key as $task_name | .value | group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add | to_entries[] | { ($task_name): {(.key): .value} })' ${tmpMetadata} | jq -s '. | add' > ${tmpExecutionStatusCount}
+    jq -s 'map(.calls | to_entries[] |  {(.key): .value | map(.executionStatus) | group_by(.) | map({(.[0]): length}) | add} ) | add' ${tmpMetadata} > ${tmpExecutionStatusCount} 
 
     # Check for failure states:
-    cat ${tmpMetadata} | jq --exit-status '[ ..|.executionStatus? | values | . == "Failed" ] | any' >  /dev/null
+    cat ${tmpMetadata} | grep -q 'Failed'
     r=$?
 
     # Check for failures:
@@ -774,6 +779,9 @@ function status()
     else
       turtleDead
       workflowStatus="WILL_FAIL"
+      local newTempFile=$(makeTemp)
+      jq ".status=\"${workflowStatus}\" | .ID=\"${1}\"" ${tmpExecutionStatusCount} > ${newTempFile}
+      cp ${newTempFile} ${tmpExecutionStatusCount}
       f=${tmpExecutionStatusCount}
     fi
   else
@@ -1402,12 +1410,17 @@ function _notifyHelper()
 
   assertCanCommunicateWithServer ${cromwellServer}
   local separator="=================================================="
+  local statusFile=$( makeTemp )
 
   while true ; do 
-    completionStatus=$( status ${id} ${cromwellServer} 2>/dev/null | grep "status" | sed -e 's#.*status":##g' | tr -d ' ",' )
-    echo ${completionStatus} | grep -qE "Succeeded|Failed|Aborted"
-    r=${PIPESTATUS[1]}
-    if [[ ${r} -eq 0 ]] ; then
+   
+    status ${id} ${cromwellServer} 2>/dev/null > ${statusFile}
+    completionStatus=$( jq -r '.status' ${statusFile} )
+
+    if [[ "${completionStatus}" == "Succeeded" ]] || \
+       [[ "${completionStatus}" == "Failed" ]] || \
+       [[ "${completionStatus}" == "Aborted" ]] || \
+       [[ "${completionStatus}" == "WILL_FAIL" ]] ; then
       workflowFile=$( grep '$id' ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $4}' ) 
       metaData=$( metadata ${id} ${cromwellServer} )
       echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email}
