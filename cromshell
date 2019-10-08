@@ -1386,19 +1386,29 @@ function notify()
     [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && error "$(cat ${tmpOut})" && exit 7
 
     # Spin off notification process on the server:
-    results=$( ssh ${hostServer} "~/${SCRIPTNAME} notify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" )
+    results=$( ssh ${hostServer} "~/${SCRIPTNAME} _rawNotify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" )
     [[ $? -ne 0 ]] && error "ERROR: Could not start notification daemon on ${hostServer}" && exit 8
 
     # Let the user know we've done our job:
     echo "Spun off thread on ${hostServer} - PID = $( echo "${results}" | grep "Spun off thread on PID" | sed 's#Spun off thread on PID ##g' )"
   else
-    error "Spinning off notification to ${email} thread for"
-    error "    workflow:             ${WORKFLOW_ID}" 
-    error "    from Cromwell server: ${WORKFLOW_SERVER_URL}"
-    error "..."
-    nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; _notifyHelper ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
-    echo "Spun off thread on PID $!"
+		_rawNotify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}
   fi
+}
+
+# Perform a raw notification without validating any input arguments.
+function _rawNotify() 
+{
+	local WORKFLOW_ID=$1
+	local email=$2
+	local WORKFLOW_SERVER_URL=$3
+
+	error "Spinning off notification thread to ${email} for"
+	error "    workflow:             ${WORKFLOW_ID}" 
+	error "    from Cromwell server: ${WORKFLOW_SERVER_URL}"
+	error "..."
+	nohup bash -c "source ${SCRIPTDIR}/${SCRIPTNAME}; _notifyHelper ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" &>/dev/null &
+	echo "Spun off thread on PID $!"
 }
 
 # Helper function for the notify command that actually notifies the user:
@@ -1706,6 +1716,10 @@ if ${ISINTERACTIVESHELL} ; then
     cleanup|submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
       # This is a good sub-command, so we do not need to do anything. 
       ;;
+		_rawNotify)
+			# This is a valid internal sub-command.  
+			# While it should never be called directly by the user, it is possible that this was called by another command in this script.
+			;;
     *)
       if [[ ${#SUB_COMMAND} -eq 0 ]]; then
         simpleUsage 
@@ -1722,14 +1736,27 @@ if ${ISINTERACTIVESHELL} ; then
   r=$?
   [[ ${r} -ne 0 ]] && exit 6
 
+	# Sanitize the displayed sub-command:
+	SUB_COMMAND_FOR_DISPLAY=${SUB_COMMAND}
+	case ${SUB_COMMAND} in
+		_rawNotify)
+			SUB_COMMAND_FOR_DISPLAY="notify"
+			;;
+	esac
+
   # Handle specific sub-command args and and call our sub-command:
-  error "Sub-Command: ${SUB_COMMAND}"
+  error "Sub-Command: ${SUB_COMMAND_FOR_DISPLAY}"
   case ${SUB_COMMAND} in 
     # These are the sub-commands that take arguments other than workflow IDs:
     cleanup|submit|list|notify|execution-status-count)
       ${SUB_COMMAND} $@
       rv=$?
       ;;
+		# These are internal sub-commands that take arguments that should not be modified:
+		_rawNotify)
+			${SUB_COMMAND} $@
+			rv=$?
+			;;
     # Handle sub-commands that only take workflow IDs:  
     *)
       extract_workflow_ids_from_args $@
