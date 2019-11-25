@@ -53,7 +53,7 @@ fi
 export CROMWELL_URL=${CROMWELL_URL:-"${CROMWELL_SERVER_FROM_FILE}"}
 FOLDER_URL=$( echo ${CROMWELL_URL} | sed -e 's#ht.*://##g' ) 
 CROMWELL_METADATA_PARAMETERS="excludeKey=submittedFiles&expandSubWorkflows=true"
-CROMWELL_SLIM_METADATA_PARAMETERS="includeKey=executionStatus&includeKey=backendStatus&includeKey=status&includeKey=callRoot&expandSubWorkflows=true"
+CROMWELL_SLIM_METADATA_PARAMETERS="${CROMWELL_SLIM_METADATA_PARAMETERS:-includeKey=executionStatus&includeKey=backendStatus&includeKey=status&includeKey=callRoot&expandSubWorkflows=true}"
 
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
