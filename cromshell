@@ -1241,7 +1241,7 @@ function list-outputs()
 
   # The -n flag just lists what would have happened if the copy occurred
   # we use this to our advantage to list the files we want:
-  gsutil rsync -rP -n -x '.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script|.*output' ${remoteFolder}/ ${tmpFolder}/. 2>&1 | \
+  gsutil rsync -rP -n -x '.*\.[Ll][oO][Gg]$|.*rc|.*stdout|.*stderr|.*script|.*output|.*gcs_delocalization\.sh|.*gcs_localization\.sh|.*gcs_transfer\.sh|.*cromwell_glob_control_file|.*glob-[a-fA-F0-9]*\.list' ${remoteFolder}/ ${tmpFolder}/. 2>&1 | \
     grep 'Would copy' | \
     sed 's#Would copy \(.*\) to .*#\1#g'
 
