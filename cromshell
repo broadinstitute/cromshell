@@ -22,7 +22,7 @@ shopt -s expand_aliases
 COLOR_NORM='\033[0m'
 COLOR_UNDERLINED='\033[1;4m'
 COLOR_FAILED='\033[1;37;41m'
-COLOR_WILL_FAIL='\033[1;31;47m'
+COLOR_DOOMED='\033[1;31;47m'
 COLOR_SUCCEEDED='\033[1;30;42m'
 COLOR_RUNNING='\033[0;30;46m'
 COLOR_ABORTED='\033[0;30;43m'
@@ -778,7 +778,7 @@ function status()
       turtle
     else
       turtleDead
-      workflowStatus="WILL_FAIL"
+      workflowStatus="DOOMED"
       local newTempFile=$(makeTemp)
       jq ".status=\"${workflowStatus}\" | .ID=\"${1}\"" ${tmpExecutionStatusCount} > ${newTempFile}
       cp ${newTempFile} ${tmpExecutionStatusCount}
@@ -1077,9 +1077,9 @@ function list()
       [[ ${r} -eq 0 ]] && echo -e "${COLOR_UNDERLINED}${line}${COLOR_NORM}" && continue
 
       # Check for jobs that WILL FAIL and color those lines:
-      echo "${line}" | grep -q 'WILL_FAIL' 
+      echo "${line}" | grep -q 'DOOMED' 
       r=$?
-      [[ ${r} -eq 0 ]] && echo -e "${COLOR_WILL_FAIL}${line}${COLOR_NORM}" && continue
+      [[ ${r} -eq 0 ]] && echo -e "${COLOR_DOOMED}${line}${COLOR_NORM}" && continue
       
       # Check for failed jobs and color those lines:
       echo "${line}" | grep -q 'Failed' 
@@ -1430,7 +1430,7 @@ function _notifyHelper()
     if [[ "${completionStatus}" == "Succeeded" ]] || \
        [[ "${completionStatus}" == "Failed" ]] || \
        [[ "${completionStatus}" == "Aborted" ]] || \
-       [[ "${completionStatus}" == "WILL_FAIL" ]] ; then
+       [[ "${completionStatus}" == "DOOMED" ]] ; then
       workflowFile=$( grep '$id' ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $4}' ) 
       metaData=$( metadata ${id} ${cromwellServer} )
       echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email}
