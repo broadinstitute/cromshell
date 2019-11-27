@@ -34,11 +34,26 @@ TASK_COLOR_FAILED='\033[0;31m'
 
 ################################################################################
 
+DOOMED_LOGO_b64gz="H4sIAOfW3l0AA6WUwXHEIAxF767i35yDQQUkTiWeYcvIgUPa2GbSwHaRSiIJAcL2zmTHeGKYj/QQ39qs625Axv+0vqyrabOB6J+mAkQv79TVIBNpGNGUs24kGbrKGV47Gz2uH1aArE5F5TcM1CKJtWURN8q7Tsi1wH54e5Roe0CDd01yf79/ZFoC8YrES10UvMuRlM4+FpuChoVkmt5s/WDW5+4Vln1KzMOn29cdZpgT2G5BRcKbK56nLEW7Pyt/SNVTklbtrpCqO2ih8O58ER73ObzzMz/uQDXGhZfyubZEudaf+GjZjJkGsoTmJ90xhmaUNiSoRVqubgsaA1SNSYc7HAIdUg2pzO1mgSO07/TyTyIHKhq0jsg9NXMiT3EU45kIEsn8J5wwo0SV/SQNZ5SSDf6gSQt1IncamfaMa1CYZ+KnJjixaFX1Gp2Xu2P2L5X0V+tlUSOlUeIOispu0FPiC0OZUIuZdxFWmeXi6u5k/1MvIkup6jZN3CXzZVplMitOf/Lm5/B8BgAA"
+
+################################################################################
+
 # Setup Cromshell config details:
 CROMSHELL_CONFIG_DIR=${HOME}/.cromshell
 mkdir -p ${CROMSHELL_CONFIG_DIR}
 CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
-[[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ]] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS" > ${CROMWELL_SUBMISSIONS_FILE}
+[[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ]] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS" > ${CROMWELL_SUBMISSIONS_FILE}
+
+# Update cromshell submissions file if it needs updating:
+grep -q 'ALIAS$' ${CROMWELL_SUBMISSIONS_FILE} 
+r=$?
+if [[ $r -ne 0 ]] ; then
+	echo "Upgrading cromshell config file..." 1>&2
+	cp ${CROMWELL_SUBMISSIONS_FILE} ${CROMSHELL_CONFIG_DIR}/tmp.tmptmp
+	echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS" > ${CROMWELL_SUBMISSIONS_FILE}
+	tail -n+2 ${CROMSHELL_CONFIG_DIR}/tmp.tmptmp >> ${CROMWELL_SUBMISSIONS_FILE}
+	rm ${CROMSHELL_CONFIG_DIR}/tmp.tmptmp
+fi
 
 # Find the CROMWELL Server:
 CROMWELL_SERVER_FILE=${CROMSHELL_CONFIG_DIR}/cromwell_server.config
@@ -71,6 +86,20 @@ OPTIONS=''
 TERMINAL_STATES="Succeeded Failed Aborted"
 
 ################################################################################
+
+function doomedLogo() 
+{
+	# Figure out which decoder to use:
+	base64 -D <<<"MQo=" &> /dev/null
+	r=$?
+	if [[ $r -eq 0 ]] ; then
+		base64 -D <<<"${DOOMED_LOGO_b64gz}" | gunzip
+	else
+		base64 -d <<<"${DOOMED_LOGO_b64gz}" | gunzip
+	fi | while read line ; do 
+		error "${COLOR_FAILED}${line}${COLOR_NORM}"
+	done
+}
 
 function turtle() 
 {
@@ -427,6 +456,42 @@ function populateLastWorkflowId()
   WORKFLOW_ID=$( tail -n1 ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $3}' )
 }
 
+function alias_workflow() 
+{
+	local alias_name=${2}
+
+	# Check that we have an alias and workflow defined:
+	if [[ ${#alias_name} -eq 0 ]] || [[ ${#2} -eq 0 ]] ; then
+		error "ERROR: Cannot process alias name."
+		error "       Please specify both a workflow ID and an alias."
+		return 1
+	fi
+
+	# Check if the alias already exists:
+	grep -q "${alias_name}" ${CROMWELL_SUBMISSIONS_FILE}
+	local r=$?
+	if [[ $r -eq 0 ]] ; then
+		error "ERROR: Alias already exists: ${alias_name}"
+		error "       Please choose another alias."
+		return 1
+	fi
+
+	# Get the workflow ID:
+	populateWorkflowIdAndServerUrl ${1}
+
+	error "Aliasing ${WORKFLOW_ID} -> ${alias_name}"
+	cp ${CROMWELL_SUBMISSIONS_FILE} ${CROMWELL_SUBMISSIONS_FILE}.bak
+	awk "BEGIN { FS=OFS=\"\t\" } { if (\$3 == \"${WORKFLOW_ID}\") { \$6=\"${alias_name}\"; print} else {print;} }" ${CROMWELL_SUBMISSIONS_FILE}.bak > ${CROMWELL_SUBMISSIONS_FILE} 
+	local r=$? 
+	if [[ $r -eq 0 ]] ; then
+		error "Done."
+	else 
+		error "Unable to create alias: ${WORKFLOW_ID} -> ${alias_name}"
+	fi
+
+	return $r
+}
+
 function populateWorkflowIdAndServerUrl()
 {
   local userSpecifiedId=${1}
@@ -437,10 +502,7 @@ function populateWorkflowIdAndServerUrl()
     assertHavePreviouslySubmittedAJob
     WORKFLOW_ID=$(tail -n ${row} ${CROMWELL_SUBMISSIONS_FILE} | head -n 1 | awk '{print $3}' )
     WORKFLOW_SERVER_URL=$(tail -n ${row} ${CROMWELL_SUBMISSIONS_FILE} | head -n 1 | awk '{print $2}' )
-  else
-    # If the user specified anything at this point, assume that it 
-    # is a workflow UUID:
-    if [[ -n "$userSpecifiedId" ]]; then
+	elif [[ $(matchWorkflowId ${userSpecifiedId}) -eq 0 ]] ; then
       WORKFLOW_ID=${userSpecifiedId}
       WORKFLOW_SERVER_URL=${CROMWELL_URL}
 
@@ -449,9 +511,14 @@ function populateWorkflowIdAndServerUrl()
       grep ${WORKFLOW_ID} ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
       r=$?
       [[ ${r} -eq 0 ]] && WORKFLOW_SERVER_URL=$( awk '{print $2}' ${tmpFile} )
-
-      # If the user specified nothing, get the last workflow ID:  
+ else
+    if [[ -n "$userSpecifiedId" ]]; then
+			# The user specified somethign, but it's not a relative ID or a proper id.
+			# It must be an alias.
+			WORKFLOW_ID=$(grep "${userSpecifiedId}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
+			WORKFLOW_SERVER_URL=$(grep "${userSpecifiedId}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
     else
+      # If the user specified nothing, get the last workflow ID:  
       populateLastWorkflowId
       WORKFLOW_SERVER_URL=$(tail -n1 ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $2}' )
     fi
@@ -777,7 +844,7 @@ function status()
       # We could not find 'Fail' in our metadata, so our original status is correct. 
       turtle
     else
-      turtleDead
+			doomedLogo
       workflowStatus="DOOMED"
       local newTempFile=$(makeTemp)
       jq ".status=\"${workflowStatus}\" | .ID=\"${1}\"" ${tmpExecutionStatusCount} > ${newTempFile}
@@ -793,7 +860,9 @@ function status()
   checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
   # Update ${CROMWELL_SUBMISSIONS_FILE}:
-  sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g" ${CROMWELL_SUBMISSIONS_FILE}
+	cp ${CROMWELL_SUBMISSIONS_FILE} ${CROMWELL_SUBMISSIONS_FILE}.bak
+	awk "BEGIN { FS=OFS=\"\t\" } { if ((\$3 == \"${1}\") && (\$2 == \"${2}\")) { \$5=\"${workflowStatus}\"; }; print }" ${CROMWELL_SUBMISSIONS_FILE}.bak > ${CROMWELL_SUBMISSIONS_FILE}
+  #sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g" ${CROMWELL_SUBMISSIONS_FILE}
 
   return ${retVal}
 }
@@ -1713,7 +1782,7 @@ if ${ISINTERACTIVESHELL} ; then
 
   # Validate our sub-command:
   case ${SUB_COMMAND} in
-    cleanup|submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs)
+    cleanup|submit|status|logs|execution-status-count|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs|alias)
       # This is a good sub-command, so we do not need to do anything. 
       ;;
 		_rawNotify)
@@ -1742,13 +1811,16 @@ if ${ISINTERACTIVESHELL} ; then
 		_rawNotify)
 			SUB_COMMAND_FOR_DISPLAY="notify"
 			;;
+		alias)
+			SUB_COMMAND="alias_workflow"
+			;;
 	esac
 
   # Handle specific sub-command args and and call our sub-command:
   error "Sub-Command: ${SUB_COMMAND_FOR_DISPLAY}"
   case ${SUB_COMMAND} in 
     # These are the sub-commands that take arguments other than workflow IDs:
-    cleanup|submit|list|notify|execution-status-count)
+    cleanup|submit|list|notify|execution-status-count|alias_workflow)
       ${SUB_COMMAND} $@
       rv=$?
       ;;
