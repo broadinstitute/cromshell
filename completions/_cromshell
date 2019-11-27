@@ -1,0 +1,134 @@
+#compdef _cromshell cromshell
+
+function _cromshell {
+    local line
+
+    _arguments -C \
+        "-h[Show help information]" \
+        "--h[Show help information]" \
+        "-T[Network Timeout]:timeout:()" \
+        "1: :((
+               submit\:'Submit a new workflow'
+               abort\:'Abort a running workflow'
+               alias\:'Assign an alias to a workflow'
+               status\:'Check the status of a workflow'
+               metadata\:'Get the full metadata of a workflow.'
+               slim-metadata\:'Get a subset of the metadata from a workflow.'
+               execution-status-count\:'Get the summarized status of all jobs in the workflow.'
+               timing\:'Open the timing diagram in a web browser'
+               logs\:'List the log files produced by a workflow.'
+               fetch-logs\:'Download all logs produced by a workflow.'
+               list-outputs\:'List all output files produced by a workflow.'
+               fetch-all\:'Download all output files produced by a workflow.'
+               notify\:'Get email notification on job completion'
+               list\:'Display a list jobs submitted through cromshell'
+               cleanup\:'Clean up local cached list'
+             ))" \
+        "*::arg:->args"
+
+    case $line[1] in
+        submit)
+           _submit
+        ;;
+        alias)
+          _alias
+        ;;
+        abort|status|metadata|slim-metadata|timing|logs|fetch-logs|list-outputs|fetch-all)
+          _id_list_function
+        ;;
+        list)
+          _list
+        ;;
+        cleanup)
+          _cleanup
+        ;;
+        execution-status-count)
+          _execution_status_count
+        ;;
+        notify)
+          _notify
+        ;;
+    esac
+}
+
+function _workflow_ids {
+   local -a ids=($( cat ~/.cromshell/all.workflow.database.tsv | tail -n+2 | cut -f3 ))
+   _describe -t ids 'workflow ids' ids
+}
+
+
+function _workflow_aliases {
+    local -a aliases=( $(cat ~/.cromshell/all.workflow.database.tsv | tail -n+2 | cut -f6 ))
+      _describe -t aliases 'workflow aliases' aliases
+}
+
+function _generate_workflow_numbers {
+    local END=$( wc -l  ~/.cromshell/all.workflow.database.tsv | awk '{print $1}' )
+    for ((i=1;i<END;i++)); do
+        echo "-$i"
+    done
+}
+
+function _workflow_numbers {
+    local -a numbers=( $(_generate_workflow_numbers) )
+    _describe -t numbers 'workflow numbers' numbers
+}
+
+function _submit {
+     _arguments \
+       "-w[wait for the workflow to start]" \
+       '1:wdl:_files -g ""*.wdl' \
+       '2:input_json:_files -g "*.json"' \
+       '3::options_json:_files -g "*.json"' \
+       "::included_wdl_zip:_files"
+ }
+
+function _workflow_references {
+   _alternative \
+     'ids:ids:_workflow_ids' \
+     'aliases:aliases:_workflow_aliases' \
+     'numbers:numbers:_workflow_numbers'
+}
+
+function _workflow_ids_and_aliases {
+   _alternative \
+     'ids:ids:_workflow_ids' \
+     'aliases:aliases:_workflow_aliases'
+}
+
+function _id_list_function {
+    _arguments \
+        '*:workflow:_workflow_references'
+}
+
+function _alias {
+    _arguments \
+      "::workflow:_workflow_ids_and_aliases" \
+      ":alias:()"
+}
+
+function _list {
+    _arguments \
+      "-c[Color the output by completion status]" \
+      "-u[Check status of all jobs]"
+}
+
+function _cleanup {
+    _arguments \
+      "-s[Remove jobs with the given status only]:status:( Succeeded Failed Aborted)"
+}
+
+function _execution_status_count {
+    _arguments \
+      "-p[Print a pretty summary instead of JSON]" \
+      "-x[Expand subworkflows]" \
+      "*:workflow:_workflow_references"
+}
+
+function _notify {
+    _arguments \
+      "::workflow:_workflow_references" \
+      "::daemon_server:_hosts" \
+      ":email:_email_addresses" \
+      ":comwell_server:_urls"
+}
