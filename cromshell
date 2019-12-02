@@ -468,7 +468,7 @@ function alias_workflow()
 	fi
 
 	# Check if the alias already exists:
-	grep -q "${alias_name}" ${CROMWELL_SUBMISSIONS_FILE}
+	awk '{print $6}' ${CROMWELL_SUBMISSIONS_FILE} | grep -v '^[ \t]*$' | grep -q "^${alias_name}$"
 	local r=$?
 	if [[ $r -eq 0 ]] ; then
 		error "ERROR: Alias already exists: ${alias_name}"
@@ -515,8 +515,8 @@ function populateWorkflowIdAndServerUrl()
     if [[ -n "$userSpecifiedId" ]]; then
 			# The user specified somethign, but it's not a relative ID or a proper id.
 			# It must be an alias.
-			WORKFLOW_ID=$(grep "${userSpecifiedId}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
-			WORKFLOW_SERVER_URL=$(grep "${userSpecifiedId}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
+			WORKFLOW_ID=$(grep "\\t${userSpecifiedId}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
+			WORKFLOW_SERVER_URL=$(grep "\\t${userSpecifiedId}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
     else
       # If the user specified nothing, get the last workflow ID:  
       populateLastWorkflowId
