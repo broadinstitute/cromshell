@@ -1,0 +1,3 @@
+{
+  "GpuCheck.docker": "jonnsmith/lrma_alignment_toolbox:latest"
+}
