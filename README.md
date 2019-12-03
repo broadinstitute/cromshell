@@ -50,6 +50,9 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
      * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
    * `abort` *`[workflow-id] [[workflow-id]...]`*                   
      * Abort a running workflow.
+   #### Workflow information:
+   * `alias` *`<workflow-id>` `<alias_name>`* 
+     * Label the given workflow ID with the given alias_name.  Aliases can be used in place of workflow IDs to reference jobs.
    #### Query workflow status:
    * `status` *`[workflow-id] [[workflow-id]...]`*                   
      * Check the status of a workflow.
