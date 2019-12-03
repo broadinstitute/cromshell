@@ -164,6 +164,12 @@ function usage()
   echo -e ""
   echo -e "   abort [workflow-id] [[workflow-id]...]                            Abort a running workflow."
   echo -e
+  echo -e "  Workflow information:"
+  echo -e
+  echo -e "   alias workflow-id alias                                           Label the given workflow ID with the given alias."
+  echo -e "                                                                     Aliases can be used in place of workflow IDs to reference"
+  echo -e "                                                                     jobs."
+  echo -e
   echo -e "  Query workflow status:"
   echo -e "   status [workflow-id] [[workflow-id]...]                           Check the status of a workflow."
   echo -e "   metadata [workflow-id] [[workflow-id]...]                         Get the full metadata of a workflow."
