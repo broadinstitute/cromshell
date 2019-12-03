@@ -8,7 +8,7 @@ SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
 MAXARGS=99
-PREREQUISITES="curl jq mail column tput rev"
+PREREQUISITES="curl jq mail column tput rev base64 gunzip"
 
 # Determine if this shell is interactive:
 ISINTERACTIVESHELL=true
@@ -461,7 +461,7 @@ function alias_workflow()
 	local alias_name=${2}
 
 	# Check that we have an alias and workflow defined:
-	if [[ ${#alias_name} -eq 0 ]] || [[ ${#2} -eq 0 ]] ; then
+	if [[ ${#alias_name} -eq 0 ]] || [[ ${#1} -eq 0 ]] ; then
 		error "ERROR: Cannot process alias name."
 		error "       Please specify both a workflow ID and an alias."
 		return 1
@@ -513,7 +513,7 @@ function populateWorkflowIdAndServerUrl()
       [[ ${r} -eq 0 ]] && WORKFLOW_SERVER_URL=$( awk '{print $2}' ${tmpFile} )
  else
     if [[ -n "$userSpecifiedId" ]]; then
-			# The user specified somethign, but it's not a relative ID or a proper id.
+			# The user specified something, but it's not a relative ID or a proper id.
 			# It must be an alias.
 			WORKFLOW_ID=$(grep "\\t${userSpecifiedId}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
 			WORKFLOW_SERVER_URL=$(grep "\\t${userSpecifiedId}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
