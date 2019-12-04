@@ -842,7 +842,7 @@ function status()
     jq -s 'map(.calls | to_entries[] |  {(.key): .value | map(.executionStatus) | group_by(.) | map({(.[0]): length}) | add} ) | add' ${tmpMetadata} > ${tmpExecutionStatusCount} 
 
     # Check for failure states:
-    cat ${tmpMetadata} | grep -q 'Failed'
+    cat ${tmpExecutionStatusCount} | grep -q 'Failed'
     r=$?
 
     # Check for failures:
