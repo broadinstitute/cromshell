@@ -834,12 +834,8 @@ function status()
 
     # Get execution status count and filter the metadata down:
     curl --compressed -s "${2}/api/workflows/v1/${1}/metadata?${CROMWELL_SLIM_METADATA_PARAMETERS}" > ${tmpMetadata}
-    
-    # Commented out due to limitations of jq 1.3 on some machines.  
-    # The following two lines are functionally equivalent:
-    #jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' ${tmpMetadata} > ${tmpExecutionStatusCount}
-    #jq '(.calls | to_entries[] | .key as $task_name | .value | group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add | to_entries[] | { ($task_name): {(.key): .value} })' ${tmpMetadata} | jq -s '. | add' > ${tmpExecutionStatusCount}
-    jq -s 'map(.calls | to_entries[] |  {(.key): .value | map(.executionStatus) | group_by(.) | map({(.[0]): length}) | add} ) | add' ${tmpMetadata} > ${tmpExecutionStatusCount} 
+
+    jq '.. | .calls? | values | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' ${tmpMetadata} > ${tmpExecutionStatusCount} 
 
     # Check for failure states:
     cat ${tmpExecutionStatusCount} | grep -q 'Failed'
@@ -973,7 +969,7 @@ function execution-status-count()
     else
       # Make it json for a computer:
       # {tasks:{status: count}}
-      jq '.calls | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "${tempFile}"
+      jq '.. | .calls? | values | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "${tempFile}"
       checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
     fi
   done
