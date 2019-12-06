@@ -32,7 +32,7 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 
 ### Supported Flags:
   * `-t` `TIMEOUT`
-	  * Set the curl connect timeout to `TIMEOUT` seconds.
+    * Set the curl connect timeout to `TIMEOUT` seconds.
     * Also sets the curl max timeout to `2*TIMEOUT` seconds.
     * `TIMEOUT` must be an integer.
 
@@ -41,37 +41,43 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
   
    ####  Start/Stop workflows
    * `submit` `[-w]` *`<wdl>`* *`<inputs_json>`* `[options_json]` `[included_wdl_zip_file]`
-     * Submit a new workflow
+     * Submit a new workflow.
+     * Will automatically validate the WDL and JSON file if `womtool` is in your path.
+       * To add `womtool` to your path, install `cromwell` with brew:
+         * `brew install cromwell`
      * *`-w`*                     Wait for workflow to transition from 'Submitted' to some other status
                                   before ${SCRIPTNAME} exits
      * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
    * `abort` *`[workflow-id] [[workflow-id]...]`*                   
-     * Abort a running workflow
+     * Abort a running workflow.
+   #### Workflow information:
+   * `alias` *`<workflow-id>` `<alias_name>`* 
+     * Label the given workflow ID with the given alias_name.  Aliases can be used in place of workflow IDs to reference jobs.
    #### Query workflow status:
    * `status` *`[workflow-id] [[workflow-id]...]`*                   
-     * Check the status of a workflow
+     * Check the status of a workflow.
    * `metadata` *`[workflow-id] [[workflow-id]...]`*                
-     * Get the full metadata of a workflow
+     * Get the full metadata of a workflow.
    * `slim-metadata` *`[workflow-id] [[workflow-id]...]`*           
-     * Get a subset of the metadata from a workflow
+     * Get a subset of the metadata from a workflow.
    * `execution-status-count` *`[-p] [-x] [workflow-id] [[workflow-id]...]`*   
-     * Get the summarized status of all jobs in the workflow
+     * Get the summarized status of all jobs in the workflow.
      * `-p` prints a pretty summary of the execution status instead of JSON
      * `-x` expands sub-workflows for more detailed summarization
    * `timing` *`[workflow-id] [[workflow-id]...]`*                  
-     * Open the timing diagram in a browser
+     * Open the timing diagram in a browser.
   
    #### Logs
    * `logs` *`[workflow-id] [[workflow-id]...]`*                     
-     * List the log files produced by a workflow
+     * List the log files produced by a workflow.
    * `fetch-logs` *`[workflow-id] [[workflow-id]...]`*               
-     * Download all logs produced by a workflow
+     * Download all logs produced by a workflow.
   
    #### Job Outputs
    * `list-outputs` *`[workflow-id] [[workflow-id]...]`*           
-     *  List all output files produced by a workflow
+     *  List all output files produced by a workflow.
    * `fetch-all` *`[workflow-id] [[workflow-id]...]`*             
-     * Download all output files produced by a workflow
+     * Download all output files produced by a workflow.
    
    ####  Get email notification on job completion
    * `notify` *`[workflow-id]` `[daemon-server]` `email` `[cromwell-server]`*
