@@ -313,6 +313,17 @@ function checkPrerequisites
   return 0
 }
 
+function checkJQVersion() {
+ local currentVersion="$( jq --version )"
+ local requiredVersion="jq-1.5"
+ if [ "$(printf '%s\n' "$requiredVersion" "$currentVersion" | sort -V | head -n1)" = "$requiredVersion" ]; then
+       return 0
+ else
+       error "ERROR: jq version must be at least ${requiredVersion}, you have ${currentVersion}."
+       return 1
+ fi
+}
+
 function assertRequiredFileIsNonEmpty()
 {
   local fileName=${1}
@@ -1804,6 +1815,10 @@ if ${ISINTERACTIVESHELL} ; then
   # Now that we have checked for help arguments, we can
   # make sure we have all the required commands:
   checkPrerequisites ${PREREQUISITES}
+  r=$?
+  [[ ${r} -ne 0 ]] && exit 6
+
+  checkJQVersion
   r=$?
   [[ ${r} -ne 0 ]] && exit 6
 
