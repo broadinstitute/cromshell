@@ -314,6 +314,7 @@ function checkPrerequisites
 }
 
 function checkJQVersion() {
+ #With thanks to https://unix.stackexchange.com/a/285928/167681
  local currentVersion="$( jq --version )"
  local requiredVersion="jq-1.5"
  if [ "$(printf '%s\n' "$requiredVersion" "$currentVersion" | sort -V | head -n1)" = "$requiredVersion" ]; then
