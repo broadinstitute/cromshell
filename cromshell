@@ -1124,16 +1124,16 @@ function list()
     tmpFile=$( makeTemp )
     cp ${CROMWELL_SUBMISSIONS_FILE} ${tmpFile}
 
-    UNREACHABLE_SERVER=""
-    REACHABLE_SERVER=""
+    local unreachable_servers=""
+    local reachable_servers=""
     while read line ; do
       id=$( echo "$line" | awk '{print $3}' )
       # Only update if the ID field is, in fact, a valid ID:
       if [[ $(matchWorkflowId ${id}) -eq 0 ]] ; then
         srv=$( echo "$line" | awk '{print $2}' )
-        if echo $UNREACHABLE_SERVER | grep -q $srv; then
+        if echo ${unreachable_servers} | grep -q ${srv}; then
           continue # we already know that server is unreachable
-        elif echo $REACHABLE_SERVER | grep -q $srv; then
+        elif echo ${reachable_servers} | grep -q ${srv}; then
           # we know that server should be reachable, practically speaking during this update operation
           runSt=$( echo "$line" | awk '{print $5}' )
 
@@ -1142,7 +1142,7 @@ function list()
             status ${id} ${srv} &> /dev/null
           fi
         elif [[ $(curl -m 1 -s ${srv}) ]]; then
-          REACHABLE_SERVER+=" $srv"
+          reachable_servers+=" ${srv}"
           
           runSt=$( echo "$line" | awk '{print $5}' )
 
@@ -1151,7 +1151,7 @@ function list()
             status ${id} ${srv} &> /dev/null
           fi
         else
-          UNREACHABLE_SERVER+=" $srv"
+          unreachable_servers+=" ${srv}"
         fi
       fi
     done < ${tmpFile}
@@ -1163,8 +1163,10 @@ function list()
     # Restore cursor position:
     tput rc
   fi
-  pretty_ugly=$(echo $UNREACHABLE_SERVER | sed 's/ /\n/g')
-  error "The following cromwell servers cannot be reached, hence skipped\n${pretty_ugly}\n"
+  if [[ ! -z ${UNREACHABLE_SERVER} ]]; then
+    local pretty_ugly=$(echo ${UNREACHABLE_SERVER} | sed 's/ /\n/g')
+    error "The following cromwell servers cannot be reached and were skipped\n${pretty_ugly}\n"
+  fi
 
   # If we have to colorize the output, we do so:
   if ${doColor} ; then
