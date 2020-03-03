@@ -476,6 +476,11 @@ function populateLastWorkflowId()
   WORKFLOW_ID=$( tail -n1 ${CROMWELL_SUBMISSIONS_FILE} | awk '{print $3}' )
 }
 
+function aliasExists(){
+  alias_name=${1}
+  grep -q "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE}
+}
+
 function alias_workflow() 
 {
   local alias_name=${2}
@@ -491,11 +496,8 @@ function alias_workflow()
     error "Alias \"${alias_name}\" is invalid, it may not start with a dash or contain whitespace"
     return 1
   fi
-
-  # Check if the alias already exists:
-  awk '{print $6}' ${CROMWELL_SUBMISSIONS_FILE} | grep -v '^[ \t]*$' | grep -q "^${alias_name}$"
-  local r=$?
-  if [[ $r -eq 0 ]] ; then
+  
+  if aliasExists ${alias_name} ; then
     error "ERROR: Alias already exists: ${alias_name}"
     error "       Please choose another alias."
     return 1
@@ -515,6 +517,17 @@ function alias_workflow()
   fi
 
   return $r
+}
+
+function populateWorkflowIdAndServerFromAlias()
+{
+    local alias_name=${1}
+    WORKFLOW_ID=$(grep "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
+    WORKFLOW_SERVER_URL=$(grep "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
+    if [[ -z ${WORKFLOW_ID} ]]; then
+      error "Invalid alias: ${WORKFLOW_ID}"
+      exit 5
+    fi
 }
 
 function populateWorkflowIdAndServerUrl()
@@ -538,10 +551,7 @@ function populateWorkflowIdAndServerUrl()
       [[ ${r} -eq 0 ]] && WORKFLOW_SERVER_URL=$( awk '{print $2}' ${tmpFile} )
  else
     if [[ -n "$userSpecifiedId" ]]; then
-      # The user specified something, but it's not a relative ID or a proper id.
-      # It must be an alias.
-      WORKFLOW_ID=$(grep "\\t${userSpecifiedId}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
-      WORKFLOW_SERVER_URL=$(grep "\\t${userSpecifiedId}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
+      populateWorkflowIdAndServerFromAlias ${userSpecifiedId}
     else
       # If the user specified nothing, get the last workflow ID:  
       populateLastWorkflowId
@@ -947,6 +957,9 @@ function execution-status-count()
         if [[ $(matchWorkflowId ${arg}) -eq 0 ]] ; then
           # This is a workflow ID!  
           # Add it to the list:
+          workflowIDs="${workflowIDs} ${arg}"
+        elif aliasExists ${arg} ; then
+          #This is an alias, add it to the list
           workflowIDs="${workflowIDs} ${arg}"
         else
           # This is a flag missing an argument!
@@ -1452,7 +1465,7 @@ function notify()
 
   # Is the next argument our workflow ID?
   # Workflow IDs are standard UUIDs or negative numbers:
-  if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ $( matchRelativeWorkflowId ${1} ) -eq 0 ]] ; then
+  if [[ $(matchWorkflowId ${1}) -eq 0 ]] || [[ $( matchRelativeWorkflowId ${1} ) -eq 0 ]] || aliasExists ${1} ; then
     # Get the workflow ID:
     populateWorkflowIdAndServerUrl ${1}
     shift
