@@ -487,6 +487,11 @@ function alias_workflow()
     return 1
   fi
 
+  if [[ ${alias_name} =~ ^-.* || ${alias_name} =~ [[:space:]]+ ]]; then
+    error "Alias \"${alias_name}\" is invalid, it may not start with a dash or contain whitespace"
+    return 1
+  fi
+
   # Check if the alias already exists:
   awk '{print $6}' ${CROMWELL_SUBMISSIONS_FILE} | grep -v '^[ \t]*$' | grep -q "^${alias_name}$"
   local r=$?
