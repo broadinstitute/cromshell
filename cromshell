@@ -1053,8 +1053,14 @@ function printTaskStatus()
   else
     taskStatus=${TASK_COLOR_FAILED}
   fi
+  echo -e "${taskStatus}${indent}\t${task}\t${shardsRunning:-0} Running, ${shardsDone:-0} Done, ${shardsRetried:-0} Preempted, ${shardsFailed:-0} Failed${COLOR_NORM}"
 
-  echo -e "${taskStatus}${indent}\t${task}\t${shardsRunning:-0} Running, ${shardsDone:-0} Done, ${shardsRetried:-0} Preempted ${shardsFailed:-0} Failed${COLOR_NORM}"
+  tmpFailedShardsFile=$(makeTemp)
+  if [[ 0 -ne shardsFailed ]]; then
+    jq -r '.calls["'${task}'"] | group_by(.executionStatus) | map({status: .[0].executionStatus, idx: .[].shardIndex}) | map(select(.status=="Failed")) | map(.idx)' ${metadataFile} > ${tmpFailedShardsFile}
+    failedShards=$(tr '\n' ' ' < ${tmpFailedShardsFile} | sed -E 's/\[( )+//' | sed -E 's/( )+\]//')
+    echo -e "${taskStatus}${indent}\tFailed shards: ${failedShards}${COLOR_NORM}"
+  fi
 }
 
 # Bring up a browser window to view timing information on the job.
