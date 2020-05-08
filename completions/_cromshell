@@ -42,7 +42,7 @@ function _cromshell {
         cleanup)
           _cleanup
         ;;
-        execution-status-count)
+        execution-status-count|counts)
           _execution_status_count
         ;;
         notify)
