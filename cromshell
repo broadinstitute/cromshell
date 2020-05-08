@@ -525,7 +525,7 @@ function populateWorkflowIdAndServerFromAlias()
     WORKFLOW_ID=$(grep "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
     WORKFLOW_SERVER_URL=$(grep "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
     if [[ -z ${WORKFLOW_ID} ]]; then
-      error "Invalid alias: ${WORKFLOW_ID}"
+      error "Invalid workflow/alias: ${alias_name}"
       exit 5
     fi
 }
@@ -1902,4 +1902,3 @@ if ${ISINTERACTIVESHELL} ; then
 
   exit ${rv}
 fi
-
