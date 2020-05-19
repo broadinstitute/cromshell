@@ -1873,10 +1873,6 @@ if ${ISINTERACTIVESHELL} ; then
   r=$?
   [[ ${r} -ne 0 ]] && exit 6
 
-  checkJQVersion
-  r=$?
-  [[ ${r} -ne 0 ]] && exit 6
-
   # Sanitize the displayed sub-command:
   SUB_COMMAND_FOR_DISPLAY=${SUB_COMMAND}
   case ${SUB_COMMAND} in
@@ -1887,6 +1883,15 @@ if ${ISINTERACTIVESHELL} ; then
       SUB_COMMAND="alias_workflow"
       ;;
   esac
+
+  # Don't check JQ version if we're notifying.
+	# Why do this, you might ask?
+	# Because it's easier to hack our code than to get Broad IT to update software on our servers.
+  if [[ "${SUB_COMMAND_FOR_DISPLAY}" != "notify" ]] ; then
+    checkJQVersion
+    r=$?
+    [[ ${r} -ne 0 ]] && exit 6
+  fi
 
   # Handle specific sub-command args and and call our sub-command:
   error "Sub-Command: ${SUB_COMMAND_FOR_DISPLAY}"
