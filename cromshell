@@ -42,15 +42,15 @@ DOOMED_LOGO_b64gz="H4sIAOfW3l0AA6WUwXHEIAxF767i35yDQQUkTiWeYcvIgUPa2GbSwHaRSiIJA
 CROMSHELL_CONFIG_DIR=${HOME}/.cromshell
 mkdir -p ${CROMSHELL_CONFIG_DIR}
 CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
-[[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ]] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS" > ${CROMWELL_SUBMISSIONS_FILE}
+[[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ]] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\tINPUT_JSON" > ${CROMWELL_SUBMISSIONS_FILE}
 
 # Update cromshell submissions file if it needs updating:
-grep -q 'ALIAS$' ${CROMWELL_SUBMISSIONS_FILE} 
+grep -q 'INPUT_JSON$' ${CROMWELL_SUBMISSIONS_FILE} 
 r=$?
 if [[ $r -ne 0 ]] ; then
   echo "Upgrading cromshell config file..." 1>&2
   cp ${CROMWELL_SUBMISSIONS_FILE} ${CROMSHELL_CONFIG_DIR}/tmp.tmptmp
-  echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS" > ${CROMWELL_SUBMISSIONS_FILE}
+  echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\tINPUT_JSON" > ${CROMWELL_SUBMISSIONS_FILE}
   tail -n+2 ${CROMSHELL_CONFIG_DIR}/tmp.tmptmp >> ${CROMWELL_SUBMISSIONS_FILE}
   rm ${CROMSHELL_CONFIG_DIR}/tmp.tmptmp
 fi
@@ -478,7 +478,7 @@ function populateLastWorkflowId()
 
 function aliasExists(){
   alias_name=${1}
-  grep -q "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE}
+  cut -d$'\t' -f6 ${CROMWELL_SUBMISSIONS_FILE} | grep -q ${alias_name}
 }
 
 function alias_workflow() 
@@ -522,8 +522,9 @@ function alias_workflow()
 function populateWorkflowIdAndServerFromAlias()
 {
     local alias_name=${1}
-    WORKFLOW_ID=$(grep "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
-    WORKFLOW_SERVER_URL=$(grep "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
+    WORKFLOW_ID=$(cat ${CROMWELL_SUBMISSIONS_FILE} | awk -F "\t" "{if (\$6 == \"$alias_name\") print \$3}" | head -n1)
+    WORKFLOW_SERVER_URL=$(cat ${CROMWELL_SUBMISSIONS_FILE} | awk -F "\t" "{if (\$6 == \"$alias_name\") print \$2}" | head -n1)
+
     if [[ -z ${WORKFLOW_ID} ]]; then
       error "Invalid workflow/alias: ${alias_name}"
       exit 5
@@ -825,7 +826,7 @@ function submit()
 
   cp ${1} ${2} ${3} ${4} ${runDir}/
 
-  echo -e "$(date +%Y%m%d_%H%M%S)\t${CROMWELL_URL}\t${id}\t$(basename ${1})\tSubmitted" >> ${CROMWELL_SUBMISSIONS_FILE}
+  echo -e "$(date +%Y%m%d_%H%M%S)\t${CROMWELL_URL}\t${id}\t$(basename ${1})\tSubmitted\t\t$(basename ${json})" >> ${CROMWELL_SUBMISSIONS_FILE}
 
   # Now that we've submitted our task, we should see if we have to wait:
   if ${doWait} ; then
@@ -1200,11 +1201,14 @@ function list()
     error "The following cromwell servers cannot be reached and were skipped\n${pretty_ugly}\n"
   fi
 
+  # Indexes correspond to order within the CROMWELL_SUBMISSIONS_FILE
+  PRINT_COLUMN_ORDER='$1"\t"$2"\t"$3"\t"$4"\t"$7"\t"$5"\t"$6'
+
   # If we have to colorize the output, we do so:
   if ${doColor} ; then
 
     local tmpFile=$( makeTemp )  
-    cat ${CROMWELL_SUBMISSIONS_FILE} | column -t > ${tmpFile}
+    cat ${CROMWELL_SUBMISSIONS_FILE} | awk -F "\t" "{print $PRINT_COLUMN_ORDER}" | column -n -t -s $'\t' > ${tmpFile}
 
     while read line ; do 
 
@@ -1241,7 +1245,7 @@ function list()
       echo "${line}"  
     done < ${tmpFile} 
   else  
-    cat ${CROMWELL_SUBMISSIONS_FILE} | column -t
+    cat ${CROMWELL_SUBMISSIONS_FILE} | awk -F "\t" "{print $PRINT_COLUMN_ORDER}" | column -n -t -s $'\t'
   fi
   return $?
 }
