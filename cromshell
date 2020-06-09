@@ -45,7 +45,7 @@ CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
 [[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ]] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\tINPUT_JSON" > ${CROMWELL_SUBMISSIONS_FILE}
 
 # Update cromshell submissions file if it needs updating:
-grep -q 'ALIAS$' ${CROMWELL_SUBMISSIONS_FILE} 
+grep -q 'INPUT_JSON$' ${CROMWELL_SUBMISSIONS_FILE} 
 r=$?
 if [[ $r -ne 0 ]] ; then
   echo "Upgrading cromshell config file..." 1>&2
