@@ -785,6 +785,8 @@ function submit()
 
   assertCanCommunicateWithServer ${CROMWELL_URL}
 
+	echo "Submitting job to server: ${CROMWELL_URL}"
+
   local response=$(curl -s -F workflowSource=@${wdl}  ${2:+ -F workflowInputs=@${json}} ${3:+ -F workflowOptions=@${optionsJson}} ${4:+ -F workflowDependencies=@${dependenciesZip}} ${CROMWELL_URL}/api/workflows/v1)
   r=$?
 
