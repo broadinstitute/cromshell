@@ -1,0 +1,10 @@
+graft tests
+graft src
+
+include README.rst
+include LICENSE.txt
+include tox.ini .travis.yml
+
+prune **/.hypothesis
+
+global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store

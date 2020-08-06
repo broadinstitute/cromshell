@@ -1,0 +1,18 @@
+[run]
+source = cromshell 
+branch = True
+
+[report]
+skip_covered = True
+exclude_lines =
+    no cov
+    no qa
+    noqa
+    pragma: no cover
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+
+[html]
+directory = coverage_html_report

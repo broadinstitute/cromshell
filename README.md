@@ -7,21 +7,14 @@
       ""     ""    ""                                                          ""    ""     ""
 ```
 
-
-# Installation
-
-`cromshell` and its dependencies can be installed on OSX with `brew install broadinstitute/dsp/cromshell`
-
-or through [bioconda](https://bioconda.github.io/) with `conda install cromshell`
-
-Alternatively, download the script and put it somewhere...
-
 # cromshell
  A script for submitting workflows to a cromwell server and monitoring / querying their results.
 
 requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 
-### Examples:
+Current version: 0.0.1 
+
+## Examples:
 
 ```
          cromshell submit workflow.wdl inputs.json options.json dependencies.zip
@@ -30,13 +23,13 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
          cromshell logs -2
 ```
 
-### Supported Flags:
+## Supported Flags:
   * `-t` `TIMEOUT`
     * Set the curl connect timeout to `TIMEOUT` seconds.
     * Also sets the curl max timeout to `2*TIMEOUT` seconds.
     * `TIMEOUT` must be an integer.
 
-### Supported Subcommands:
+## Supported Subcommands:
 
   
    ####  Start/Stop workflows
@@ -95,8 +88,7 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
        where a completed state is one of: `Succeeded`, `Failed`, `Aborted`
      * *`-s STATUS`*     If provided, will only remove jobs with the given `STATUS` from the local list.
   
-    
- ### Features:
+## Features:
  * Running `submit` will create a new folder in the `~/.cromshell/${CROMWELL_URL}/` directory named with the cromwell job id of the newly submitted job.  
  It will copy your wdl and json inputs into the folder for reproducibility.  
  * It keeps track of your most recently submitted jobs by storing their ids in `./cromshell/`  
@@ -104,8 +96,66 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
  * You can override the default cromwell server by setting the environmental variable `CROMWELL_URL` to the appropriate URL.
  * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromwell status -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
 
- ### Code Conventions:
- Please try to follow these conventions when editing cromshell.
- * Use double brackets for tests ( `[[ ... ]]` instead of `[]`)
- * Use `{}` when doing dereferencing variables (`${VALUE}`,`${1}` instead of `$VALUE`,`$1`)
- * Define functions with the `function` keyword (`function doThing()` instead of `doThing()`)
+## Installation
+
+    pip install .
+
+## Development
+
+To do development in this codebase, the python3 development package must
+be installed.
+
+After installation the carrot\_cli development environment can be set up by
+the following commands:
+
+    python3 -mvenv venv
+    . venv/bin/activate
+    pip install -r dev-requirements.txt
+    pip install -e .
+
+### Linting files
+
+    # run all linting commands
+    tox -e lint
+
+    # reformat all project files
+    black src tests setup.py
+
+    # sort imports in project files
+    isort -rc src tests setup.py
+
+    # check pep8 against all project files
+    flake8 src tests setup.py
+
+    # lint python code for common errors and codestyle issues
+    pylint src
+
+### Tests
+
+    # run all linting and test
+    tox
+
+    # run only (fast) unit tests
+    tox -e unit
+
+    # run only linting
+    tox -e lint
+
+### Versioning
+
+We use `bumpversion` to maintain version numbers.
+DO NOT MANUALLY EDIT ANY VERSION NUMBERS.
+
+Our versions are specified by a 3 number semantic version system (https://semver.org/):
+
+	major.minor.patch
+
+To update the version with bumpversion do the following:
+
+`bumpversion PART` where PART is one of:
+- major
+- minor
+- patch
+
+This will increase the corresponding version number by 1.
+
