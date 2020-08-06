@@ -12,7 +12,7 @@
 
 requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 
-Current version: 0.0.1 
+Current version: 2.0.0 
 
 ## Examples:
 

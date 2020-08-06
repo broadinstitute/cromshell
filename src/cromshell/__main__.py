@@ -10,7 +10,7 @@ from .sub_command_3 import command as sub_command_3
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
-__version__ = "0.0.1"
+__version__ = "2.0.0"
 
 # Create a logger for this module:
 LOGGER = logging.getLogger(__name__)
