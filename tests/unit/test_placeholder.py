@@ -5,7 +5,7 @@ class TestPlaceholder:
     """For tox to find tests the following must be true:
         - Names of test files begin with 'test'
         - Names of classes containing tests begin with 'Test'
-        - Names of functions to be run as tests begin with 'Test'
+        - Names of functions to be run as tests begin with 'test'
         """
 
     def test_trivial(self):
