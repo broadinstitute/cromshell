@@ -105,7 +105,7 @@ Current version: 2.0.0
 To do development in this codebase, the python3 development package must
 be installed.
 
-After installation the carrot\_cli development environment can be set up by
+After installation the cromshell development environment can be set up by
 the following commands:
 
     python3 -mvenv venv
