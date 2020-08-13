@@ -112,6 +112,15 @@ the following commands:
     . venv/bin/activate
     pip install -r dev-requirements.txt
     pip install -e .
+    
+### Running Development Builds of Cromshell
+
+After following the above development environment setup steps, simply type
+```
+cromshell
+```
+Note that there is no leading `./` in this command.  This is due to the 
+development setup adding the cromshell python script to your path.
 
 ### Linting files
 
