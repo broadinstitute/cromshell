@@ -17,6 +17,8 @@ setup(
     numpy
     pysam
     dataclasses
+    termcolor
+    jq
     """.split(
         "\n"
     ),

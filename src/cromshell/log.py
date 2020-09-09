@@ -6,7 +6,7 @@ from pathlib import Path
 def configure_logging(verbosity):
     """Set up logging for the cromshell module"""
 
-    import cromshell# pylint: disable=C0415
+    import cromshell  # pylint: disable=C0415
 
     format_string = get_logging_format_string(cromshell)
 

@@ -3,10 +3,12 @@ from sys import argv
 
 import click
 
-# porcelain
-from .sub_command_1 import command as sub_command_1
-from .sub_command_2 import command as sub_command_2
-from .sub_command_3 import command as sub_command_3
+from cromshell.utilities import CromshellConfig
+
+from .status import command as status
+from .sub_command_1 import command as sub_command_1  # Porcelain
+from .sub_command_2 import command as sub_command_2  # Porcelain
+from .sub_command_3 import command as sub_command_3  # Porcelain
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
@@ -37,7 +39,20 @@ LOGGER = logging.getLogger(__name__)
     flag_value=logging.NOTSET,
     help="Highest level logging for debugging",
 )
-def main_entry(verbosity):
+@click.option(
+    "--slim_metadata_parameters",
+    type=str,
+    envvar="CROMWELL_SLIM_METADATA_PARAMETERS",
+    help="Get a subset of the metadata for a workflow",
+)
+@click.option(
+    "--cromwell_url",
+    type=str,
+    envvar="CROMWELL_URL",
+    help="Specify Cromwell URL used",
+)
+@click.pass_context
+def main_entry(cromshell_config, verbosity, slim_metadata_parameters, cromwell_url):
     # Set up our log verbosity
     from . import log  # pylint: disable=C0415
 
@@ -46,6 +61,16 @@ def main_entry(verbosity):
     # Log our command-line and log level so we can have it in the log file:
     LOGGER.info("Invoked by: %s", " ".join(argv))
     LOGGER.info("Log level set to: %s", logging.getLevelName(logging.getLogger().level))
+
+    # Create an object to hold all cromwell configurations
+    cromshell_config.obj = CromshellConfig.CromshellConfig()
+    CromshellConfig.CromshellConfig.user_defined_slim_metadata_parameters(
+        slim_metadata_parameters
+    )
+    CromshellConfig.CromshellConfig.override_cromwell_config_server(
+        server_user=cromwell_url
+    )
+    CromshellConfig.CromshellConfig.user_defined_show_logo(verbosity)
 
 
 @main_entry.command()
@@ -58,6 +83,7 @@ def version():
 main_entry.add_command(sub_command_1.main)
 main_entry.add_command(sub_command_2.main)
 main_entry.add_command(sub_command_3.main)
+main_entry.add_command(status.main)
 
 
 if __name__ == "__main__":
