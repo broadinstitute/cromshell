@@ -204,6 +204,8 @@ function usage()
   echo -e "                          Will remove all jobs from the local list that are in a completed state,"
   echo -e "                          where a completed state is one of: $(echo ${TERMINAL_STATES} | tr ' ' ',' )" 
   echo -e "         -s STATUS        If provided, will only remove jobs with the given STATUS from the local list."
+  echo -e "  Update cromwell server:"
+  echo -e "   update-server          Change which cromwell server jobs will be submitted to."
   echo -e ""
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
@@ -1835,6 +1837,11 @@ if ${ISINTERACTIVESHELL} ; then
   # Get our sub-command:
   SUB_COMMAND=${1}
   shift
+
+  # Use the update-server sub-command to modify CROMWELL_NEEDS_SETUP here.
+  if [[ "${SUB_COMMAND}" == "update-server" ]] ; then
+    CROMWELL_NEEDS_SETUP=true
+  fi
   
   # Check if we need to set this up.
   # Note: because of how `notify` works, we can't require the setup for the notify action.
