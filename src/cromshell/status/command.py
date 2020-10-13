@@ -2,7 +2,6 @@ import fileinput
 import json
 import logging
 import re
-import sys
 
 import click
 import jq
@@ -25,9 +24,10 @@ def main(cromshell_config, workflow_id):
 
     ret_val = 0
 
-    # Set cromwell server using submission file. Running the function below with passing only the workflow id
-    # overrides the default cromwell url set in the cromshell config file, command line argument, and
-    # environment. This takes place only if the workflow id is found in the submission file.
+    # Set cromwell server using submission file. Running the function below with
+    # passing only the workflow id overrides the default cromwell url set in the
+    # cromshell config file, command line argument, and environment. This takes
+    # place only if the workflow id is found in the submission file.
     CromshellConfig.CromshellConfig.override_cromwell_config_server(
         workflow_id=workflow_id
     )
@@ -85,12 +85,16 @@ def main(cromshell_config, workflow_id):
 
         # Check for failures:
         if not failed:
-            # We could not find 'Fail' in our metadata, so our original Running status is correct.
+            # We could not find 'Fail' in our metadata, so our
+            # original Running status is correct.
             IOUtils.turtle(cromshell_config.is_verbose)
         else:
             IOUtils.doomed_logo(cromshell_config.is_verbose)
             workflow_status = "DOOMED"
-            message = "The workflow is Running but one of the instances has failed which will lead to failure."
+            message = (
+                "The workflow is Running but one of the instances"
+                "has failed which will lead to failure."
+            )
             temp_line = '{{"status":"{}","id":"{}"}}{}{}'.format(
                 workflow_status, workflow_id, "\n", message
             )
