@@ -3,12 +3,9 @@ from sys import argv
 
 import click
 
-from cromshell.utilities import CromshellConfig
+from cromshell.utilities import cromshellconfig
 
 from .status import command as status
-from .sub_command_1 import command as sub_command_1  # Porcelain
-from .sub_command_2 import command as sub_command_2  # Porcelain
-from .sub_command_3 import command as sub_command_3  # Porcelain
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
@@ -63,14 +60,14 @@ def main_entry(cromshell_config, verbosity, slim_metadata_parameters, cromwell_u
     LOGGER.info("Log level set to: %s", logging.getLevelName(logging.getLogger().level))
 
     # Create an object to hold all cromwell configurations
-    cromshell_config.obj = CromshellConfig.CromshellConfig()
-    CromshellConfig.CromshellConfig.user_defined_slim_metadata_parameters(
+    cromshell_config.obj = cromshellconfig.CromshellConfig()
+    cromshellconfig.CromshellConfig.user_defined_slim_metadata_parameters(
         slim_metadata_parameters
     )
-    CromshellConfig.CromshellConfig.override_cromwell_config_server(
+    cromshellconfig.CromshellConfig.resolve_cromwell_config_server_address(
         server_user=cromwell_url
     )
-    CromshellConfig.CromshellConfig.user_defined_show_logo(verbosity)
+    cromshellconfig.CromshellConfig.user_defined_show_logo(verbosity)
 
 
 @main_entry.command()
@@ -80,9 +77,6 @@ def version():
 
 
 # Update with new sub-commands:
-main_entry.add_command(sub_command_1.main)
-main_entry.add_command(sub_command_2.main)
-main_entry.add_command(sub_command_3.main)
 main_entry.add_command(status.main)
 
 

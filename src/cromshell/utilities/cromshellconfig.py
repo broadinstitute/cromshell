@@ -1,6 +1,7 @@
 import logging
-import sys
 from pathlib import Path
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CromshellConfig:
@@ -16,7 +17,7 @@ class CromshellConfig:
             )
 
     @classmethod
-    def override_cromwell_config_server(cls, server_user=None, workflow_id=None):
+    def resolve_cromwell_config_server_address(cls, server_user=None, workflow_id=None):
         """
         Override Cromwell Server From Command Line or Environment or Submission file
 
@@ -31,15 +32,14 @@ class CromshellConfig:
         """
 
         if server_user is None and workflow_id is None:
-            cls.LOGGER.info(
-                "Workflow id and cromwell server not specified. Using default"
+            LOGGER.info(
+                "Workflow id and cromwell server not specified. Using default cromwell server"
             )
         elif server_user:
             cls.cromwell_server = server_user
-            CromshellConfig.LOGGER.info(
-                "Cromwell server set to the provided in cli or environment argument."
+            LOGGER.info(
+                "Cromwell server URL was overridden by command line argument"
             )
-            CromshellConfig.LOGGER.info(cls.cromwell_server)
         else:
             with open(cls.submission_file) as f:
                 column = None
@@ -47,16 +47,17 @@ class CromshellConfig:
                     if workflow_id in line:
                         column = line.split()
                 if column:
-                    cls.LOGGER.info("Found workflow id in submission file.")
+                    LOGGER.info("Found workflow id in submission file.")
                     cls.cromwell_server = column[1]
-                    CromshellConfig.LOGGER.info(
+                    LOGGER.info(
                         "Cromwell server set to matching workflow id in submission file."
                     )
-                    CromshellConfig.LOGGER.info(cls.cromwell_server)
                 else:
-                    cls.LOGGER.info(
+                    LOGGER.info(
                         "Unable to find workflow id in submission file. Using default"
                     )
+            LOGGER.info(f"WorkflowID: {workflow_id}")
+        LOGGER.info(f"Server: {cls.cromwell_server}")
 
     @classmethod
     def user_defined_show_logo(cls, verbosity):
@@ -79,15 +80,13 @@ class CromshellConfig:
     def __get_submission_file(config_dir):
         """Get File Path To Cromshell Submission File"""
 
-        submission_file = "{}/all.workflow.database.tsv".format(config_dir)
+        submission_file = f"{config_dir}/all.workflow.database.tsv"
         if not Path.exists(Path(submission_file)):
             Path.touch(Path(submission_file))
             submission_header = (
-                "DATE{0}CROMWELL_SERVER{0}RUN_ID{0}WDL_NAME{0}STATUS{0}ALIAS".format(
-                    "\t"
-                )
+                f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
             )
-            with Path(submission_file).open() as f:
+            with Path(submission_file).open('w') as f:
                 f.write(submission_header)
         return submission_file
 
@@ -95,25 +94,21 @@ class CromshellConfig:
     def __get_cromwell_server(config_dir):
         """Get Cromshell Server URL from Configuration File"""
 
-        cromwell_server_path = "{}/cromwell_server.config".format(config_dir)
-        if Path.exists(Path(cromwell_server_path)):
+        cromwell_server_path = f"{config_dir}/cromwell_server.config"
+        if Path(cromwell_server_path).exists():
             with Path(cromwell_server_path).open() as f:
                 cromwell_server = f.readline().strip()
+            LOGGER.info("Setting cromwell server to cromwell url from config file.")
+            LOGGER.info(cromwell_server)
             return cromwell_server
-            CromshellConfig.LOGGER.info(
-                "Setting cromwell server to cromwell url from config file."
-            )
-            CromshellConfig.LOGGER.info(cromwell_server)
         else:
-            CromshellConfig.LOGGER.error("Could not find cromwell_server.config")
-            CromshellConfig.LOGGER.info("Creating file %s", cromwell_server_path)
-            Path.touch(Path(cromwell_server_path))
-            CromshellConfig.LOGGER.error(
+            LOGGER.error("Could not find cromwell_server.config")
+            LOGGER.info("Creating file %s", cromwell_server_path)
+            Path(cromwell_server_path).touch()
+            LOGGER.error(
                 "Please add a Cromwell server URL to file %s", cromwell_server_path
             )
-            sys.exit()
-
-    LOGGER = logging.getLogger(__name__)
+            raise Exception(f"Please add a Cromwell server URL to file {cromwell_server_path}")
 
     # Set Cromshell Configuration Default Values
     metadata_parameters = "excludeKey=submittedFiles&expandSubWorkflows=true"
@@ -125,3 +120,4 @@ class CromshellConfig:
         "=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
         "=subWorkflowMetadata&includeKey=subWorkflowId"
     )
+    api_string = "/api/workflows/v1/"

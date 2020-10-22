@@ -14,8 +14,6 @@ setup(
     license="BSD 3-Clause",
     long_description=open("README.md").read(),
     install_requires="""
-    numpy
-    pysam
     dataclasses
     termcolor
     jq
