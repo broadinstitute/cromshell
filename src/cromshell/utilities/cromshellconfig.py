@@ -13,15 +13,17 @@ slim_metadata_parameters = (
     "=subWorkflowMetadata&includeKey=subWorkflowId"
 )
 api_string = "/api/workflows/v1/"
-is_verbose = True
+show_logo = True
 
 
-def user_defined_slim_metadata_parameters(slim_metadata_parameters_user):
+def override_slim_metadata_parameters(slim_metadata_param):
     """Override Cromwell Slim Metadata Key From Command Line"""
-    if slim_metadata_parameters_user:
-        global slim_metadata_parameters
+
+    global slim_metadata_parameters
+
+    if slim_metadata_param:
         slim_metadata_parameters = (
-                slim_metadata_parameters_user
+                slim_metadata_param
                 + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
         )
 
@@ -72,15 +74,13 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
     LOGGER.info(f"Server: {cromwell_server}")
 
 
-def user_defined_show_logo(verbosity):
+def override_logo_display_setting(hide_logo):
     """Boolean for Displaying Turtle Logo"""
 
-    global is_verbose
+    global show_logo
 
-    if verbosity is None or verbosity < logging.CRITICAL:
-        is_verbose = True
-    else:
-        is_verbose = False
+    if hide_logo is True:
+        show_logo = False
 
 
 def __get_config_dir():

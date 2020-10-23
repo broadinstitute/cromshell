@@ -49,7 +49,7 @@ def main(config, workflow_id):
     # Set return value based on workflow status
     if workflow_status in ("Failed", "Aborted", "fail"):
         ret_val = 1
-        io_utils.turtle_dead(config.is_verbose)
+        io_utils.turtle_dead(config.show_logo)
     elif workflow_status == "Succeeded":  # change to Running for the final version.
         # Status claims this workflow is running fine, but we need to check to see
         # if there are any failed sub-processes.
@@ -81,9 +81,9 @@ def main(config, workflow_id):
         if failed:
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
-            io_utils.turtle(config.is_verbose)
+            io_utils.turtle(config.show_logo)
         else:
-            io_utils.doomed_logo(config.is_verbose)
+            io_utils.doomed_logo(config.show_logo)
             workflow_status = "DOOMED"
             message = (
                 "The workflow is Running but one of the instances "
@@ -92,7 +92,7 @@ def main(config, workflow_id):
             requested_status_json = f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message}'
 
     else:
-        io_utils.turtle(config.is_verbose)
+        io_utils.turtle(config.show_logo)
 
     # Display status to user:
     line_string = requested_status_json

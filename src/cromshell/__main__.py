@@ -37,6 +37,11 @@ LOGGER = logging.getLogger(__name__)
     help="Highest level logging for debugging",
 )
 @click.option(
+    "--hide_logo",
+    flag_value=True,
+    help="Hide turtle logo",
+)
+@click.option(
     "--slim_metadata_parameters",
     type=str,
     envvar="CROMWELL_SLIM_METADATA_PARAMETERS",
@@ -49,7 +54,7 @@ LOGGER = logging.getLogger(__name__)
     help="Specify Cromwell URL used",
 )
 @click.pass_context
-def main_entry(cromshell_config, verbosity, slim_metadata_parameters, cromwell_url):
+def main_entry(cromshell_config, verbosity, slim_metadata_parameters, hide_logo, cromwell_url):
     # Set up our log verbosity
     from . import log  # pylint: disable=C0415
 
@@ -61,13 +66,13 @@ def main_entry(cromshell_config, verbosity, slim_metadata_parameters, cromwell_u
 
     # Create an object to hold all cromwell configurations
     cromshell_config.obj = cromshellconfig
-    cromshellconfig.user_defined_slim_metadata_parameters(
+    cromshellconfig.override_slim_metadata_parameters(
         slim_metadata_parameters
     )
     cromshellconfig.resolve_cromwell_config_server_address(
         server_user=cromwell_url
     )
-    cromshellconfig.user_defined_show_logo(verbosity)
+    cromshellconfig.override_logo_display_setting(hide_logo)
 
 
 @main_entry.command()
