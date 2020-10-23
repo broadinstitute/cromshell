@@ -28,7 +28,7 @@ def main(config, workflow_id):
     # passing only the workflow id overrides the default cromwell url set in the
     # cromshell config file, command line argument, and environment. This takes
     # place only if the workflow id is found in the submission file.
-    cromshellconfig.CromshellConfig.resolve_cromwell_config_server_address(
+    cromshellconfig.resolve_cromwell_config_server_address(
         workflow_id=workflow_id
     )
 

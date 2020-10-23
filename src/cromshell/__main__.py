@@ -60,14 +60,14 @@ def main_entry(cromshell_config, verbosity, slim_metadata_parameters, cromwell_u
     LOGGER.info("Log level set to: %s", logging.getLevelName(logging.getLogger().level))
 
     # Create an object to hold all cromwell configurations
-    cromshell_config.obj = cromshellconfig.CromshellConfig()
-    cromshellconfig.CromshellConfig.user_defined_slim_metadata_parameters(
+    cromshell_config.obj = cromshellconfig
+    cromshellconfig.user_defined_slim_metadata_parameters(
         slim_metadata_parameters
     )
-    cromshellconfig.CromshellConfig.resolve_cromwell_config_server_address(
+    cromshellconfig.resolve_cromwell_config_server_address(
         server_user=cromwell_url
     )
-    cromshellconfig.CromshellConfig.user_defined_show_logo(verbosity)
+    cromshellconfig.user_defined_show_logo(verbosity)
 
 
 @main_entry.command()
