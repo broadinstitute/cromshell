@@ -60,31 +60,9 @@ def main(config, workflow_id):
             f"{config.cromwell_server}{config.api_string}{workflow_id}/metadata?{config.slim_metadata_parameters}"
         )
 
-        #tmp_metadata holds the workflow metadata as a dictionary
+        # tmp_metadata holds the workflow metadata as a dictionary
         tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
-        execution_status_count = []
-        tmp_execution_status = []
-
-        # For each call in the metadata dictionary create a shortened summary containing the call name and status
-        for call in tmp_metadata['calls']:
-            call_element = f'"{call}": '
-            execution_statuses = []
-
-            # For each call name add the number of executionstatus to a list
-            for instanceDic in tmp_metadata['calls'][call]:
-                execution_statuses.append(instanceDic['executionStatus'])
-
-            # Create a key and value pair for the execution status and number of times it is seen
-            status_count = Counter(execution_statuses)
-            # For each status for the call add the call name and status name and count to list
-            for status in set(execution_statuses):
-                status_element = f'{{"{status}": {status_count[status]}}}'
-                tmp_execution_status.append(f"{call_element}{status_element}")
-
-        #
-        tmp_execution_status_json = ", ".join(tmp_execution_status)
-        tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
-        execution_status_count.append(json.loads(tmp_execution_status_json))
+        execution_status_count = get_metadata_status_summary(tmp_metadata)
 
         # Check for failure states:
         failed = False
@@ -129,3 +107,38 @@ def main(config, workflow_id):
                 print(line, end="")
 
     return ret_val
+
+
+def get_metadata_status_summary(workflow_metadata):
+    """Get the status for each call in a workflow and the frequency of those statuses"""
+    # workflow_metadata holds the workflow metadata as a dictionary
+    workflow_metadata
+    workflow_status_count = []
+    tmp_execution_status = []
+
+    # For each call in the metadata dictionary create a shortened summary containing the call name and status
+    for call in workflow_metadata['calls']:
+        call_element = f'"{call}": '
+        execution_statuses = []
+
+        # For each call name add the number of executionstatus to a list
+        for instanceDic in workflow_metadata['calls'][call]:
+            execution_statuses.append(instanceDic['executionStatus'])
+
+        # Create a key and value pair for the execution status and number of times it is seen
+        status_count = Counter(execution_statuses)
+        # For each status for the call add the call name and status name and count to list
+        for status in set(execution_statuses):
+            status_element = f'{{"{status}": {status_count[status]}}}'
+            tmp_execution_status.append(f"{call_element}{status_element}")
+
+    #
+    tmp_execution_status_json = ", ".join(tmp_execution_status)
+    tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
+    workflow_status_count.append(json.loads(tmp_execution_status_json))
+
+    return workflow_status_count
+
+
+if __name__ == '__main__':
+    main()
