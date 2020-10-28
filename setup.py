@@ -16,7 +16,6 @@ setup(
     install_requires="""
     dataclasses
     termcolor
-    jq
     """.split(
         "\n"
     ),

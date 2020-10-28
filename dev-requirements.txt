@@ -12,4 +12,3 @@ sphinx-rtd-theme
 mypy==0.770
 click
 termcolor
-jq
