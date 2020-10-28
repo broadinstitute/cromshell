@@ -4,8 +4,8 @@ import logging
 import re
 
 import click
-import jq
 import requests
+from typing_extensions import Counter
 
 from cromshell.utilities import cromshellconfig
 from cromshell.utilities import http_utils
@@ -40,7 +40,7 @@ def main(config, workflow_id):
         f"{config.cromwell_server}{config.api_string}{workflow_id}/status"
     )
 
-    requested_status_json = request_out.content
+    requested_status_json = request_out.content.decode("utf-8")
     workflow_status_description = json.loads(request_out.content)
 
     # Hold our status string here
@@ -60,14 +60,31 @@ def main(config, workflow_id):
             f"{config.cromwell_server}{config.api_string}{workflow_id}/metadata?{config.slim_metadata_parameters}"
         )
 
-        execution_status_count = (
-            jq.compile(
-                ".. | .calls? | values | map_values(group_by(.executionStatus) | "
-                "map({(.[0].executionStatus): . | length}) | add)"
-            )
-            .input(json.loads(request_meta_out.content))
-            .all()
-        )
+        #tmp_metadata holds the workflow metadata as a dictionary
+        tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
+        execution_status_count = []
+        tmp_execution_status = []
+
+        # For each call in the metadata dictionary create a shortened summary containing the call name and status
+        for call in tmp_metadata['calls']:
+            call_element = f'"{call}": '
+            execution_statuses = []
+
+            # For each call name add the number of executionstatus to a list
+            for instanceDic in tmp_metadata['calls'][call]:
+                execution_statuses.append(instanceDic['executionStatus'])
+
+            # Create a key and value pair for the execution status and number of times it is seen
+            status_count = Counter(execution_statuses)
+            # For each status for the call add the call name and status name and count to list
+            for status in set(execution_statuses):
+                status_element = f'{{"{status}": {status_count[status]}}}'
+                tmp_execution_status.append(f"{call_element}{status_element}")
+
+        #
+        tmp_execution_status_json = ", ".join(tmp_execution_status)
+        tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
+        execution_status_count.append(json.loads(tmp_execution_status_json))
 
         # Check for failure states:
         failed = False
@@ -78,7 +95,7 @@ def main(config, workflow_id):
                     break
 
         # Check for failures:
-        if failed:
+        if not failed:
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
             io_utils.turtle(config.show_logo)
@@ -99,20 +116,16 @@ def main(config, workflow_id):
     print(line_string.replace(",", ",\n"))
 
     # Update ${CROMWELL_SUBMISSIONS_FILE}:
-    with open(config.submission_file) as file:
-        # Check if workflow Id is submission file, if so update file.
-        if workflow_id in file.read():
-            # Open file for writing and make backup of file
-            with fileinput.FileInput(
-                config.submission_file, inplace=True, backup=".bak"
-            ) as f:
+    with fileinput.FileInput(
+            config.submission_file, inplace=True, backup=".bak"
+    ) as f:
+        for line in f:
+            if config.cromwell_server and workflow_id in line:
                 pattern = "\t[^\t]+$"
-                replace = "\t" + workflow_status
-                for line in f:
-                    if config.cromwell_server and workflow_id in line:
-                        updated_line = re.sub(pattern, replace, line)
-                        print(updated_line, end="\n")
-                    else:
-                        print(line, end="")
+                replace = "\t" + workflow_status  ##split by tab and replace the 5th element
+                updated_line = re.sub(pattern, replace, line)
+                print(updated_line, end="\n")
+            else:
+                print(line, end="")
 
     return ret_val
