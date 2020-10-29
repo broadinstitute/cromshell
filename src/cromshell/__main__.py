@@ -44,13 +44,11 @@ LOGGER = logging.getLogger(__name__)
 @click.option(
     "--slim_metadata_parameters",
     type=str,
-    envvar="CROMWELL_SLIM_METADATA_PARAMETERS",
     help="Get a subset of the metadata for a workflow",
 )
 @click.option(
     "--cromwell_url",
     type=str,
-    envvar="CROMWELL_URL",
     help="Specify Cromwell URL used",
 )
 @click.pass_context
