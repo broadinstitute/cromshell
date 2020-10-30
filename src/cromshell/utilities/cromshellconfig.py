@@ -1,4 +1,5 @@
 import logging
+import json
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                 )
             else:
                 LOGGER.info(
-                    "Unable to find workflow id in submission file. Using default"
+                    "Unable to find workflow id in submission file. Using default cromwell server"
                 )
         LOGGER.info(f"WorkflowID: {workflow_id}")
     LOGGER.info(f"Server: {cromwell_server}")
@@ -94,38 +95,46 @@ def __get_config_dir():
 def __get_submission_file(config_directory):
     """Get File Path To Cromshell Submission File"""
 
-    submission_file = f"{config_directory}/all.workflow.database.tsv"
-    if not Path.exists(Path(submission_file)):
-        Path.touch(Path(submission_file))
+    submission_file_path = f"{config_directory}/all.workflow.database.tsv"
+    if not Path.exists(Path(submission_file_path)):
+        Path.touch(Path(submission_file_path))
         submission_header = (
             f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
         )
-        with Path(submission_file).open('w') as f:
+        with Path(submission_file_path).open('w') as f:
             f.write(submission_header)
-    return submission_file
+    return submission_file_path
 
 
-def __get_cromwell_server(config_directory):
-    """Get Cromshell Server URL from Configuration File"""
+def __load_cromshell_config_file(config_directory):
+    """Load options from Cromshell Config File to dictionary"""
 
-    cromwell_server_path = f"{config_directory}/cromwell_server.config"
-    if Path(cromwell_server_path).exists():
-        with Path(cromwell_server_path).open() as f:
-            config_cromwell_server = f.readline().strip()
-        LOGGER.info("Setting cromwell server to cromwell url from config file.")
-        LOGGER.info(config_cromwell_server)
-        return config_cromwell_server
-    else:
-        LOGGER.error("Could not find cromwell_server.config")
-        LOGGER.info("Creating file %s", cromwell_server_path)
-        Path(cromwell_server_path).touch()
-        LOGGER.error(
-            "Please add a Cromwell server URL to file %s", cromwell_server_path
-        )
-        raise Exception(f"Please add a Cromwell server URL to file {cromwell_server_path}")
+    cromshell_config_file = f"{config_directory}/cromshell_config.json"
+    if not Path.exists(Path(cromshell_config_file)):
+        LOGGER.error(f"Cromshell config file {cromshell_config_file} was not found")
+        LOGGER.error(f"Please create {cromshell_config_file}")
+        raise Exception(f"Cromshell config file {cromshell_config_file} was not found")
+
+    with open(cromshell_config_file, 'r') as f:
+        config_options = json.loads(f.read())
+
+    return config_options
+
+
+def __get_cromwell_server():
+    """Get Cromshell Server URL from configuration options"""
+
+    if not cromshell_config_options['cromwell_server']:
+        raise Exception(f'Cromshell config file is missing "cromwell_server"')
+
+    LOGGER.info("Setting cromwell server to cromwell url from config file.") # Why doesn't this get printed in the stdout?
+    LOGGER.info(cromshell_config_options['cromwell_server'])
+
+    return cromshell_config_options['cromwell_server']
 
 
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
 submission_file = __get_submission_file(config_dir)
-cromwell_server = __get_cromwell_server(config_dir)
+cromshell_config_options = __load_cromshell_config_file(config_dir)
+cromwell_server = __get_cromwell_server()
