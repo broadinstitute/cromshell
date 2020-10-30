@@ -54,7 +54,7 @@ def main(config, workflow_id):
         # Status claims this workflow is running fine, but we need to check to see
         # if there are any failed sub-processes.
         # To do this, we use the `execution-status-count` logic with some filtering:
-
+        # TODO : Use this as a template for the Metadata subcommand
         # Get execution status count and filter the metadata down:
         request_meta_out = requests.get(
             f"{config.cromwell_server}{config.api_string}{workflow_id}/metadata?{config.slim_metadata_parameters}"
@@ -68,7 +68,7 @@ def main(config, workflow_id):
         failed = False
         for task_status in execution_status_count:
             for key in task_status:
-                if re.search("Failed", str(task_status[key]), re.I):
+                if "Failed" in str(task_status[key]):
                     failed = True
                     break
 

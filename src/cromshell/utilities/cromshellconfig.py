@@ -57,13 +57,13 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
         )
     else:
         with open(submission_file) as f:
-            column = None
+            row = None
             for line in f:
                 if workflow_id in line:
-                    column = line.split()
-            if column:
+                    row = line.split()
+            if row:
                 LOGGER.info("Found workflow id in submission file.")
-                cromwell_server = column[1]
+                cromwell_server = row[1]
                 LOGGER.info(
                     "Cromwell server set to matching workflow id in submission file."
                 )
