@@ -1,6 +1,7 @@
 import logging
 import json
 from pathlib import Path
+import csv
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,29 +50,28 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
         LOGGER.info(
             "Workflow id and cromwell server not specified. Using default cromwell server"
         )
+        LOGGER.info(f"Server: {cromwell_server}")
     elif server_user:
         cromwell_server = server_user
         LOGGER.info(
             "Cromwell server URL was overridden by command line argument"
         )
+        LOGGER.info(f"Server: {cromwell_server}")
     else:
-        with open(submission_file) as f:
-            row = None
-            for line in f:
-                if workflow_id in line:
-                    row = line.split()
-            if row:
-                LOGGER.info("Found workflow id in submission file.")
-                cromwell_server = row[1]
-                LOGGER.info(
-                    "Cromwell server set to matching workflow id in submission file."
-                )
-            else:
-                LOGGER.info(
-                    "Unable to find workflow id in submission file. Using default cromwell server"
-                )
-        LOGGER.info(f"WorkflowID: {workflow_id}")
-    LOGGER.info(f"Server: {cromwell_server}")
+        with open(submission_file, 'r') as csv_file:
+            reader = csv.DictReader(csv_file, delimiter="\t")
+            for row in reader:
+                if row["RUN_ID"] == workflow_id:
+                    LOGGER.info("Found workflow id in submission file.")
+                    cromwell_server = row["CROMWELL_SERVER"]
+                    LOGGER.info(
+                        "Cromwell server set to matching workflow id in submission file."
+                    )
+                    LOGGER.info(f"WorkflowID: {workflow_id}")
+                    LOGGER.info(f"Server: {cromwell_server}")
+                    break
+
+
 
 
 def __get_config_dir():
