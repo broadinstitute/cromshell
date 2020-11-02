@@ -57,6 +57,7 @@ def main_entry(cromshell_config, verbosity, slim_metadata_parameters, hide_logo,
     from . import log  # pylint: disable=C0415
 
     log.configure_logging(verbosity)
+    log.override_logo_display_setting(hide_logo)
 
     # Log our command-line and log level so we can have it in the log file:
     LOGGER.info("Invoked by: %s", " ".join(argv))
@@ -70,7 +71,6 @@ def main_entry(cromshell_config, verbosity, slim_metadata_parameters, hide_logo,
     cromshellconfig.resolve_cromwell_config_server_address(
         server_user=cromwell_url
     )
-    cromshellconfig.override_logo_display_setting(hide_logo)
 
 
 @main_entry.command()

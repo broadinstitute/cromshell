@@ -10,6 +10,7 @@ from typing_extensions import Counter
 from cromshell.utilities import cromshellconfig
 from cromshell.utilities import http_utils
 from cromshell.utilities import io_utils
+from cromshell import log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def main(config, workflow_id):
     # Set return value based on workflow status
     if workflow_status in ("Failed", "Aborted", "fail"):
         ret_val = 1
-        io_utils.turtle_dead(config.show_logo)
+        log.display_logo(io_utils.dead_turtle)
     elif workflow_status == "Succeeded":  # change to Running for the final version.
         # Status claims this workflow is running fine, but we need to check to see
         # if there are any failed sub-processes.
@@ -76,9 +77,9 @@ def main(config, workflow_id):
         if not failed:
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
-            io_utils.turtle(config.show_logo)
+            log.display_logo(io_utils.turtle)
         else:
-            io_utils.doomed_logo(config.show_logo)
+            log.display_logo(io_utils.doomed_logo)
             workflow_status = "DOOMED"
             message = (
                 "The workflow is Running but one of the instances "
@@ -87,7 +88,7 @@ def main(config, workflow_id):
             requested_status_json = f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message}'
 
     else:
-        io_utils.turtle(config.show_logo)
+        log.display_logo(io_utils.turtle)
 
     # Display status to user:
     line_string = requested_status_json

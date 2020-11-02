@@ -14,7 +14,6 @@ slim_metadata_parameters = (
     "=subWorkflowMetadata&includeKey=subWorkflowId"
 )
 api_string = "/api/workflows/v1/"
-show_logo = True
 
 
 def override_slim_metadata_parameters(slim_metadata_param):
@@ -73,15 +72,6 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                 )
         LOGGER.info(f"WorkflowID: {workflow_id}")
     LOGGER.info(f"Server: {cromwell_server}")
-
-
-def override_logo_display_setting(hide_logo):
-    """Boolean for Displaying Turtle Logo"""
-
-    global show_logo
-
-    if hide_logo is True:
-        show_logo = False
 
 
 def __get_config_dir():
