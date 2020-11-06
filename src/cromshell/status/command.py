@@ -58,7 +58,7 @@ def main(config, workflow_id):
         # TODO : Use this as a template for the Metadata subcommand
         # Get execution status count and filter the metadata down:
         request_meta_out = requests.get(
-            f"{config.cromwell_server}{config.api_string}{workflow_id}/metadata?{config.slim_metadata_parameters}"
+            f"{config.cromwell_server}{config.api_string}{workflow_id}/metadata?{config.slim_metadata_parameters} "
         )
 
         # tmp_metadata holds the workflow metadata as a dictionary
@@ -85,7 +85,7 @@ def main(config, workflow_id):
                 "The workflow is Running but one of the instances "
                 "has failed which will lead to failure."
             )
-            requested_status_json = f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message}'
+            requested_status_json = f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message} '
 
     else:
         log.display_logo(io_utils.turtle)
@@ -111,12 +111,14 @@ def main(config, workflow_id):
 
 
 def get_metadata_status_summary(workflow_metadata):
-    """Get the status for each call in a workflow and the frequency of those statuses"""
+    """Get the status for each call in a workflow and the frequency of those
+    statuses """
     # workflow_metadata holds the workflow metadata as a dictionary
     workflow_status_count = []
     tmp_execution_status = []
 
-    # For each call in the metadata dictionary create a shortened summary containing the call name and status
+    # For each call in the metadata dictionary create a shortened summary containing
+    # the call name and status
     for call in workflow_metadata['calls']:
         call_element = f'"{call}": '
         execution_statuses = []
@@ -125,9 +127,11 @@ def get_metadata_status_summary(workflow_metadata):
         for instanceDic in workflow_metadata['calls'][call]:
             execution_statuses.append(instanceDic['executionStatus'])
 
-        # Create a key and value pair for the execution status and number of times it is seen
+        # Create a key and value pair for the execution status and number of times
+        # it is seen
         status_count = Counter(execution_statuses)
-        # For each status for the call add the call name and status name and count to list
+        # For each status for the call add the call name and status name and count
+        # to list
         for status in set(execution_statuses):
             status_element = f'{{"{status}": {status_count[status]}}}'
             tmp_execution_status.append(f"{call_element}{status_element}")

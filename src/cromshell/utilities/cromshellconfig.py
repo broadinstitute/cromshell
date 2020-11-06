@@ -48,7 +48,8 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
 
     if server_user is None and workflow_id is None:
         LOGGER.info(
-            "Workflow id and cromwell server not specified. Using default cromwell server"
+            "Workflow id and cromwell server not specified. Using default cromwell "
+            "server "
         )
         LOGGER.info(f"Server: {cromwell_server}")
     elif server_user:
@@ -65,7 +66,8 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                     LOGGER.info("Found workflow id in submission file.")
                     cromwell_server = row["CROMWELL_SERVER"]
                     LOGGER.info(
-                        "Cromwell server set to matching workflow id in submission file."
+                        "Cromwell server set to matching workflow id in submission "
+                        "file. "
                     )
                     LOGGER.info(f"WorkflowID: {workflow_id}")
                     LOGGER.info(f"Server: {cromwell_server}")
