@@ -114,7 +114,6 @@ def get_metadata_status_summary(workflow_metadata):
     """Get the status for each call in a workflow and the frequency of those
     statuses """
     # workflow_metadata holds the workflow metadata as a dictionary
-    workflow_status_count = []
     tmp_execution_status = []
 
     # For each call in the metadata dictionary create a shortened summary containing
