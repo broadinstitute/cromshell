@@ -79,7 +79,7 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
 def __get_config_dir():
     """Get Path To Cromshell Hidden Directory"""
 
-    config_path = str(Path.home()) + "/.cromshell"
+    config_path = os.path.join(Path.home(), ".cromshell")
     Path.mkdir(Path(config_path), exist_ok=True)
     return config_path
 
@@ -87,9 +87,9 @@ def __get_config_dir():
 def __get_submission_file(config_directory):
     """Get File Path To Cromshell Submission File"""
 
-    submission_file_path = f"{config_directory}/all.workflow.database.tsv"
-    if not Path.exists(Path(submission_file_path)):
-        Path.touch(Path(submission_file_path))
+    submission_file_path = os.path.join(config_directory, "all.workflow.database.tsv")
+    if not Path(submission_file_path).exists():
+        Path(submission_file_path).touch()
         submission_header = (
             f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
         )
@@ -101,8 +101,8 @@ def __get_submission_file(config_directory):
 def __load_cromshell_config_file(config_directory):
     """Load options from Cromshell Config File to dictionary"""
 
-    cromshell_config_file = f"{config_directory}/cromshell_config.json"
-    if not Path.exists(Path(cromshell_config_file)):
+    cromshell_config_file = os.path.join(config_directory, "cromshell_config.json")
+    if not Path(cromshell_config_file).exists():
         LOGGER.error(f"Cromshell config file {cromshell_config_file} was not found")
         LOGGER.error(f"Please create {cromshell_config_file}")
         raise Exception(f"Cromshell config file {cromshell_config_file} was not found")

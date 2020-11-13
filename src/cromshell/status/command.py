@@ -94,7 +94,7 @@ def main(config, workflow_id):
     line_string = requested_status_json
     print(line_string.replace(",", ",\n"))
 
-    # Update ${CROMWELL_SUBMISSIONS_FILE}:
+    # Update config.submission_file:
     with fileinput.FileInput(
              config.submission_file, inplace=True, backup=".bak"
     ) as csv_file:
@@ -114,7 +114,6 @@ def get_metadata_status_summary(workflow_metadata):
     """Get the status for each call in a workflow and the frequency of those
     statuses """
     # workflow_metadata holds the workflow metadata as a dictionary
-    workflow_status_count = []
     tmp_execution_status = []
 
     # For each call in the metadata dictionary create a shortened summary containing
@@ -136,12 +135,9 @@ def get_metadata_status_summary(workflow_metadata):
             status_element = f'{{"{status}": {status_count[status]}}}'
             tmp_execution_status.append(f"{call_element}{status_element}")
 
-    #
     tmp_execution_status_json = ", ".join(tmp_execution_status)
     tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
-    workflow_status_count.append(json.loads(tmp_execution_status_json))
-
-    return workflow_status_count
+    return [json.loads(tmp_execution_status_json)]
 
 
 if __name__ == '__main__':

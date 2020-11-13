@@ -18,8 +18,6 @@ def override_logo_display_setting(hide_logo):
 def display_logo(logo):
     """ Prints logo to screen"""
 
-    global show_logo
-
     if show_logo:
         logo()
 
