@@ -94,7 +94,7 @@ def main(config, workflow_id):
     line_string = requested_status_json
     print(line_string.replace(",", ",\n"))
 
-    # Update ${CROMWELL_SUBMISSIONS_FILE}:
+    # Update config.submission_file:
     with fileinput.FileInput(
              config.submission_file, inplace=True, backup=".bak"
     ) as csv_file:
