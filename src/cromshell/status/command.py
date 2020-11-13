@@ -137,9 +137,7 @@ def get_metadata_status_summary(workflow_metadata):
 
     tmp_execution_status_json = ", ".join(tmp_execution_status)
     tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
-    workflow_status_count.append(json.loads(tmp_execution_status_json))
-
-    return workflow_status_count
+    return [json.loads(tmp_execution_status_json)]
 
 
 if __name__ == '__main__':
