@@ -102,7 +102,7 @@ def __load_cromshell_config_file(config_directory):
     """Load options from Cromshell Config File to dictionary"""
 
     cromshell_config_file = os.path.join(config_directory, "cromshell_config.json")
-    if not Path.exists(Path(cromshell_config_file)):
+    if not Path(cromshell_config_file).exists():
         LOGGER.error(f"Cromshell config file {cromshell_config_file} was not found")
         LOGGER.error(f"Please create {cromshell_config_file}")
         raise Exception(f"Cromshell config file {cromshell_config_file} was not found")
