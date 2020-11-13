@@ -132,7 +132,6 @@ def get_metadata_status_summary(workflow_metadata):
             status_element = f'{{"{status}": {status_count[status]}}}'
             tmp_execution_status.append(f"{call_element}{status_element}")
 
-    #
     tmp_execution_status_json = ", ".join(tmp_execution_status)
     tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
     workflow_status_count.append(json.loads(tmp_execution_status_json))
