@@ -85,7 +85,7 @@ def __get_config_dir():
 def __get_submission_file(config_directory):
     """Get File Path To Cromshell Submission File"""
 
-    submission_file_path = f"{config_directory}/all.workflow.database.tsv"
+    submission_file_path = os.path.join(config_directory, "all.workflow.database.tsv")
     if not Path.exists(Path(submission_file_path)):
         Path.touch(Path(submission_file_path))
         submission_header = (
