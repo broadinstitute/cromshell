@@ -13,7 +13,6 @@ def override_logo_display_setting(hide_logo):
 
     if hide_logo is True:
         show_logo = False
-    print(show_logo)
 
 
 def display_logo(logo):
