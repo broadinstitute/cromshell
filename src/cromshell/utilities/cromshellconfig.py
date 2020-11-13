@@ -88,7 +88,7 @@ def __get_submission_file(config_directory):
     """Get File Path To Cromshell Submission File"""
 
     submission_file_path = os.path.join(config_directory, "all.workflow.database.tsv")
-    if not Path.exists(Path(submission_file_path)):
+    if not Path(submission_file_path).exists():
         Path.touch(Path(submission_file_path))
         submission_header = (
             f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
