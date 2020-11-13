@@ -89,7 +89,7 @@ def __get_submission_file(config_directory):
 
     submission_file_path = os.path.join(config_directory, "all.workflow.database.tsv")
     if not Path(submission_file_path).exists():
-        Path.touch(Path(submission_file_path))
+        Path(submission_file_path).touch()
         submission_header = (
             f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
         )
