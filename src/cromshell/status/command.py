@@ -51,7 +51,7 @@ def main(config, workflow_id):
     if workflow_status in ("Failed", "Aborted", "fail"):
         ret_val = 1
         log.display_logo(io_utils.dead_turtle)
-    elif workflow_status == "Succeeded":  # change to Running for the final version.
+    elif workflow_status == "Running":
         # Status claims this workflow is running fine, but we need to check to see
         # if there are any failed sub-processes.
         # To do this, we use the `execution-status-count` logic with some filtering:
@@ -96,7 +96,7 @@ def main(config, workflow_id):
 
     # Update config.submission_file:
     with fileinput.FileInput(
-             config.submission_file, inplace=True, backup=".bak"
+            config.submission_file, inplace=True, backup=".bak"
     ) as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         print("\t".join(reader.fieldnames))
