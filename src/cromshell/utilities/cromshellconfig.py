@@ -1,6 +1,7 @@
 import logging
 import json
 from pathlib import Path
+import os
 import csv
 
 LOGGER = logging.getLogger(__name__)
@@ -15,6 +16,11 @@ slim_metadata_parameters = (
     "=subWorkflowMetadata&includeKey=subWorkflowId"
 )
 api_string = "/api/workflows/v1/"
+# Defaults for variables will be set after functions have been defined
+config_dir = None
+submission_file = None
+cromshell_config_options = None
+cromwell_server = None
 
 
 def override_slim_metadata_parameters(slim_metadata_param):
@@ -72,8 +78,6 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                     LOGGER.info(f"WorkflowID: {workflow_id}")
                     LOGGER.info(f"Server: {cromwell_server}")
                     break
-
-
 
 
 def __get_config_dir():
