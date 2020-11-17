@@ -52,7 +52,9 @@ LOGGER = logging.getLogger(__name__)
     help="Specify Cromwell URL used",
 )
 @click.pass_context
-def main_entry(cromshell_config, verbosity, slim_metadata_parameters, hide_logo, cromwell_url):
+def main_entry(
+    cromshell_config, verbosity, slim_metadata_parameters, hide_logo, cromwell_url
+):
     # Set up our log verbosity
     from . import log  # pylint: disable=C0415
 
@@ -65,12 +67,8 @@ def main_entry(cromshell_config, verbosity, slim_metadata_parameters, hide_logo,
 
     # Create an object to hold all cromwell configurations
     cromshell_config.obj = cromshellconfig
-    cromshellconfig.override_slim_metadata_parameters(
-        slim_metadata_parameters
-    )
-    cromshellconfig.resolve_cromwell_config_server_address(
-        server_user=cromwell_url
-    )
+    cromshellconfig.override_slim_metadata_parameters(slim_metadata_parameters)
+    cromshellconfig.resolve_cromwell_config_server_address(server_user=cromwell_url)
 
 
 @main_entry.command()

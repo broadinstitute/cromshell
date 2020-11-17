@@ -32,8 +32,8 @@ def override_slim_metadata_parameters(slim_metadata_param):
 
     if slim_metadata_param:
         slim_metadata_parameters = (
-                slim_metadata_param
-                + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
+            slim_metadata_param
+            + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
         )
 
 
@@ -62,12 +62,10 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
         LOGGER.info(f"Server: {cromwell_server}")
     elif server_user:
         cromwell_server = server_user
-        LOGGER.info(
-            "Cromwell server URL was overridden by command line argument"
-        )
+        LOGGER.info("Cromwell server URL was overridden by command line argument")
         LOGGER.info(f"Server: {cromwell_server}")
     else:
-        with open(submission_file, 'r') as csv_file:
+        with open(submission_file, "r") as csv_file:
             reader = csv.DictReader(csv_file, delimiter="\t")
             for row in reader:
                 if row["RUN_ID"] == workflow_id:
@@ -96,10 +94,8 @@ def __get_submission_file(config_directory):
     submission_file_path = os.path.join(config_directory, "all.workflow.database.tsv")
     if not Path(submission_file_path).exists():
         Path(submission_file_path).touch()
-        submission_header = (
-            f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
-        )
-        with Path(submission_file_path).open('w') as f:
+        submission_header = f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
+        with Path(submission_file_path).open("w") as f:
             f.write(submission_header)
     return submission_file_path
 
@@ -113,7 +109,7 @@ def __load_cromshell_config_file(config_directory):
         LOGGER.error(f"Please create {cromshell_config_file}")
         raise Exception(f"Cromshell config file {cromshell_config_file} was not found")
 
-    with open(cromshell_config_file, 'r') as f:
+    with open(cromshell_config_file, "r") as f:
         config_options = json.loads(f.read())
 
     return config_options
@@ -122,13 +118,13 @@ def __load_cromshell_config_file(config_directory):
 def __get_cromwell_server():
     """Get Cromshell Server URL from configuration options"""
 
-    if not cromshell_config_options['cromwell_server']:
+    if not cromshell_config_options["cromwell_server"]:
         raise Exception(f'Cromshell config file is missing "cromwell_server"')
 
-    LOGGER.info("Setting cromwell server to cromwell url from config file.") # Why doesn't this get printed in the stdout?
-    LOGGER.info(cromshell_config_options['cromwell_server'])
+    LOGGER.info("Setting cromwell server to cromwell url from config file.")
+    LOGGER.info(cromshell_config_options["cromwell_server"])
 
-    return cromshell_config_options['cromwell_server']
+    return cromshell_config_options["cromwell_server"]
 
 
 # Get and Set Cromshell Configuration Default Values
