@@ -24,15 +24,15 @@ def main(config, workflow_id):
     LOGGER.info("status")
 
     ret_val = 0
-    config.cromwell_api_workflow_id = f"{config.cromwell_server}{config.api_string}{workflow_id}"
+    config.cromwell_api_workflow_id = (
+        f"{config.cromwell_server}{config.api_string}{workflow_id}"
+    )
 
     # Set cromwell server using submission file. Running the function below with
     # passing only the workflow id overrides the default cromwell url set in the
     # cromshell config file, command line argument, and environment. This takes
     # place only if the workflow id is found in the submission file.
-    cromshellconfig.resolve_cromwell_config_server_address(
-        workflow_id=workflow_id
-    )
+    cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
 
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
@@ -84,7 +84,9 @@ def main(config, workflow_id):
                 "The workflow is Running but one of the instances "
                 "has failed which will lead to failure."
             )
-            requested_status_json = f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message} '
+            requested_status_json = (
+                f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message} '
+            )
 
     else:
         log.display_logo(io_utils.turtle)
@@ -95,12 +97,15 @@ def main(config, workflow_id):
 
     # Update config.submission_file:
     with fileinput.FileInput(
-            config.submission_file, inplace=True, backup=".bak"
+        config.submission_file, inplace=True, backup=".bak"
     ) as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         print("\t".join(reader.fieldnames))
         for row in reader:
-            if row["CROMWELL_SERVER"] == config.cromwell_server and row["RUN_ID"] == workflow_id:
+            if (
+                row["CROMWELL_SERVER"] == config.cromwell_server
+                and row["RUN_ID"] == workflow_id
+            ):
                 row["STATUS"] = workflow_status
                 print("\t".join(x for x in row.values() if x))
             else:
@@ -110,20 +115,20 @@ def main(config, workflow_id):
 
 
 def get_metadata_status_summary(workflow_metadata):
-    """Get the status for each call in a workflow and the frequency of those
-    statuses """
+    """Get the status for each call in a workflow
+    and the frequency of those statuses"""
     # workflow_metadata holds the workflow metadata as a dictionary
     tmp_execution_status = []
 
     # For each call in the metadata dictionary create a shortened summary containing
     # the call name and status
-    for call in workflow_metadata['calls']:
+    for call in workflow_metadata["calls"]:
         call_element = f'"{call}": '
         execution_statuses = []
 
         # For each call name add the number of execution_status to a list
-        for instanceDic in workflow_metadata['calls'][call]:
-            execution_statuses.append(instanceDic['executionStatus'])
+        for instanceDic in workflow_metadata["calls"][call]:
+            execution_statuses.append(instanceDic["executionStatus"])
 
         # Create a key and value pair for the execution status and number of times
         # it is seen
@@ -139,5 +144,5 @@ def get_metadata_status_summary(workflow_metadata):
     return [json.loads(tmp_execution_status_json)]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

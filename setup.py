@@ -11,7 +11,7 @@ setup(
     description="Command Line Interface (CLI) for Cromwell servers",
     author="Jonn Smith, Louis Bergelson, Beri Shifaw",
     author_email="jonn@broadinstitute.org, louisb@broadinstitute.org, "
-                 "bshifaw@broadinstitute.org",
+    "bshifaw@broadinstitute.org",
     license="BSD 3-Clause",
     long_description=open("README.md").read(),
     install_requires="""
