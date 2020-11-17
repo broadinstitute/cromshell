@@ -24,6 +24,7 @@ def main(config, workflow_id):
     LOGGER.info("status")
 
     ret_val = 0
+    config.cromwell_api_workflow_id = f"{config.cromwell_server}{config.api_string}{workflow_id}"
 
     # Set cromwell server using submission file. Running the function below with
     # passing only the workflow id overrides the default cromwell url set in the
@@ -37,9 +38,7 @@ def main(config, workflow_id):
     http_utils.assert_can_communicate_with_server(config)
 
     # Request workflow status
-    request_out = requests.get(
-        f"{config.cromwell_server}{config.api_string}{workflow_id}/status"
-    )
+    request_out = requests.get(f"{config.cromwell_api_workflow_id}/status")
 
     requested_status_json = request_out.content.decode("utf-8")
     workflow_status_description = json.loads(request_out.content)
@@ -58,7 +57,7 @@ def main(config, workflow_id):
         # TODO : Use this as a template for the Metadata subcommand
         # Get execution status count and filter the metadata down:
         request_meta_out = requests.get(
-            f"{config.cromwell_server}{config.api_string}{workflow_id}/metadata?{config.slim_metadata_parameters} "
+            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters} "
         )
 
         # tmp_metadata holds the workflow metadata as a dictionary
@@ -122,7 +121,7 @@ def get_metadata_status_summary(workflow_metadata):
         call_element = f'"{call}": '
         execution_statuses = []
 
-        # For each call name add the number of executionstatus to a list
+        # For each call name add the number of execution_status to a list
         for instanceDic in workflow_metadata['calls'][call]:
             execution_statuses.append(instanceDic['executionStatus'])
 
