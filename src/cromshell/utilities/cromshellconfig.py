@@ -65,11 +65,15 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
         LOGGER.info("Cromwell server URL was overridden by command line argument")
         LOGGER.info(f"Server: {cromwell_server}")
     else:
+        LOGGER.info(
+            "Checking submission file for associated cromwell server with the provided "
+            "workflow id."
+        )
         with open(submission_file, "r") as csv_file:
             reader = csv.DictReader(csv_file, delimiter="\t")
+            id_in_file = False
             for row in reader:
                 if row["RUN_ID"] == workflow_id:
-                    LOGGER.info("Found workflow id in submission file.")
                     cromwell_server = row["CROMWELL_SERVER"]
                     LOGGER.info(
                         "Cromwell server set to matching workflow id in submission "
@@ -77,7 +81,13 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                     )
                     LOGGER.info(f"WorkflowID: {workflow_id}")
                     LOGGER.info(f"Server: {cromwell_server}")
+                    id_in_file = True
                     break
+            if not id_in_file:
+                LOGGER.info(
+                    "Workflow id was not found in submission file, using default "
+                    "cromwell server."
+                )
 
 
 def __get_config_dir():
