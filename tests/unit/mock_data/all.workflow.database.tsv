@@ -1,0 +1,6 @@
+DATE    CROMWELL_SERVER RUN_ID  WDL_NAME        STATUS  ALIAS
+20200110_105202 https://cromwell-v47.dsde-methods.broadinstitute.org    a63aa10c-a43e-4ca7-9be9-c2d2aa08b96d    ValidateBam.wdl Failed
+20200110_110109 https://cromwell-v47.dsde-methods.broadinstitute.org    b3b197b3-fdca-4647-9fd8-bf16d2cb734d    ValidateBam.wdl Succeeded
+20200110_111429 https://cromwell-v47.dsde-methods.broadinstitute.org    682f3e72-0285-40ec-8128-1feb877706ce    ValidateBam.wdl Succeeded
+20200507_080200 https://cromwell-v45.dsde-methods.broadinstitute.org    d689adec-c600-4e4b-be37-4e30e65848c7    PBCCSOnlySingleFlowcell.wdl     Succeeded
+20200508_100413 https://cromwell-v45.dsde-methods.broadinstitute.org    d7cad898-f13a-4547-b301-f0c9dbb8865d    PBCCSOnlySingleFlowcell.wdl     Failed
