@@ -2,11 +2,31 @@ import logging
 import pkgutil
 from pathlib import Path
 
+# Default for boolean to display logo
+show_logo = True
+
+
+def override_logo_display_setting(hide_logo):
+    """Override boolean for displaying turtle Logo"""
+
+    global show_logo
+
+    if hide_logo is True:
+        show_logo = False
+
+
+def display_logo(logo):
+    """ Prints logo to screen"""
+
+    if show_logo:
+        logo()
+
 
 def configure_logging(verbosity):
     """Set up logging for the cromshell module"""
 
-    import cromshell# pylint: disable=C0415
+    # Having the cromshell import here instead of at the top is for speed optimization
+    import cromshell  # pylint: disable=C0415
 
     format_string = get_logging_format_string(cromshell)
 
