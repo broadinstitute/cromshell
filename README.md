@@ -105,13 +105,22 @@ Current version: 2.0.0
 To do development in this codebase, the python3 development package must
 be installed.
 
-After installation the carrot\_cli development environment can be set up by
+After installation the cromshell development environment can be set up by
 the following commands:
 
     python3 -mvenv venv
     . venv/bin/activate
     pip install -r dev-requirements.txt
     pip install -e .
+    
+### Running Development Builds of Cromshell
+
+After following the above development environment setup steps, simply type
+```
+cromshell
+```
+Note that there is no leading `./` in this command.  This is due to the 
+development setup adding the cromshell python script to your path.
 
 ### Linting files
 
