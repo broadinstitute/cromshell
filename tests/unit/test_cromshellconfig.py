@@ -1,4 +1,3 @@
-import copy
 from cromshell.utilities import cromshellconfig
 from importlib import reload
 from pathlib import Path
@@ -7,7 +6,7 @@ import os
 
 
 class TestCromshellConfig:
-    """Test the cromshell config values"""
+    """Test the cromshell config functions and variables"""
 
     def test_override_slim_metadata_parameters(self):
         reload(cromshellconfig)
@@ -35,7 +34,7 @@ class TestCromshellConfig:
         test_cromwell_url = "https://cromwell-v1.dsde-methods.broadinstitute.org"
 
         assert cromshellconfig.cromwell_server is not None, \
-            "Cromwell server variable should be set"
+            "Cromwell server variable should not be empty"
 
         cromshellconfig.resolve_cromwell_config_server_address(
             server_user=test_cromwell_url)
@@ -63,7 +62,7 @@ class TestCromshellConfig:
             server_user=test_cromwell_url,
             workflow_id=mock_workflow_id)
         assert cromshellconfig.cromwell_server == test_cromwell_url, \
-            "Cromwell server variable should be set to {test_cromwell_url}"
+            f"Cromwell server variable should be set to {test_cromwell_url}"
 
     def test_config_dir(self):
         reload(cromshellconfig)
@@ -90,13 +89,9 @@ class TestCromshellConfig:
 
     def test_cromwell_server(self):
         reload(cromshellconfig)
-        cromshell_config = cromshellconfig
-        ret_val = 0
-        if cromshell_config.cromwell_server is None:
-            ret_val = 1
-
-        assert ret_val == 0, "Return value should be 0"
+        assert cromshellconfig.cromwell_server is not None, \
+            "Cromwell server should be set"
 
     @pytest.fixture
     def mock_data_path(self):
-        return os.path.abspath("mock_data/")
+        return os.path.join(os.path.dirname(__file__), "mock_data/")
