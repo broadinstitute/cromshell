@@ -92,6 +92,14 @@ class TestCromshellConfig:
         assert cromshellconfig.cromwell_server is not None, \
             "Cromwell server should be set"
 
+    def test__load_cromshell_config_options(self, mock_data_path):
+        reload(cromshellconfig)
+        cc__load_cromshell_config_file = getattr(cromshellconfig, '__load_cromshell_config_file')
+        returned_value = cc__load_cromshell_config_file(os.path.dirname(mock_data_path))
+
+        assert returned_value is not None, "Variable should not be empty"
+        assert type(returned_value) is dict, "Variable should be a dictionary"
+
     @pytest.fixture
     def mock_data_path(self):
         return os.path.join(os.path.dirname(__file__), "mock_data/")
