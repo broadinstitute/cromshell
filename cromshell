@@ -1088,9 +1088,14 @@ function printTaskStatus()
 # Bring up a browser window to view timing information on the job.
 function timing() 
 {
+  local id=${1}
+  local server_url_for_browser=${2}
   turtle
-  echo "Opening timing information in a web browser for job ID: ${1}"
-  open ${2}/api/workflows/v1/${1}/timing
+  echo "Opening timing information in your default web browser for job ID: ${id}"
+  if [[ ${server_url_for_browser} != "http*" ]]; then
+    server_url_for_browser="http://${server_url_for_browser}"
+  fi
+  open ${server_url_for_browser}/api/workflows/v1/${id}/timing
   return $?
 }
 
