@@ -57,20 +57,21 @@ def main(config, workflow_id):
         # TODO : Use this as a template for the Metadata subcommand
         # Get execution status count and filter the metadata down:
         request_meta_out = requests.get(
-            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters} "
+            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters}"
         )
 
         # tmp_metadata holds the workflow metadata as a dictionary
         tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
-        execution_status_count = get_metadata_status_summary(tmp_metadata)
+        summarized_tmp_metadata = get_all_call_values(tmp_metadata)
+        execution_status_count = get_metadata_status_summary(summarized_tmp_metadata)
+        print(execution_status_count)
 
         # Check for failure states:
         failed = False
-        for task_status in execution_status_count:
-            for key in task_status:
-                if "Failed" in str(task_status[key]):
-                    failed = True
-                    break
+        for call in execution_status_count:
+            if "Failed" in str(execution_status_count[call]):
+                failed = True
+                break
 
         # Check for failures:
         if not failed:
@@ -97,14 +98,14 @@ def main(config, workflow_id):
 
     # Update config.submission_file:
     with fileinput.FileInput(
-        config.submission_file, inplace=True, backup=".bak"
+            config.submission_file, inplace=True, backup=".bak"
     ) as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         print("\t".join(reader.fieldnames))
         for row in reader:
             if (
-                row["CROMWELL_SERVER"] == config.cromwell_server
-                and row["RUN_ID"] == workflow_id
+                    row["CROMWELL_SERVER"] == config.cromwell_server
+                    and row["RUN_ID"] == workflow_id
             ):
                 row["STATUS"] = workflow_status
                 print("\t".join(x for x in row.values() if x))
@@ -114,34 +115,74 @@ def main(config, workflow_id):
     return ret_val
 
 
-def get_metadata_status_summary(workflow_metadata):
+def get_all_call_values(nested_dictionary):
+    """Summarizes a given workflow metadata dictionary into a
+    new dictionary with only task name and status"""
+    temp_dic1 = {}
+    temp_dic2 = {}
+    temp_dic3 = {}
+    for key, value in nested_dictionary.items():
+        # Skip any keys that have values that are strings, because we are note
+        # interested in them
+        if type(value) is str:
+            continue
+        # If a dictionary value is encountered then we iterate through the dictionary
+        # to find call statuses
+        if type(value) is dict:
+            temp_dic1 = get_all_call_values(value)
+        # If a list value is encountered then those are the calls and their status,
+        # we'll want to add the key and value to the temp dictionary
+        if type(value) is list:
+            # Each item in the list is the shard of a call so we'll itterate through
+            # the list and collect info on all shards
+            temp_dic3[key] = []
+            for i, shard in enumerate(value):
+                calls_status = shard
+                # If a key in the shard dictionary has the term "subWorkflowMetadata"
+                # then this is a subworkflow so we iterate through the dictionary to
+                # find call statuses
+                if "subWorkflowMetadata" in calls_status.keys():
+                    temp_dic2 = get_all_call_values(calls_status["subWorkflowMetadata"])
+                    # Remove "Scatter" key from dict
+                    if key in temp_dic3.keys():
+                        temp_dic3.pop(key)
+                # If there isn't a sub workflow then we add the call name combined
+                # with the shard index as a key and its metadata dictionary as its
+                # value
+                if "subWorkflowMetadata" not in calls_status.keys():
+                    temp_dic3[key].append(calls_status)
+
+    # Merge all the dictionaries together from all the different if statments
+    merged_dic = {**temp_dic1, **temp_dic2, **temp_dic3}
+    return merged_dic
+
+
+def get_metadata_status_summary(workflow_call_metadata):
     """Get the status for each call in a workflow
     and the frequency of those statuses"""
-    # workflow_metadata holds the workflow metadata as a dictionary
-    tmp_execution_status = []
 
-    # For each call in the metadata dictionary create a shortened summary containing
-    # the call name and status
-    for call in workflow_metadata["calls"]:
-        call_element = f'"{call}": '
-        execution_statuses = []
+    tmp_execution_status = {}
+
+    # For each call in the given metadata dictionary create a shortened dictionary
+    # containing the call name and status
+    for call in workflow_call_metadata:
+        execution_statuses = []  # List to hold the different status per call
+        tmp_execution_status[call] = {}
 
         # For each call name add the number of execution_status to a list
-        for instanceDic in workflow_metadata["calls"][call]:
-            execution_statuses.append(instanceDic["executionStatus"])
+        for shard in workflow_call_metadata[call]:
+            execution_statuses.append(shard["executionStatus"])
 
         # Create a key and value pair for the execution status and number of times
-        # it is seen
+        # it is seen for this call
         status_count = Counter(execution_statuses)
+
         # For each status for the call add the call name and status name and count
         # to list
         for status in set(execution_statuses):
-            status_element = f'{{"{status}": {status_count[status]}}}'
-            tmp_execution_status.append(f"{call_element}{status_element}")
+            tmp_execution_status[call][status] = status_count[status]
 
-    tmp_execution_status_json = ", ".join(tmp_execution_status)
-    tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
-    return [json.loads(tmp_execution_status_json)]
+    return tmp_execution_status
 
 
 if __name__ == "__main__":
