@@ -86,14 +86,14 @@ def main(config, workflow_id):
 
     # Update config.submission_file:
     with fileinput.FileInput(
-        config.submission_file, inplace=True, backup=".bak"
+            config.submission_file, inplace=True, backup=".bak"
     ) as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         print("\t".join(reader.fieldnames))
         for row in reader:
             if (
-                row["CROMWELL_SERVER"] == config.cromwell_server
-                and row["RUN_ID"] == workflow_id
+                    row["CROMWELL_SERVER"] == config.cromwell_server
+                    and row["RUN_ID"] == workflow_id
             ):
                 row["STATUS"] = workflow_status
                 print("\t".join(x for x in row.values() if x))
