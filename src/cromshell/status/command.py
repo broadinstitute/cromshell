@@ -126,7 +126,7 @@ def check_for_failure(metadata: dict):
         # and their status within layers of the dictionary. Depth First Search recursion
         # is used to traverse the dictionary by iterating through any dictionary
         # this function comes across first and reporting whether it found a failure
-        if type(value) is dict:
+        if isinstance(value, dict):
             workflow_failed = check_for_failure(value)
 
         # If a list value is encountered then the dictionary being traversed through is
@@ -137,7 +137,7 @@ def check_for_failure(metadata: dict):
         # dictionary holding status for the shard.
         # We'll want to check each shard to determine whether it's status has
         # Failed
-        if type(value) is list:
+        if isinstance(value, list):
             for i, shard in enumerate(value):
                 if "subWorkflowMetadata" in shard.keys():
                     workflow_failed = check_for_failure(shard["subWorkflowMetadata"])
