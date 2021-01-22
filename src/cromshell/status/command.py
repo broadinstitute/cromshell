@@ -5,7 +5,6 @@ import logging
 import click
 import requests
 import csv
-from typing_extensions import Counter
 
 from cromshell.utilities import cromshellconfig
 from cromshell.utilities import http_utils
@@ -62,18 +61,9 @@ def main(config, workflow_id):
 
         # tmp_metadata holds the workflow metadata as a dictionary
         tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
-        summarized_tmp_metadata = get_tasks_status(tmp_metadata)
-        execution_status_count = get_metadata_status_summary(summarized_tmp_metadata)
-
-        # Check for failure states:
-        failed = False
-        for call in execution_status_count:
-            if "Failed" in str(execution_status_count[call]):
-                failed = True
-                break
 
         # Check for failures:
-        if not failed:
+        if not check_for_failure(tmp_metadata):
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
             log.display_logo(io_utils.turtle)
@@ -114,26 +104,30 @@ def main(config, workflow_id):
     return ret_val
 
 
-def get_tasks_status(metadata_json: dict):
-    """Summarizes a given workflow metadata dictionary into a
-    new dictionary with only task name and status"""
-    current_task_status = {}
-    subworkflow_task_status = {}
-    task_status = {}
-    for key, value in metadata_json.items():
-        # Skip any keys that have values that are strings, because we are not
-        # interested in them
-        if isinstance(value, str):
-            continue
-
+def check_for_failure(metadata: dict):
+    """Checks a workflow metadata dictionary for failing statuses
+    Returns True to indicate workflow or some task(s) has failed"""
+    workflow_failed = False
+    # If the given dictionary contains a 'status' key and has
+    # value of "Failed" then exit the function returning
+    # True to indicate workflow has failed
+    if 'status' in metadata:
+        if metadata['status'] == "Failed":
+            workflow_failed = True
+            return workflow_failed
+    # If the dictionary does not contain a failed value for
+    # its status key or if status key does does not exist
+    # then we'll iterate through this loop in search for
+    # task status or subworkflows.
+    for key, value in metadata.items():
         # If a dictionary value is encountered then recursion is used iterate through
-        # the dictionary to find call statuses. The reason for this is due to the tree
+        # the dictionary to find task statuses. The reason for this is due to the tree
         # structure of the metadata dictionary which holds the calls, subworkflow calls,
         # and their status within layers of the dictionary. Depth First Search recursion
-        # is used to traverse the dictionary by iterating through any dictionary this
-        # this functions comes across first and obtaining their call and status.
-        if isinstance(value, dict):
-            current_task_status = get_tasks_status(value)
+        # is used to traverse the dictionary by iterating through any dictionary
+        # this function comes across first and reporting whether it found a failure
+        if type(value) is dict:
+            workflow_failed = check_for_failure(value)
 
         # If a list value is encountered then the dictionary being traversed through is
         # a key and value pair where the key is the task name and the value is the
@@ -141,58 +135,17 @@ def get_tasks_status(metadata_json: dict):
         # task was scattered. Hence the value for the key is a list to account
         # for all the shards for a task. Each item(shard) within this list is a
         # dictionary holding status for the shard.
-        # We'll want to add this key and list value holding all its shard(s)
-        # to the temp dictionary.
-        if isinstance(value, list):
-            # Since each item in the list is a shard of a task we'll iterate through
-            # the list and collect info on all shards
-            task_status[key] = list()
+        # We'll want to check each shard to determine whether it's status has
+        # Failed
+        if type(value) is list:
             for i, shard in enumerate(value):
-                # If a key in the shard dictionary has the term "subWorkflowMetadata"
-                # then this is a subworkflow containing another layer of tasks
-                # so we iterate through the dictionary to obtain its task statuses
                 if "subWorkflowMetadata" in shard.keys():
-                    subworkflow_task_status = get_tasks_status(shard["subWorkflowMetadata"])
-                    # Remove "Scatter" key from dict
-                    if key in task_status.keys():
-                        task_status.pop(key)
-                # If there isn't a sub workflow then we add the task name combined
-                # with the shard index as a key and its metadata dictionary as its
-                # value
+                    workflow_failed = check_for_failure(shard["subWorkflowMetadata"])
                 else:
-                    task_status[key].append(shard)
-
-    # Merge all the dictionaries together from all the different if statments
-    merged_dic = {**current_task_status, **subworkflow_task_status, **task_status}
-    return merged_dic
-
-
-def get_metadata_status_summary(workflow_call_metadata):
-    """Get the status for each call in a workflow
-    and the frequency of those statuses"""
-
-    tmp_execution_status = {}
-
-    # For each call in the given metadata dictionary create a shortened dictionary
-    # containing the call name and status
-    for call in workflow_call_metadata:
-        execution_statuses = []  # List to hold the different status per call
-        tmp_execution_status[call] = {}
-
-        # For each call name add the number of execution_status to a list
-        for shard in workflow_call_metadata[call]:
-            execution_statuses.append(shard["executionStatus"])
-
-        # Create a key and value pair for the execution status and number of times
-        # it is seen for this call
-        status_count = Counter(execution_statuses)
-
-        # For each status for the call add the call name and status name and count
-        # to list
-        for status in set(execution_statuses):
-            tmp_execution_status[call][status] = status_count[status]
-
-    return tmp_execution_status
+                    if shard['executionStatus'] == "Failed":
+                        workflow_failed = True
+                        return workflow_failed
+    return workflow_failed
 
 
 if __name__ == "__main__":
