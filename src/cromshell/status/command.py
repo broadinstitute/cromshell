@@ -62,9 +62,8 @@ def main(config, workflow_id):
 
         # tmp_metadata holds the workflow metadata as a dictionary
         tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
-        summarized_tmp_metadata = get_all_call_values(tmp_metadata)
+        summarized_tmp_metadata = get_tasks_status(tmp_metadata)
         execution_status_count = get_metadata_status_summary(summarized_tmp_metadata)
-        print(execution_status_count)
 
         # Check for failure states:
         failed = False
@@ -115,45 +114,56 @@ def main(config, workflow_id):
     return ret_val
 
 
-def get_all_call_values(nested_dictionary):
+def get_tasks_status(metadata_json: dict):
     """Summarizes a given workflow metadata dictionary into a
     new dictionary with only task name and status"""
-    temp_dic1 = {}
-    temp_dic2 = {}
-    temp_dic3 = {}
-    for key, value in nested_dictionary.items():
-        # Skip any keys that have values that are strings, because we are note
+    current_task_status = {}
+    subworkflow_task_status = {}
+    task_status = {}
+    for key, value in metadata_json.items():
+        # Skip any keys that have values that are strings, because we are not
         # interested in them
-        if type(value) is str:
+        if isinstance(value, str):
             continue
-        # If a dictionary value is encountered then we iterate through the dictionary
-        # to find call statuses
-        if type(value) is dict:
-            temp_dic1 = get_all_call_values(value)
-        # If a list value is encountered then those are the calls and their status,
-        # we'll want to add the key and value to the temp dictionary
-        if type(value) is list:
-            # Each item in the list is the shard of a call so we'll itterate through
+
+        # If a dictionary value is encountered then recursion is used iterate through
+        # the dictionary to find call statuses. The reason for this is due to the tree
+        # structure of the metadata dictionary which holds the calls, subworkflow calls,
+        # and their status within layers of the dictionary. Depth First Search recursion
+        # is used to traverse the dictionary by iterating through any dictionary this
+        # this functions comes across first and obtaining their call and status.
+        if isinstance(value, dict):
+            current_task_status = get_tasks_status(value)
+
+        # If a list value is encountered then the dictionary being traversed through is
+        # a key and value pair where the key is the task name and the value is the
+        # number of times the task was executed (shard), which is normally 1 unless the
+        # task was scattered. Hence the value for the key is a list to account
+        # for all the shards for a task. Each item(shard) within this list is a
+        # dictionary holding status for the shard.
+        # We'll want to add this key and list value holding all its shard(s)
+        # to the temp dictionary.
+        if isinstance(value, list):
+            # Since each item in the list is a shard of a task we'll iterate through
             # the list and collect info on all shards
-            temp_dic3[key] = []
+            task_status[key] = list()
             for i, shard in enumerate(value):
-                calls_status = shard
                 # If a key in the shard dictionary has the term "subWorkflowMetadata"
-                # then this is a subworkflow so we iterate through the dictionary to
-                # find call statuses
-                if "subWorkflowMetadata" in calls_status.keys():
-                    temp_dic2 = get_all_call_values(calls_status["subWorkflowMetadata"])
+                # then this is a subworkflow containing another layer of tasks
+                # so we iterate through the dictionary to obtain its task statuses
+                if "subWorkflowMetadata" in shard.keys():
+                    subworkflow_task_status = get_tasks_status(shard["subWorkflowMetadata"])
                     # Remove "Scatter" key from dict
-                    if key in temp_dic3.keys():
-                        temp_dic3.pop(key)
-                # If there isn't a sub workflow then we add the call name combined
+                    if key in task_status.keys():
+                        task_status.pop(key)
+                # If there isn't a sub workflow then we add the task name combined
                 # with the shard index as a key and its metadata dictionary as its
                 # value
-                if "subWorkflowMetadata" not in calls_status.keys():
-                    temp_dic3[key].append(calls_status)
+                else:
+                    task_status[key].append(shard)
 
     # Merge all the dictionaries together from all the different if statments
-    merged_dic = {**temp_dic1, **temp_dic2, **temp_dic3}
+    merged_dic = {**current_task_status, **subworkflow_task_status, **task_status}
     return merged_dic
 
 
