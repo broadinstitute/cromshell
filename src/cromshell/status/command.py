@@ -87,14 +87,14 @@ def main(config, workflow_id):
 
     # Update config.submission_file:
     with fileinput.FileInput(
-            config.submission_file, inplace=True, backup=".bak"
+        config.submission_file, inplace=True, backup=".bak"
     ) as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         print("\t".join(reader.fieldnames))
         for row in reader:
             if (
-                    row["CROMWELL_SERVER"] == config.cromwell_server
-                    and row["RUN_ID"] == workflow_id
+                row["CROMWELL_SERVER"] == config.cromwell_server
+                and row["RUN_ID"] == workflow_id
             ):
                 row["STATUS"] = workflow_status
                 print("\t".join(x for x in row.values() if x))
@@ -111,8 +111,8 @@ def check_for_failure(metadata: dict):
     # If the given dictionary contains a 'status' key and has
     # value of "Failed" then exit the function returning
     # True to indicate workflow has failed
-    if 'status' in metadata:
-        if metadata['status'] == "Failed":
+    if "status" in metadata:
+        if metadata["status"] == "Failed":
             workflow_failed = True
             return workflow_failed
     # If the dictionary does not contain a failed value for
@@ -142,7 +142,7 @@ def check_for_failure(metadata: dict):
                 if "subWorkflowMetadata" in shard.keys():
                     workflow_failed = check_for_failure(shard["subWorkflowMetadata"])
                 else:
-                    if shard['executionStatus'] == "Failed":
+                    if shard["executionStatus"] == "Failed":
                         workflow_failed = True
                         return workflow_failed
     return workflow_failed
