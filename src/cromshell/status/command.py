@@ -63,7 +63,8 @@ def main(config, workflow_id):
         tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
 
         # Check for failures:
-        if not check_for_failure(tmp_metadata):
+        workflow_failed = check_for_failure(tmp_metadata)
+        if not workflow_failed:
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
             log.display_logo(io_utils.turtle)
