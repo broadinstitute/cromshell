@@ -107,27 +107,26 @@ def main(config, workflow_id):
 def check_for_failure(metadata: dict):
     """Checks a workflow metadata dictionary for failing statuses
     Returns True to indicate workflow or some task(s) has failed"""
-    workflow_failed = False
-    # If the given dictionary contains a 'status' key and has
-    # value of "Failed" then exit the function returning
-    # True to indicate workflow has failed
-    if "status" in metadata:
-        if metadata["status"] == "Failed":
-            workflow_failed = True
-            return workflow_failed
-    # If the dictionary does not contain a failed value for
-    # its status key or if status key does does not exist
-    # then we'll iterate through this loop in search for
-    # task status or subworkflows.
-    for key, value in metadata.items():
-        # If a dictionary value is encountered then recursion is used iterate through
-        # the dictionary to find task statuses. The reason for this is due to the tree
-        # structure of the metadata dictionary which holds the calls, subworkflow calls,
-        # and their status within layers of the dictionary. Depth First Search recursion
-        # is used to traverse the dictionary by iterating through any dictionary
-        # this function comes across first and reporting whether it found a failure
+
+    # If the given dictionary contains a 'status' key and has value of "Failed"
+    # then exit the function returning "True" to indicate workflow has failed
+    if metadata.get("status") == "Failed":
+        return True
+
+    # If the dictionary does not contain a failed value for its status key or
+    # if status key does does not exist then we'll iterate through the dictionary
+    # value in search of a nested dictionary (indicating subworkflows)
+    # or a list which holds the task statuses.
+    for value in metadata.values():
+
+        # If a dictionary value is encountered then Depth First Search recursion
+        # is used to traverse the dictionary by iterating through the given dictionary
+        # and reporting whether it found a failure. The reason for this is due to the
+        # tree structure of the metadata dictionary which holds the task statuses
+        # in second layer dictionary key called calls.
         if isinstance(value, dict):
-            workflow_failed = check_for_failure(value)
+            if check_for_failure(value):
+                return True
 
         # If a list value is encountered then the dictionary being traversed through is
         # a key and value pair where the key is the task name and the value is the
@@ -135,17 +134,20 @@ def check_for_failure(metadata: dict):
         # task was scattered. Hence the value for the key is a list to account
         # for all the shards for a task. Each item(shard) within this list is a
         # dictionary holding status for the shard.
-        # We'll want to check each shard to determine whether it's status has
-        # Failed
+        # We'll want to check each shard to determine whether it's status has "Failed".
         if isinstance(value, list):
-            for i, shard in enumerate(value):
+            for shard in value:
+
+                # If a key in the shared labeled "subWorkflowMetadata" then this
+                # will another dictionary layer of subworkflow tasks that needs
+                # to be traversed.
                 if "subWorkflowMetadata" in shard.keys():
-                    workflow_failed = check_for_failure(shard["subWorkflowMetadata"])
+                    if check_for_failure(shard["subWorkflowMetadata"]):
+                        return True
                 else:
                     if shard["executionStatus"] == "Failed":
-                        workflow_failed = True
-                        return workflow_failed
-    return workflow_failed
+                        return True
+    return False
 
 
 if __name__ == "__main__":
