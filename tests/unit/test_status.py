@@ -3,89 +3,31 @@ from cromshell.status import command as status_command
 import os
 import json
 
-command_name = "status"
-
-
+# Todo: pytest function
 class TestStatus:
     """Test the status command functions"""
 
-    def test_get_all_call_values_doomed(self, mock_data_path):
-        global command_name
-        function_name = "get_all_call_values"
-
+    def test_check_for_failure_doom(self, mock_data_path):
         workflow_metadata_path = os.path.join(mock_data_path,
                                               "doom_workflow_slim_metadata.json")
         with open(workflow_metadata_path, 'r') as f:
             workflow_metadata = json.load(f)
 
-        workflow_metadata_status_sum_path = os.path.join(mock_data_path,
-                                                         command_name,
-                                                         function_name,
-                                                         "doom_workflow_output.json")
-        with open(workflow_metadata_status_sum_path, 'r') as f:
-            workflow_metadata_status_sum = json.load(f)
+        assert status_command.check_for_failure(
+            workflow_metadata) == "True", "A running workflow metadata should have " \
+                                          "output 'True' to indicate workflow " \
+                                          "has failed."
 
-        assert status_command.get_all_call_values(
-            workflow_metadata) == workflow_metadata_status_sum, "Output does not match"
-
-    def test_get_all_call_values_running(self, mock_data_path):
-        global command_name
-        function_name = "get_all_call_values"
-
+    def test_check_for_failure_running(self, mock_data_path):
         workflow_metadata_path = os.path.join(mock_data_path,
                                               "running_workflow_slim_metadata.json")
         with open(workflow_metadata_path, 'r') as f:
             workflow_metadata = json.load(f)
 
-        workflow_metadata_status_sum_path = os.path.join(mock_data_path,
-                                                         command_name,
-                                                         function_name,
-                                                         "running_workflow_output.json")
-        with open(workflow_metadata_status_sum_path, 'r') as f:
-            workflow_metadata_status_sum = json.load(f)
-
-        assert status_command.get_all_call_values(
-            workflow_metadata) == workflow_metadata_status_sum, "Output does not match"
-
-    def test_get_metadata_status_summary_doom(self, mock_data_path):
-        global command_name
-        function_name = "get_metadata_status_summary"
-
-        workflow_metadata_path = os.path.join(mock_data_path,
-                                              command_name,
-                                              function_name,
-                                              "doom_workflow_input.json")
-        with open(workflow_metadata_path, 'r') as f:
-            workflow_metadata = json.load(f)
-        workflow_metadata_status_sum_path = os.path.join(mock_data_path,
-                                                         command_name,
-                                                         function_name,
-                                                         "doom_workflow_output.json")
-        with open(workflow_metadata_status_sum_path, 'r') as f:
-            workflow_metadata_status_sum = json.load(f)
-
-        assert status_command.get_metadata_status_summary(
-            workflow_metadata) == workflow_metadata_status_sum, "Output does not match"
-
-    def test_get_metadata_status_summary_running(self, mock_data_path):
-        global command_name
-        function_name = "get_metadata_status_summary"
-
-        workflow_metadata_path = os.path.join(mock_data_path,
-                                              command_name,
-                                              function_name,
-                                              "running_workflow_input.json")
-        with open(workflow_metadata_path, 'r') as f:
-            workflow_metadata = json.load(f)
-        workflow_metadata_status_sum_path = os.path.join(mock_data_path,
-                                                         command_name,
-                                                         function_name,
-                                                         "running_workflow_output.json")
-        with open(workflow_metadata_status_sum_path, 'r') as f:
-            workflow_metadata_status_sum = json.load(f)
-
-        assert status_command.get_metadata_status_summary(
-            workflow_metadata) == workflow_metadata_status_sum, "Output does not match"
+        assert status_command.check_for_failure(
+            workflow_metadata) == "False", "A running workflow metadata should have " \
+                                           "output 'False' to indicate workflow is " \
+                                           "still running."
 
     @pytest.fixture
     def mock_data_path(self):
