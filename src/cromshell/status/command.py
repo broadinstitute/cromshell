@@ -124,7 +124,7 @@ def check_for_failure(metadata: dict):
         # is used to traverse the dictionary by iterating through the given dictionary
         # and reporting whether it found a failure. The reason for this is due to the
         # tree structure of the metadata dictionary which holds the task statuses
-        # in second layer dictionary key called calls.
+        # in a nested dictionary key called "calls".
         if isinstance(value, dict):
             if check_for_failure(value):
                 return True
