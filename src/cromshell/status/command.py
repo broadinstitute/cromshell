@@ -59,11 +59,11 @@ def main(config, workflow_id):
             f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters}"
         )
 
-        # tmp_metadata holds the workflow metadata as a dictionary
-        tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
+        # metadata holds the workflow metadata as a dictionary
+        metadata = json.loads(request_meta_out.content.decode("utf-8"))
 
         # Check for failures:
-        workflow_failed = check_for_failure(tmp_metadata)
+        workflow_failed = check_for_failure(metadata)
         if not workflow_failed:
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
