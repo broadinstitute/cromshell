@@ -136,12 +136,12 @@ def check_for_failure(metadata: dict):
         # for all the shards for a task. Each item(shard) within this list is a
         # dictionary holding status for the shard.
         # We'll want to check each shard to determine whether it's status has "Failed".
-        if isinstance(value, list):
+        elif isinstance(value, list):
             for shard in value:
 
-                # If a key in the shared labeled "subWorkflowMetadata" then this
-                # will another dictionary layer of subworkflow tasks that needs
-                # to be traversed.
+                # If a key in the shard is labeled "subWorkflowMetadata", then this
+                # will contain another dictionary layer of subworkflow tasks that will
+                # require traversal.
                 if "subWorkflowMetadata" in shard.keys():
                     if check_for_failure(shard["subWorkflowMetadata"]):
                         return True
