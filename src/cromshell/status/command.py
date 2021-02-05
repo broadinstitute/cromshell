@@ -63,8 +63,7 @@ def main(config, workflow_id):
         metadata = json.loads(request_meta_out.content.decode("utf-8"))
 
         # Check for failures:
-        workflow_failed = check_for_failure(metadata)
-        if not workflow_failed:
+        if not workflow_failed(metadata):
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
             log.display_logo(io_utils.turtle)
@@ -105,7 +104,7 @@ def main(config, workflow_id):
     return ret_val
 
 
-def check_for_failure(metadata: dict):
+def workflow_failed(metadata: dict):
     """Checks a workflow metadata dictionary for failing statuses
     Returns True to indicate workflow or some task(s) has failed"""
 
