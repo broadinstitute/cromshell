@@ -16,7 +16,7 @@ slim_metadata_parameters = (
     "=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
     "=subWorkflowMetadata&includeKey=subWorkflowId"
 )
-api_string = "/api/workflows/v1/"
+api_string = "/api/workflows/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined
