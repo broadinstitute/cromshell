@@ -46,7 +46,8 @@ def main(config, workflow_id):
     workflow_status = workflow_status_description["status"]
 
     # Set return value based on workflow status
-    if workflow_status in ("Failed", "Aborted", "fail"):
+    if workflow_status in cromshellconfig.WorkflowStatuses.Failed.value or \
+            cromshellconfig.WorkflowStatuses.Aborted.value:
         ret_val = 1
         log.display_logo(io_utils.dead_turtle)
     elif workflow_status == "Running":
@@ -69,7 +70,7 @@ def main(config, workflow_id):
             log.display_logo(io_utils.turtle)
         else:
             log.display_logo(io_utils.doomed_logo)
-            workflow_status = "DOOMED"
+            workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value
             message = (
                 "The workflow is Running but one of the instances "
                 "has failed which will lead to failure."
@@ -125,7 +126,7 @@ def workflow_failed(metadata: dict):
         # tree structure of the metadata dictionary which holds the task statuses
         # in a nested dictionary key called "calls".
         if isinstance(value, dict):
-            if check_for_failure(value):
+            if workflow_failed(value):
                 return True
 
         # If a list value is encountered then the dictionary being traversed through is
@@ -142,7 +143,7 @@ def workflow_failed(metadata: dict):
                 # will contain another dictionary layer of subworkflow tasks that will
                 # require traversal.
                 if "subWorkflowMetadata" in shard.keys():
-                    if check_for_failure(shard["subWorkflowMetadata"]):
+                    if workflow_failed(shard["subWorkflowMetadata"]):
                         return True
                 else:
                     if shard["executionStatus"] == "Failed":
