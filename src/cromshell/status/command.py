@@ -70,7 +70,7 @@ def main(config, workflow_id):
             log.display_logo(io_utils.turtle)
         else:
             log.display_logo(io_utils.doomed_logo)
-            workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value
+            workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value[0]
             message = (
                 "The workflow is Running but one of the instances "
                 "has failed which will lead to failure."
@@ -111,7 +111,7 @@ def workflow_failed(metadata: dict):
 
     # If the given dictionary contains a 'status' key and has value of "Failed"
     # then exit the function returning "True" to indicate workflow has failed
-    if metadata.get("status") == "Failed":
+    if metadata.get("status") == cromshellconfig.WorkflowStatuses.Failed.value[0]:
         return True
 
     # If the dictionary does not contain a failed value for its status key or
@@ -146,7 +146,7 @@ def workflow_failed(metadata: dict):
                     if workflow_failed(shard["subWorkflowMetadata"]):
                         return True
                 else:
-                    if shard["executionStatus"] == "Failed":
+                    if shard["executionStatus"] == cromshellconfig.WorkflowStatuses.Failed.value[0]:
                         return True
     return False
 
