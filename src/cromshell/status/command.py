@@ -23,9 +23,7 @@ def main(config, workflow_id):
     LOGGER.info("status")
 
     ret_val = 0
-    config.cromwell_api_workflow_id = (
-        f"{config.cromwell_server}{config.api_string}/{workflow_id}"
-    )
+    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
 
     # Set cromwell server using submission file. Running the function below with
     # passing only the workflow id overrides the default cromwell url set in the
