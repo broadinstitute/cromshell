@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import warnings
 import os
 from enum import Enum
 from pathlib import Path
@@ -27,6 +28,25 @@ CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
+# Request defaults
+requests_connect_timeout = 5
+requests_verify_certs = True
+
+
+def override_requests_parameters(server_timeout: int, skip_certs: bool):
+    """Override requests settings for timeout and certs verification"""
+
+    global requests_connect_timeout
+    global requests_verify_certs
+
+    if server_timeout:
+        requests_connect_timeout = server_timeout
+
+    if skip_certs is True:
+        requests_verify_certs = False
+        # Hide requests warning about not verifying certs.
+        warnings.filterwarnings('ignore',
+                                message='Unverified HTTPS request is being made to')
 
 
 class WorkflowStatuses(Enum):
