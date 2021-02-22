@@ -5,7 +5,6 @@ import logging
 import click
 import requests
 import csv
-from typing_extensions import Counter
 
 from cromshell.utilities import cromshellconfig
 from cromshell.utilities import http_utils
@@ -47,7 +46,8 @@ def main(config, workflow_id):
     workflow_status = workflow_status_description["status"]
 
     # Set return value based on workflow status
-    if workflow_status in ("Failed", "Aborted", "fail"):
+    if workflow_status in cromshellconfig.WorkflowStatuses.Failed.value or \
+            cromshellconfig.WorkflowStatuses.Aborted.value:
         ret_val = 1
         log.display_logo(io_utils.dead_turtle)
     elif workflow_status == "Running":
@@ -57,29 +57,20 @@ def main(config, workflow_id):
         # TODO : Use this as a template for the Metadata subcommand
         # Get execution status count and filter the metadata down:
         request_meta_out = requests.get(
-            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters} "
+            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters}"
         )
 
-        # tmp_metadata holds the workflow metadata as a dictionary
-        tmp_metadata = json.loads(request_meta_out.content.decode("utf-8"))
-        execution_status_count = get_metadata_status_summary(tmp_metadata)
-
-        # Check for failure states:
-        failed = False
-        for task_status in execution_status_count:
-            for key in task_status:
-                if "Failed" in str(task_status[key]):
-                    failed = True
-                    break
+        # metadata holds the workflow metadata as a dictionary
+        metadata = json.loads(request_meta_out.content.decode("utf-8"))
 
         # Check for failures:
-        if not failed:
+        if not workflow_failed(metadata):
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
             log.display_logo(io_utils.turtle)
         else:
             log.display_logo(io_utils.doomed_logo)
-            workflow_status = "DOOMED"
+            workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value[0]
             message = (
                 "The workflow is Running but one of the instances "
                 "has failed which will lead to failure."
@@ -114,34 +105,50 @@ def main(config, workflow_id):
     return ret_val
 
 
-def get_metadata_status_summary(workflow_metadata):
-    """Get the status for each call in a workflow
-    and the frequency of those statuses"""
-    # workflow_metadata holds the workflow metadata as a dictionary
-    tmp_execution_status = []
+def workflow_failed(metadata: dict):
+    """Checks a workflow metadata dictionary for failing statuses
+    Returns True to indicate workflow or some task(s) has failed"""
 
-    # For each call in the metadata dictionary create a shortened summary containing
-    # the call name and status
-    for call in workflow_metadata["calls"]:
-        call_element = f'"{call}": '
-        execution_statuses = []
+    # If the given dictionary contains a 'status' key and has value of "Failed"
+    # then exit the function returning "True" to indicate workflow has failed
+    if metadata.get("status") == cromshellconfig.WorkflowStatuses.Failed.value[0]:
+        return True
 
-        # For each call name add the number of execution_status to a list
-        for instanceDic in workflow_metadata["calls"][call]:
-            execution_statuses.append(instanceDic["executionStatus"])
+    # If the dictionary does not contain a failed value for its status key or
+    # if status key does does not exist then we'll iterate through the dictionary
+    # value in search of a nested dictionary (indicating subworkflows)
+    # or a list which holds the task statuses.
+    for value in metadata.values():
 
-        # Create a key and value pair for the execution status and number of times
-        # it is seen
-        status_count = Counter(execution_statuses)
-        # For each status for the call add the call name and status name and count
-        # to list
-        for status in set(execution_statuses):
-            status_element = f'{{"{status}": {status_count[status]}}}'
-            tmp_execution_status.append(f"{call_element}{status_element}")
+        # If a dictionary value is encountered then Depth First Search recursion
+        # is used to traverse the dictionary by iterating through the given dictionary
+        # and reporting whether it found a failure. The reason for this is due to the
+        # tree structure of the metadata dictionary which holds the task statuses
+        # in a nested dictionary key called "calls".
+        if isinstance(value, dict):
+            if workflow_failed(value):
+                return True
 
-    tmp_execution_status_json = ", ".join(tmp_execution_status)
-    tmp_execution_status_json = "{" + tmp_execution_status_json + "}"
-    return [json.loads(tmp_execution_status_json)]
+        # If a list value is encountered then the dictionary being traversed through is
+        # a key and value pair where the key is the task name and the value is the
+        # number of times the task was executed (shard), which is normally 1 unless the
+        # task was scattered. Hence the value for the key is a list to account
+        # for all the shards for a task. Each item(shard) within this list is a
+        # dictionary holding status for the shard.
+        # We'll want to check each shard to determine whether it's status has "Failed".
+        elif isinstance(value, list):
+            for shard in value:
+
+                # If a key in the shard is labeled "subWorkflowMetadata", then this
+                # will contain another dictionary layer of subworkflow tasks that will
+                # require traversal.
+                if "subWorkflowMetadata" in shard.keys():
+                    if workflow_failed(shard["subWorkflowMetadata"]):
+                        return True
+                else:
+                    if shard["executionStatus"] == cromshellconfig.WorkflowStatuses.Failed.value[0]:
+                        return True
+    return False
 
 
 if __name__ == "__main__":

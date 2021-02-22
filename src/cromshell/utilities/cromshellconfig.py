@@ -1,8 +1,9 @@
-import logging
-import json
-from pathlib import Path
-import os
 import csv
+import json
+import logging
+import os
+from enum import Enum
+from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,6 +24,14 @@ config_dir = None
 submission_file = None
 cromshell_config_options = None
 cromwell_server = None
+
+
+class WorkflowStatuses(Enum):
+    Failed = ["Failed", "fail"]
+    Aborted = ["Aborted", "abort"]
+    Running = ["Running"]
+    Succeeded = ["Succeeded"]
+    DOOMED = ["DOOMED"]
 
 
 def override_slim_metadata_parameters(slim_metadata_param):
