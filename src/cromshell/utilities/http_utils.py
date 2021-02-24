@@ -13,9 +13,7 @@ def assert_can_communicate_with_server(config):
     """Check Connection with Cromwell Server"""
 
     try:
-        request_out = requests.get(
-            f"{config.cromwell_server}{config.api_string}backends", timeout=5
-        )
+        request_out = requests.get(f"{config.cromwell_api}/backends", timeout=5)
     except ConnectionError:
         LOGGER.error("Failed to connect to %s", config.cromwell_server)
         raise Exception("Failed to connect to %s", config.cromwell_server)
