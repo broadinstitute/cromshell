@@ -52,7 +52,7 @@ LOGGER = logging.getLogger(__name__)
     help="Specify Cromwell URL used",
 )
 @click.option(
-    "--server_timeout",
+    "--request_timeout",
     type=int,
     help="Specify the server connection timeout in seconds."
          "Must be an integer. Default is 5.",
@@ -62,12 +62,12 @@ LOGGER = logging.getLogger(__name__)
     flag_value=True,
     help="Stops cromshell from verifying TLS certificate of server. "
          "The use of verification is strongly advised as per ssl documentation. "
-         "Use only when communicating with internal cromwell servers.",
+         "Use this flag only when communicating with internal cromwell servers.",
 )
 @click.pass_context
 def main_entry(
     cromshell_config, verbosity, slim_metadata_parameters, hide_logo, cromwell_url,
-    server_timeout, requests_skip_certs
+    request_timeout, requests_skip_certs
 ):
     # Set up our log verbosity
     from . import log  # pylint: disable=C0415
@@ -83,7 +83,7 @@ def main_entry(
     cromshell_config.obj = cromshellconfig
     cromshellconfig.override_slim_metadata_parameters(slim_metadata_parameters)
     cromshellconfig.resolve_cromwell_config_server_address(server_user=cromwell_url)
-    cromshellconfig.override_requests_parameters(server_timeout=server_timeout,
+    cromshellconfig.override_requests_parameters(server_timeout=request_timeout,
                                                  skip_certs=requests_skip_certs)
 
 

@@ -33,14 +33,19 @@ requests_connect_timeout = 5
 requests_verify_certs = True
 
 
-def override_requests_parameters(server_timeout: int, skip_certs: bool):
-    """Override requests settings for timeout and certs verification"""
+def override_requests_timeout_parameter(server_timeout: int):
+    """Override requests settings for timeout verification"""
 
     global requests_connect_timeout
-    global requests_verify_certs
 
     if server_timeout:
         requests_connect_timeout = server_timeout
+
+
+def override_requests_cert_parameters(skip_certs: bool):
+    """Override requests settings for certs verification"""
+
+    global requests_verify_certs
 
     if skip_certs is True:
         requests_verify_certs = False
