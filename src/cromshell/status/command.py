@@ -55,7 +55,7 @@ def main(config, workflow_id):
         # TODO : Use this as a template for the Metadata subcommand
         # Get execution status count and filter the metadata down:
         request_meta_out = requests.get(
-            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters} "
+            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters}"
         )
 
         # metadata holds the workflow metadata as a dictionary
