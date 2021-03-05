@@ -33,15 +33,6 @@ requests_connect_timeout = 5
 requests_verify_certs = True
 
 
-def override_requests_timeout_parameter(server_timeout: int):
-    """Override requests settings for timeout verification"""
-
-    global requests_connect_timeout
-
-    if server_timeout:
-        requests_connect_timeout = server_timeout
-
-
 def override_requests_cert_parameters(skip_certs: bool):
     """Override requests settings for certs verification"""
 
@@ -49,6 +40,7 @@ def override_requests_cert_parameters(skip_certs: bool):
 
     if skip_certs is True:
         requests_verify_certs = False
+        LOGGER.info("Skipping server TLS certificate verification.")
         # Hide requests warning about not verifying certs.
         warnings.filterwarnings('ignore',
                                 message='Unverified HTTPS request is being made to')
@@ -163,23 +155,41 @@ def __load_cromshell_config_file(config_directory, config_file_name):
     return config_options
 
 
-def __get_cromwell_server():
+def __get_cromwell_server(config_options: dict):
     """Get Cromshell Server URL from configuration options"""
 
-    if not cromshell_config_options["cromwell_server"]:
+    if not config_options["cromwell_server"]:
         raise Exception(f'Cromshell config file is missing "cromwell_server"')
 
     LOGGER.info("Setting cromwell server to cromwell url from config file.")
-    LOGGER.info(cromshell_config_options["cromwell_server"])
+    LOGGER.info(config_options["cromwell_server"])
 
-    return cromshell_config_options["cromwell_server"]
+    return config_options["cromwell_server"]
+
+
+def __get_requests_timeout_parameter(config_options: dict):
+    """Get requests timeout setting from the configuration
+    options file. The input should be the dictionary created
+    from the cromshell options file. """
+
+    global requests_connect_timeout
+
+    if "requests_timeout" in config_options:  # if key in dict then return key value
+        LOGGER.info("Setting requests timeout from value in config file.")
+        LOGGER.info("Request Timeout value: %s sec", config_options["requests_timeout"])
+
+        return config_options["requests_timeout"]
+    else:
+        return requests_connect_timeout  # else return default value
 
 
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
 submission_file_path = __get_submission_file(config_dir, SUBMISSION_FILE_NAME)
+# Todo: Validate cromshell_config_options keys
 cromshell_config_options = __load_cromshell_config_file(
     config_dir, CROMSHELL_CONFIG_FILE_NAME
 )
-cromwell_server = __get_cromwell_server()
+cromwell_server = __get_cromwell_server(cromshell_config_options)
 cromwell_api = cromwell_server + api_string
+requests_connect_timeout = __get_requests_timeout_parameter(cromshell_config_options)
