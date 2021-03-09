@@ -28,6 +28,7 @@ CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
+local_folder_name = None
 # Request defaults
 requests_connect_timeout = 5
 requests_verify_certs = True
@@ -209,4 +210,5 @@ cromshell_config_options = __load_cromshell_config_file(
     config_dir, CROMSHELL_CONFIG_FILE_NAME
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
+local_folder_name = cromwell_server.replace("https://", "").replace("http://", "")
 cromwell_api = cromwell_server + api_string
