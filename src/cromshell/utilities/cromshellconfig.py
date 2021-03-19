@@ -123,6 +123,7 @@ def __get_submission_file(config_directory):
 
 def __load_cromshell_config_file(config_directory):
     """Load options from Cromshell Config File to dictionary"""
+    # TODO: Add more config settings to validate user key and values
 
     cromshell_config_file = os.path.join(config_directory, "cromshell_config.json")
     if not Path(cromshell_config_file).exists():

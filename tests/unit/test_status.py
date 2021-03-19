@@ -9,7 +9,7 @@ from cromshell.status import command as status_command
 class TestStatus:
     """Test the status command functions"""
 
-    def test_workflow_failed_doom(self, mock_data_path):
+    def test_workflow_failed_for_metadata_that_is_doomed(self, mock_data_path):
         workflow_metadata_path = os.path.join(
             mock_data_path, "doom_workflow_slim_metadata.json"
         )
@@ -22,7 +22,7 @@ class TestStatus:
             "has failed."
         )
 
-    def test_workflow_failed_running(self, mock_data_path):
+    def test_workflow_failed_for_metadata_that_is_running(self, mock_data_path):
         workflow_metadata_path = os.path.join(
             mock_data_path, "running_workflow_slim_metadata.json"
         )

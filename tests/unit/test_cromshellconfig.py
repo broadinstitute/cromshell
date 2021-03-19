@@ -44,7 +44,8 @@ class TestCromshellConfig:
         )
         assert (
             cromshellconfig.cromwell_server == test_cromwell_url
-        ), f"Cromwell server variable should be set to the specified server url : {test_cromwell_url}"
+        ), f"Cromwell server variable should be set to "\
+           f"the specified server url : {test_cromwell_url}"
 
     def test_resolve_cromwell_config_server_address_with_mock_data(
         self, mock_data_path
@@ -94,7 +95,7 @@ class TestCromshellConfig:
         ), "Submission file variable should be set "
 
         path_to_submission = os.path.join(
-            Path.home(), ".cromshell", "all.workflow.database.tsv"
+            Path.home(), ".cromshell", cromshellconfig.submission_file_name
         )
         assert (
                 cromshellconfig.submission_file_path == path_to_submission
