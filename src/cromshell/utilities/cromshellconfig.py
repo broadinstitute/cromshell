@@ -109,16 +109,16 @@ def __get_config_dir():
     return config_path
 
 
-def __get_submission_file(config_directory):
+def __get_submission_file(config_directory, sub_file_name):
     """Get File Path To Cromshell Submission File"""
 
-    submission_file = os.path.join(config_directory, "all.workflow.database.tsv")
-    if not Path(submission_file).exists():
-        Path(submission_file).touch()
+    sub_file_path = os.path.join(config_directory, sub_file_name)
+    if not Path(sub_file_path).exists():
+        Path(sub_file_path).touch()
         submission_header = f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
-        with Path(submission_file).open("w") as f:
+        with Path(sub_file_path).open("w") as f:
             f.write(submission_header)
-    return submission_file
+    return sub_file_path
 
 
 def __load_cromshell_config_file(config_directory):
