@@ -132,6 +132,7 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
         )
         if 0 == validation_output.returncode:
             LOGGER.info("WDL and JSON are valid.")
+            return 0
         else:
             io_utils.log_error_and_raise_exception(
                 error_source="Womtool",
@@ -183,6 +184,7 @@ def update_submission_file(
         workflow_status["id"],
         PurePath(wdl).name,
         workflow_status["status"],
+        "",  # Place holder for Alias column
     ]
 
     with open(submission_file, "a") as f:
