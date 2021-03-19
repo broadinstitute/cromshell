@@ -55,8 +55,8 @@ class TestCromshellConfig:
         mock_cromwell_url = "https://cromwell-v45.dsde-methods.broadinstitute.org"
 
         # Set the submission file path to mock data
-        cromshellconfig.submission_file = os.path.join(
-            mock_data_path, "all.workflow.database.tsv"
+        cromshellconfig.submission_file_path = os.path.join(
+            mock_data_path, cromshellconfig.submission_file_name
         )
         # Execute function that changes cromwell server based off the
         # workflow id and submission file
@@ -90,18 +90,18 @@ class TestCromshellConfig:
     def test_submission_file(self):
         reload(cromshellconfig)
         assert (
-            cromshellconfig.submission_file is not None
+                cromshellconfig.submission_file_path is not None
         ), "Submission file variable should be set "
 
         path_to_submission = os.path.join(
             Path.home(), ".cromshell", "all.workflow.database.tsv"
         )
         assert (
-            cromshellconfig.submission_file == path_to_submission
+                cromshellconfig.submission_file_path == path_to_submission
         ), f"Submission file path should be {path_to_submission} "
 
         assert Path(
-            cromshellconfig.submission_file
+            cromshellconfig.submission_file_path
         ).exists(), "Submission file should exist"
 
     def test_cromwell_server(self):

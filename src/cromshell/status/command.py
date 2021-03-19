@@ -86,7 +86,7 @@ def main(config, workflow_id):
 
     # Update config.submission_file:
     with fileinput.FileInput(
-        config.submission_file, inplace=True, backup=".bak"
+        config.submission_file_path, inplace=True, backup=".bak"
     ) as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         print("\t".join(reader.fieldnames))

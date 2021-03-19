@@ -22,7 +22,8 @@ cromwell_api_workflow_id = None
 cromwell_api = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
-submission_file = None
+submission_file_name = "all.workflow.database.tsv"
+submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
 
@@ -62,7 +63,7 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
     """
 
     global cromwell_server
-    global submission_file
+    global submission_file_path
 
     if server_user is None and workflow_id is None:
         LOGGER.info(
@@ -79,7 +80,7 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
             "Checking submission file for associated cromwell server with the provided "
             "workflow id."
         )
-        with open(submission_file, "r") as csv_file:
+        with open(submission_file_path, "r") as csv_file:
             reader = csv.DictReader(csv_file, delimiter="\t")
             id_in_file = False
             for row in reader:
@@ -111,13 +112,13 @@ def __get_config_dir():
 def __get_submission_file(config_directory):
     """Get File Path To Cromshell Submission File"""
 
-    submission_file_path = os.path.join(config_directory, "all.workflow.database.tsv")
-    if not Path(submission_file_path).exists():
-        Path(submission_file_path).touch()
+    submission_file = os.path.join(config_directory, "all.workflow.database.tsv")
+    if not Path(submission_file).exists():
+        Path(submission_file).touch()
         submission_header = f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
-        with Path(submission_file_path).open("w") as f:
+        with Path(submission_file).open("w") as f:
             f.write(submission_header)
-    return submission_file_path
+    return submission_file
 
 
 def __load_cromshell_config_file(config_directory):
@@ -149,7 +150,7 @@ def __get_cromwell_server():
 
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
-submission_file = __get_submission_file(config_dir)
+submission_file_path = __get_submission_file(config_dir, submission_file_name)
 cromshell_config_options = __load_cromshell_config_file(config_dir)
 cromwell_server = __get_cromwell_server()
 cromwell_api = cromwell_server + api_string
