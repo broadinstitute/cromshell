@@ -50,8 +50,9 @@ class TestCromshellConfig:
     def test_resolve_cromwell_config_server_address_provided_server_url(
         self, mock_data_path
     ):
-        reset_cromshellconfig(mock_data_path)
+        """Test when server url only is given to function."""
 
+        reset_cromshellconfig(mock_data_path)
         test_cromwell_url = "https://cromwell-v1.dsde-methods.broadinstitute.org"
 
         # Test when server only is given to function
@@ -62,50 +63,50 @@ class TestCromshellConfig:
             f"Cromwell server variable should be set to "
             f"the specified server url : {test_cromwell_url}"
         )
-        reset_cromshellconfig(mock_data_path)
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_present(
         self, mock_data_path
     ):
+        """Test when workflow id only is given to function and id
+        is present in submission file."""
+
+        reset_cromshellconfig(mock_data_path)
         mock_workflow_id_present = "d689adec-c600-4e4b-be37-4e30e65848c7"
         mock_cromwell_url = "https://cromwell-v45.dsde-methods.broadinstitute.org"
-        reset_cromshellconfig(mock_data_path)
 
-        # Test when workflow id only is given to function and id
-        # is present in submission file.
         cromshellconfig.resolve_cromwell_config_server_address(
             workflow_id=mock_workflow_id_present
         )
         assert (
             cromshellconfig.cromwell_server == mock_cromwell_url
         ), f"Cromwell server variable should be set to {mock_cromwell_url}"
-        reset_cromshellconfig(mock_data_path)
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_absent(
         self, mock_data_path
     ):
+        """Test when workflow id only is given to function and id
+        is NOT present in submission file."""
+
+        reset_cromshellconfig(mock_data_path)
         mock_workflow_id_absent = "h634sdv-x687-8m5e-mx13-1o97e30848h8"
         default_cromwell_url = cromshellconfig.cromwell_server
-        reset_cromshellconfig(mock_data_path)
 
-        # Test when workflow id only is given to function and id
-        # is NOT present in submission file.
         cromshellconfig.resolve_cromwell_config_server_address(
             workflow_id=mock_workflow_id_absent
         )
         assert (
             cromshellconfig.cromwell_server == default_cromwell_url
         ), f"Cromwell server variable should be set to {default_cromwell_url}"
-        reset_cromshellconfig(mock_data_path)
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_and_server(
         self, mock_data_path
     ):
+        """Cromwell url parameter should supersede workflow id look up"""
+
+        reset_cromshellconfig(mock_data_path)
         test_cromwell_url = "https://cromwell-v1.dsde-methods.broadinstitute.org"
         mock_workflow_id_present = "d689adec-c600-4e4b-be37-4e30e65848c7"
-        reset_cromshellconfig(mock_data_path)
 
-        # Cromwell url parameter should supersede workflow id look up
         cromshellconfig.resolve_cromwell_config_server_address(
             server_user=test_cromwell_url, workflow_id=mock_workflow_id_present
         )
