@@ -30,8 +30,8 @@ class TestCromshellConfig:
         )
 
         test_slim_parameters = (
-                "expandSubWorkflows=true"
-                + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
+            "expandSubWorkflows=true"
+            + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
         )
         cromshellconfig.override_slim_metadata_parameters("expandSubWorkflows=true")
         assert cromshellconfig.slim_metadata_parameters == test_slim_parameters, (
@@ -44,11 +44,11 @@ class TestCromshellConfig:
         reload(cromshellconfig)
 
         assert (
-                cromshellconfig.cromwell_server is not None
+            cromshellconfig.cromwell_server is not None
         ), "Cromwell server variable should not be empty"
 
     def test_resolve_cromwell_config_server_address_provided_server_url(
-            self, mock_data_path
+        self, mock_data_path
     ):
         reset_cromshellconfig(mock_data_path)
 
@@ -58,14 +58,14 @@ class TestCromshellConfig:
         cromshellconfig.resolve_cromwell_config_server_address(
             server_user=test_cromwell_url
         )
-        assert (
-                cromshellconfig.cromwell_server == test_cromwell_url
-        ), f"Cromwell server variable should be set to " \
-           f"the specified server url : {test_cromwell_url}"
+        assert cromshellconfig.cromwell_server == test_cromwell_url, (
+            f"Cromwell server variable should be set to "
+            f"the specified server url : {test_cromwell_url}"
+        )
         reset_cromshellconfig(mock_data_path)
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_present(
-            self, mock_data_path
+        self, mock_data_path
     ):
         mock_workflow_id_present = "d689adec-c600-4e4b-be37-4e30e65848c7"
         mock_cromwell_url = "https://cromwell-v45.dsde-methods.broadinstitute.org"
@@ -77,12 +77,12 @@ class TestCromshellConfig:
             workflow_id=mock_workflow_id_present
         )
         assert (
-                cromshellconfig.cromwell_server == mock_cromwell_url
+            cromshellconfig.cromwell_server == mock_cromwell_url
         ), f"Cromwell server variable should be set to {mock_cromwell_url}"
         reset_cromshellconfig(mock_data_path)
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_absent(
-            self, mock_data_path
+        self, mock_data_path
     ):
         mock_workflow_id_absent = "h634sdv-x687-8m5e-mx13-1o97e30848h8"
         default_cromwell_url = cromshellconfig.cromwell_server
@@ -94,12 +94,12 @@ class TestCromshellConfig:
             workflow_id=mock_workflow_id_absent
         )
         assert (
-                cromshellconfig.cromwell_server == default_cromwell_url
+            cromshellconfig.cromwell_server == default_cromwell_url
         ), f"Cromwell server variable should be set to {default_cromwell_url}"
         reset_cromshellconfig(mock_data_path)
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_and_server(
-            self, mock_data_path
+        self, mock_data_path
     ):
         test_cromwell_url = "https://cromwell-v1.dsde-methods.broadinstitute.org"
         mock_workflow_id_present = "d689adec-c600-4e4b-be37-4e30e65848c7"
@@ -110,7 +110,7 @@ class TestCromshellConfig:
             server_user=test_cromwell_url, workflow_id=mock_workflow_id_present
         )
         assert (
-                cromshellconfig.cromwell_server == test_cromwell_url
+            cromshellconfig.cromwell_server == test_cromwell_url
         ), f"Cromwell server variable should be set to {test_cromwell_url}"
 
     def test_config_dir(self):
@@ -128,14 +128,14 @@ class TestCromshellConfig:
     def test_submission_file(self):
         reload(cromshellconfig)
         assert (
-                cromshellconfig.submission_file_path is not None
+            cromshellconfig.submission_file_path is not None
         ), "Submission file variable should be set "
 
         path_to_submission = os.path.join(
             Path.home(), ".cromshell", cromshellconfig.submission_file_name
         )
         assert (
-                cromshellconfig.submission_file_path == path_to_submission
+            cromshellconfig.submission_file_path == path_to_submission
         ), f"Submission file path should be {path_to_submission} "
 
         assert Path(
@@ -145,7 +145,7 @@ class TestCromshellConfig:
     def test_cromwell_server(self):
         reload(cromshellconfig)
         assert (
-                cromshellconfig.cromwell_server is not None
+            cromshellconfig.cromwell_server is not None
         ), "Cromwell server should be set"
 
     def test__load_cromshell_config_options(self, mock_data_path):

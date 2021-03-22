@@ -44,8 +44,10 @@ def main(config, workflow_id):
     workflow_status = workflow_status_description["status"]
 
     # Set return value based on workflow status
-    if workflow_status in cromshellconfig.WorkflowStatuses.Failed.value or \
-            cromshellconfig.WorkflowStatuses.Aborted.value:
+    if (
+        workflow_status in cromshellconfig.WorkflowStatuses.Failed.value
+        or cromshellconfig.WorkflowStatuses.Aborted.value
+    ):
         ret_val = 1
         log.display_logo(io_utils.dead_turtle)
     elif workflow_status == "Running":
@@ -144,7 +146,10 @@ def workflow_failed(metadata: dict):
                     if workflow_failed(shard["subWorkflowMetadata"]):
                         return True
                 else:
-                    if shard["executionStatus"] == cromshellconfig.WorkflowStatuses.Failed.value[0]:
+                    if (
+                        shard["executionStatus"]
+                        == cromshellconfig.WorkflowStatuses.Failed.value[0]
+                    ):
                         return True
     return False
 
