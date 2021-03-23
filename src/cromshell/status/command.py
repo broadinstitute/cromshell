@@ -46,7 +46,7 @@ def main(config, workflow_id):
     # Set return value based on workflow status
     if (
         workflow_status in cromshellconfig.WorkflowStatuses.Failed.value
-        or cromshellconfig.WorkflowStatuses.Aborted.value
+        + cromshellconfig.WorkflowStatuses.Aborted.value
     ):
         ret_val = 1
         log.display_logo(io_utils.dead_turtle)
