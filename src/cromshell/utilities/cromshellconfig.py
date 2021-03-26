@@ -41,9 +41,12 @@ def override_requests_cert_parameters(skip_certs: bool):
     if skip_certs is True:
         requests_verify_certs = False
         LOGGER.info("Skipping server TLS certificate verification.")
-        # Hide requests warning about not verifying certs.
-        warnings.filterwarnings('ignore',
-                                message='Unverified HTTPS request is being made to')
+        # Since the log message regarding skipping certification is printed out
+        # in the line above we will hide any future requests warning
+        # about not verifying certs.
+        warnings.filterwarnings(
+            "ignore", message="Unverified HTTPS request is being made to"
+        )
 
 
 class WorkflowStatuses(Enum):
@@ -170,7 +173,7 @@ def __get_cromwell_server(config_options: dict):
 def __get_requests_timeout_parameter(config_options: dict):
     """Get requests timeout setting from the configuration
     options file. The input should be the dictionary created
-    from the cromshell options file. """
+    from the cromshell options file."""
 
     global requests_connect_timeout
 
@@ -181,6 +184,29 @@ def __get_requests_timeout_parameter(config_options: dict):
         return config_options["requests_timeout"]
     else:
         return requests_connect_timeout  # else return default value
+
+
+def resolve_requests_connect_timeout(timeout: int):
+    """Override the default request timeout duration.
+
+    By default the timeout duration is 5 sec, however
+    if the option is specified in the cromshell config file or
+    command line then this overrides the default.
+    CLI > Config File > Default
+    """
+
+    global requests_connect_timeout
+
+    # Set the requests_connect_timeout variable to timeout value in config file.
+    requests_connect_timeout = __get_requests_timeout_parameter(
+        cromshell_config_options
+    )
+
+    # If timeout is specified then override the current setting
+    if timeout:
+        LOGGER.info("Setting requests timeout from command line options.")
+        LOGGER.info("Request Timeout value: %s sec", timeout)
+        requests_connect_timeout = timeout
 
 
 # Get and Set Cromshell Configuration Default Values
