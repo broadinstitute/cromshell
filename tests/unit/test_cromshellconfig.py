@@ -10,7 +10,7 @@ def reset_cromshellconfig(mock_data_path):
 
     # Set the submission file path to mock data
     cromshellconfig.submission_file_path = os.path.join(
-        mock_data_path, cromshellconfig.submission_file_name
+        mock_data_path, cromshellconfig.SUBMISSION_FILE_NAME
     )
 
 
@@ -19,15 +19,10 @@ class TestCromshellConfig:
 
     def test_override_slim_metadata_parameters(self):
         reload(cromshellconfig)
-        default_slim_parameters = (
-            "=includeKey=id&includeKey=executionStatus&includeKey=backendStatus"
-            "&includeKey=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
-            "=subWorkflowMetadata&includeKey=subWorkflowId"
-        )
-        assert cromshellconfig.slim_metadata_parameters == default_slim_parameters, (
-            "By default slim_metadata_parameters should equal \n"
-            "{slim_metadata_parameters}"
-        )
+
+        assert (
+            cromshellconfig.slim_metadata_parameters is not None
+        ), "slim_metadata_parameters should equal not be empty."
 
         test_slim_parameters = (
             "expandSubWorkflows=true"
@@ -133,7 +128,7 @@ class TestCromshellConfig:
         ), "Submission file variable should be set "
 
         path_to_submission = os.path.join(
-            Path.home(), ".cromshell", cromshellconfig.submission_file_name
+            Path.home(), ".cromshell", cromshellconfig.SUBMISSION_FILE_NAME
         )
         assert (
             cromshellconfig.submission_file_path == path_to_submission

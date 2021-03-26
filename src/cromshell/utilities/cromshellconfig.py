@@ -22,7 +22,8 @@ cromwell_api_workflow_id = None
 cromwell_api = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
-submission_file_name = "all.workflow.database.tsv"
+SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
+CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
@@ -121,11 +122,11 @@ def __get_submission_file(config_directory, sub_file_name):
     return sub_file_path
 
 
-def __load_cromshell_config_file(config_directory):
+def __load_cromshell_config_file(config_directory, config_file_name):
     """Load options from Cromshell Config File to dictionary"""
     # TODO: Add more config settings to validate user key and values
 
-    cromshell_config_file = os.path.join(config_directory, "cromshell_config.json")
+    cromshell_config_file = os.path.join(config_directory, config_file_name)
     if not Path(cromshell_config_file).exists():
         LOGGER.error(f"Cromshell config file {cromshell_config_file} was not found")
         LOGGER.error(f"Please create {cromshell_config_file}")
@@ -151,7 +152,9 @@ def __get_cromwell_server():
 
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
-submission_file_path = __get_submission_file(config_dir, submission_file_name)
-cromshell_config_options = __load_cromshell_config_file(config_dir)
+submission_file_path = __get_submission_file(config_dir, SUBMISSION_FILE_NAME)
+cromshell_config_options = __load_cromshell_config_file(
+    config_dir, CROMSHELL_CONFIG_FILE_NAME
+)
 cromwell_server = __get_cromwell_server()
 cromwell_api = cromwell_server + api_string
