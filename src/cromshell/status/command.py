@@ -35,10 +35,11 @@ def main(config, workflow_id):
     http_utils.assert_can_communicate_with_server(config)
 
     # Request workflow status
-    request_out = requests.get(f"{config.cromwell_api_workflow_id}/status",
-                               timeout=config.requests_connect_timeout,
-                               verify=config.requests_verify_certs
-                               )
+    request_out = requests.get(
+        f"{config.cromwell_api_workflow_id}/status",
+        timeout=config.requests_connect_timeout,
+        verify=config.requests_verify_certs
+    )
 
     requested_status_json = request_out.content.decode("utf-8")
     workflow_status_description = json.loads(request_out.content)
