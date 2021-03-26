@@ -22,7 +22,11 @@ class TestCromshellConfig:
 
         assert (
             cromshellconfig.slim_metadata_parameters is not None
-        ), "slim_metadata_parameters should equal not be empty."
+        ), "slim_metadata_parameters should equal not None"
+
+        assert (
+            cromshellconfig.slim_metadata_parameters != ""
+        ), "slim_metadata_parameters should not be empty."
 
         test_slim_parameters = (
             "expandSubWorkflows=true"
@@ -149,7 +153,9 @@ class TestCromshellConfig:
         cc__load_cromshell_config_file = getattr(
             cromshellconfig, "__load_cromshell_config_file"
         )
-        returned_value = cc__load_cromshell_config_file(os.path.dirname(mock_data_path))
+        returned_value = cc__load_cromshell_config_file(
+            os.path.dirname(mock_data_path), cromshellconfig.CROMSHELL_CONFIG_FILE_NAME
+        )
 
         assert returned_value is not None, "Variable should not be empty"
         assert type(returned_value) is dict, "Variable should be a dictionary"
