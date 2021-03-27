@@ -6,10 +6,10 @@ import logging
 import click
 import requests
 
+from cromshell import log
 from cromshell.utilities import cromshellconfig
 from cromshell.utilities import http_utils
 from cromshell.utilities import io_utils
-from cromshell import log
 
 LOGGER = logging.getLogger(__name__)
 
