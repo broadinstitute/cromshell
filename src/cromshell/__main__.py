@@ -88,7 +88,7 @@ def main_entry(
     cromshellconfig.override_slim_metadata_parameters(slim_metadata_parameters)
     cromshellconfig.resolve_cromwell_config_server_address(server_user=cromwell_url)
     cromshellconfig.override_requests_cert_parameters(skip_certs=requests_skip_certs)
-    cromshellconfig.resolve_requests_connect_timeout(timeout=request_timeout)
+    cromshellconfig.resolve_requests_connect_timeout(timeout_cli=request_timeout)
 
 
 @main_entry.command()

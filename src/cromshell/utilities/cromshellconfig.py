@@ -170,23 +170,20 @@ def __get_cromwell_server(config_options: dict):
     return config_options["cromwell_server"]
 
 
-def __get_requests_timeout_parameter(config_options: dict):
-    """Get requests timeout setting from the configuration
-    options file. The input should be the dictionary created
-    from the cromshell options file."""
+def __requests_timeout_in_cromshell_config():
+    """Check if requests timeout setting is in the
+    cromshell configuration options file.
+    """
 
     global requests_connect_timeout
 
-    if "requests_timeout" in config_options:  # if key in dict then return key value
-        LOGGER.info("Setting requests timeout from value in config file.")
-        LOGGER.info("Request Timeout value: %s sec", config_options["requests_timeout"])
-
-        return config_options["requests_timeout"]
+    if "requests_timeout" in cromshell_config_options:
+        return True  # if key in dict return True
     else:
-        return requests_connect_timeout  # else return default value
+        return False  # else return False
 
 
-def resolve_requests_connect_timeout(timeout: int):
+def resolve_requests_connect_timeout(timeout_cli: int):
     """Override the default request timeout duration.
 
     By default the timeout duration is 5 sec, however
@@ -196,17 +193,26 @@ def resolve_requests_connect_timeout(timeout: int):
     """
 
     global requests_connect_timeout
+    timeout_in_cc = __requests_timeout_in_cromshell_config()
 
-    # Set the requests_connect_timeout variable to timeout value in config file.
-    requests_connect_timeout = __get_requests_timeout_parameter(
-        cromshell_config_options
-    )
-
-    # If timeout is specified then override the current setting
-    if timeout:
+    # If timeout is specified in cli then use it to override default/config file
+    if timeout_cli:
         LOGGER.info("Setting requests timeout from command line options.")
-        LOGGER.info("Request Timeout value: %s sec", timeout)
-        requests_connect_timeout = timeout
+        LOGGER.info("Request Timeout value: %s sec", timeout_cli)
+        requests_connect_timeout = timeout_cli
+
+    # If timeout is specified in cromshell config file then use it to override default
+    elif timeout_in_cc is True and timeout_cli is None:
+        LOGGER.info("Setting requests timeout from value in config file.")
+        LOGGER.info(
+            "Request Timeout value: %s sec",
+            cromshell_config_options["requests_timeout"]
+        )
+        # Set the requests_connect_timeout variable to timeout value in config file.
+        requests_connect_timeout = cromshell_config_options["requests_timeout"]
+    else:
+        LOGGER.info("Using requests default timeout duration.")
+        LOGGER.info("Request Timeout value: %s sec", requests_connect_timeout)
 
 
 # Get and Set Cromshell Configuration Default Values
@@ -218,4 +224,3 @@ cromshell_config_options = __load_cromshell_config_file(
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
 cromwell_api = cromwell_server + api_string
-requests_connect_timeout = __get_requests_timeout_parameter(cromshell_config_options)
