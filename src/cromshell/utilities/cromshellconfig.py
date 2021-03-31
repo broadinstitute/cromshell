@@ -172,10 +172,9 @@ def __get_cromwell_server(config_options: dict):
 
 def __requests_timeout_in_cromshell_config():
     """Check if requests timeout setting is in the
-    cromshell configuration options file.
+    cromshell configuration dictionary obtained from
+    the cromshell configuration options file.
     """
-
-    global requests_connect_timeout
 
     if "requests_timeout" in cromshell_config_options:
         return True  # if key in dict return True
