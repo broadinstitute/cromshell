@@ -51,7 +51,7 @@ LOGGER = logging.getLogger(__name__)
     help="Specify Cromwell URL used",
 )
 @click.option(
-    "-t"
+    "-t",
     "--requests_timeout",
     type=int,
     help="Specify the server connection timeout in seconds."

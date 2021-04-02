@@ -170,18 +170,6 @@ def __get_cromwell_server(config_options: dict):
     return config_options["cromwell_server"]
 
 
-def __requests_timeout_in_cromshell_config():
-    """Check if requests timeout setting is in the
-    cromshell configuration dictionary obtained from
-    the cromshell configuration options file.
-    """
-
-    if "requests_timeout" in cromshell_config_options:
-        return True  # if key in dict return True
-    else:
-        return False  # else return False
-
-
 def resolve_requests_connect_timeout(timeout_cli: int):
     """Override the default request timeout duration.
 
@@ -192,7 +180,6 @@ def resolve_requests_connect_timeout(timeout_cli: int):
     """
 
     global requests_connect_timeout
-    timeout_in_cc = __requests_timeout_in_cromshell_config()
 
     # If timeout is specified in cli then use it to override default/config file
     if timeout_cli:
@@ -201,7 +188,7 @@ def resolve_requests_connect_timeout(timeout_cli: int):
         requests_connect_timeout = timeout_cli
 
     # If timeout is specified in cromshell config file then use it to override default
-    elif timeout_in_cc is True:
+    elif "requests_timeout" in cromshell_config_options:
         LOGGER.info("Setting requests timeout from value in config file.")
         LOGGER.info(
             "Request Timeout value: %d sec",

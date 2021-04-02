@@ -174,35 +174,6 @@ class TestCromshellConfig:
                 "Request certification should be overridden to be False"
         )
 
-    def test__requests_timeout_in_cromshell_config(self):
-        reload(cromshellconfig)
-        test_config_with_timeout = {
-            "random_arg1": True,
-            "requests_timeout": 7,
-            "random_arg2": "Value"
-        }
-        test_config_without_timeout = {
-            "random_arg1": True,
-            "random_arg2": "Value"
-        }
-
-        # Create an object to use the private function being tested
-        cc__requests_timeout_in_cromshell_config = getattr(
-            cromshellconfig, "__requests_timeout_in_cromshell_config"
-        )
-
-        # Set the cromshell config options dictionary to equal test dictionaries
-        # then test function to check its presence
-        cromshellconfig.cromshell_config_options = test_config_with_timeout
-        assert (
-                cc__requests_timeout_in_cromshell_config() is True
-        ), "Should equal to True to indicate timeout key is present in dictionary"
-
-        cromshellconfig.cromshell_config_options = test_config_without_timeout
-        assert (
-                cc__requests_timeout_in_cromshell_config() is False
-        ), "Should equal to True to indicate timeout key is NOT present in dictionary"
-
     def test_resolve_requests_connect_timeout_default(self):
         reload(cromshellconfig)
         # CLI > Config File > Default
