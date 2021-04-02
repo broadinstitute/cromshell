@@ -1,9 +1,7 @@
-from cromshell.utilities import http_utils
-from importlib import reload
-from pathlib import Path
 import pytest
-import os
 from requests.models import Response
+
+from cromshell.utilities import http_utils
 
 
 class TestHTTPUtilities:
