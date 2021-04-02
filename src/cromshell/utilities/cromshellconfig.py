@@ -40,7 +40,7 @@ def override_requests_cert_parameters(skip_certs: bool):
 
     if skip_certs is True:
         requests_verify_certs = False
-        LOGGER.info("Skipping server TLS certificate verification.")
+        LOGGER.warning("Skipping server TLS certificate verification.")
         # Since the log message regarding skipping certification is printed out
         # in the line above we will hide any future requests warning
         # about not verifying certs.
@@ -197,21 +197,21 @@ def resolve_requests_connect_timeout(timeout_cli: int):
     # If timeout is specified in cli then use it to override default/config file
     if timeout_cli:
         LOGGER.info("Setting requests timeout from command line options.")
-        LOGGER.info("Request Timeout value: %s sec", timeout_cli)
+        LOGGER.info("Request Timeout value: %d sec", timeout_cli)
         requests_connect_timeout = timeout_cli
 
     # If timeout is specified in cromshell config file then use it to override default
-    elif timeout_in_cc is True and timeout_cli is None:
+    elif timeout_in_cc is True:
         LOGGER.info("Setting requests timeout from value in config file.")
         LOGGER.info(
-            "Request Timeout value: %s sec",
+            "Request Timeout value: %d sec",
             cromshell_config_options["requests_timeout"]
         )
         # Set the requests_connect_timeout variable to timeout value in config file.
         requests_connect_timeout = cromshell_config_options["requests_timeout"]
     else:
         LOGGER.info("Using requests default timeout duration.")
-        LOGGER.info("Request Timeout value: %s sec", requests_connect_timeout)
+        LOGGER.info("Request Timeout value: %d sec", requests_connect_timeout)
 
 
 # Get and Set Cromshell Configuration Default Values
