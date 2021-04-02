@@ -219,13 +219,13 @@ class TestCromshellConfig:
         ), "By Default the requests timeout duration is 5 sec"
 
     def test_resolve_requests_connect_timeout_given_config_file_value(
-            self, test_config_options_without_timeout
+            self, test_config_options_with_timeout
     ):
         reload(cromshellconfig)
         # CLI > Config File > Default
 
         # Provide a mock dictionary holding cromwell config options
-        cromshellconfig.cromshell_config_options = test_config_options_without_timeout
+        cromshellconfig.cromshell_config_options = test_config_options_with_timeout
 
         # Run function as if user did not provide timeout option in cli (None)
         timeout_from_command_line = None

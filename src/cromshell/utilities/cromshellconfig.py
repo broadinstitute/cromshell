@@ -217,7 +217,7 @@ def resolve_requests_connect_timeout(timeout_cli: int):
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
 submission_file_path = __get_submission_file(config_dir, SUBMISSION_FILE_NAME)
-# Todo: Validate cromshell_config_options keys
+# TODO: Validate cromshell_config_options keys
 cromshell_config_options = __load_cromshell_config_file(
     config_dir, CROMSHELL_CONFIG_FILE_NAME
 )

@@ -51,7 +51,7 @@ LOGGER = logging.getLogger(__name__)
     help="Specify Cromwell URL used",
 )
 @click.option(
-    "--request_timeout",
+    "--requests_timeout",
     type=int,
     help="Specify the server connection timeout in seconds."
     "Must be an integer. Default is 5.",
@@ -70,7 +70,7 @@ def main_entry(
     slim_metadata_parameters,
     hide_logo,
     cromwell_url,
-    request_timeout,
+    requests_timeout,
     requests_skip_certs,
 ):
     # Set up our log verbosity
@@ -88,7 +88,7 @@ def main_entry(
     cromshellconfig.override_slim_metadata_parameters(slim_metadata_parameters)
     cromshellconfig.resolve_cromwell_config_server_address(server_user=cromwell_url)
     cromshellconfig.override_requests_cert_parameters(skip_certs=requests_skip_certs)
-    cromshellconfig.resolve_requests_connect_timeout(timeout_cli=request_timeout)
+    cromshellconfig.resolve_requests_connect_timeout(timeout_cli=requests_timeout)
 
 
 @main_entry.command()
