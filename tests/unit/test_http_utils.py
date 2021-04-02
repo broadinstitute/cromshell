@@ -30,10 +30,8 @@ class TestHTTPUtilities:
         """Create requests response object to be hold mock response"""
 
         response = Response()
-        response.ok = True
         response.reason = "Reason Mock pass"
         response.status_code = 200
-        response.text = "Text Mock"
 
         return response
 
@@ -42,9 +40,7 @@ class TestHTTPUtilities:
         """Create requests response object to be hold mock response"""
 
         response = Response()
-        response.ok = False
         response.reason = "Reason Mock failure"
         response.status_code = 400
-        response.text = "Text Mock failure"
 
         return response
