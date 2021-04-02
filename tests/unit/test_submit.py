@@ -6,7 +6,7 @@ import pytest
 from cromshell.submit import command as submit_command
 
 
-class TestStatus:
+class TestSubmit:
     """Test the submit command functions"""
 
     # Skipping test because function simply holds other functions
