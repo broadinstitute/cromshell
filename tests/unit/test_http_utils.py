@@ -23,7 +23,7 @@ class TestHTTPUtilities:
         with pytest.raises(Exception):
             http_utils.check_http_request_status_code(
                 short_error_message="TEST", response=mock_failed_response
-            )
+            ), "If response.ok is False then exception should be raised"
 
     @pytest.fixture
     def mock_pass_response(self):
