@@ -113,10 +113,10 @@ def validate_input(wdl: str, wdl_json: str, options_json: str, dependencies_zip:
     """Asserts files are not empty and if womtool is
     in path validates WDL and WDL input JSON"""
 
-    io_utils.assert_required_file_is_not_empty(wdl, "WDL")
-    io_utils.assert_required_file_is_not_empty(wdl_json, "Input JSON")
-    io_utils.assert_required_file_is_not_empty(options_json, "Options json")
-    io_utils.assert_required_file_is_not_empty(dependencies_zip, "Dependencies Zip")
+    io_utils.assert_file_is_not_empty(wdl, "WDL")
+    io_utils.assert_file_is_not_empty(wdl_json, "Input JSON")
+    io_utils.assert_file_is_not_empty(options_json, "Options json")
+    io_utils.assert_file_is_not_empty(dependencies_zip, "Dependencies Zip")
 
     # At this point, we should validate our inputs if womtool is in PATH:
     womtool_validate_wdl_and_json(wdl, wdl_json)

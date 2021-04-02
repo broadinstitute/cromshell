@@ -56,7 +56,7 @@ def doomed_logo():
     print(colored(r".`''                                                                      ``'.", "red"))
 
 
-def assert_required_file_is_not_empty(file_name: str, file_description: str):
+def assert_file_is_not_empty(file_name: str, file_description: str):
     """Confirm the provided file exist and is not empty."""
 
     if file_name is None:
