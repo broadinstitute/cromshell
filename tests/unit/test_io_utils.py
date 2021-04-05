@@ -37,3 +37,23 @@ class TestIOUtilities:
             io_utils.assert_file_is_not_empty(
                 file_name="/fake/file/path", file_description="Io Utils"
             ), "Provided a fake file path, function is fail"
+
+    def test_is_workflow_id_valid(self):
+
+        with pytest.raises(Exception):
+            io_utils.is_workflow_id_valid(workflow_id=None), \
+            "Should raise an error if empty string is given"
+
+        assert not io_utils.is_workflow_id_valid(
+            workflow_id="7ef69ca-6l9-44489-8ed-fce2876312c"), \
+            "Workflow ids not following 8-4-4-4-12 bock length " \
+            "pattern should return False"
+
+        assert not io_utils.is_workflow_id_valid(
+            workflow_id="7ez69ca5-6l9h-4449-8ej1-mce28763712c"), \
+            "Workflow ids characters must only be `a` through `f`"
+
+        assert io_utils.is_workflow_id_valid(
+            workflow_id="7ef69ca5-0a9a-4449-8ed1-fce28763712c"), \
+            "Should return True with valid ID"
+
