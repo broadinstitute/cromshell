@@ -138,7 +138,14 @@ class TestIOUtilities:
         # Delete temp folder
         shutil.rmtree(temp_folder)
 
-    #def test_log_error_and_raise_exception(self):
+    def test_log_error_and_raise_exception(self):
+
+        with pytest.raises(Exception):
+            io_utils.log_error_and_raise_exception(
+                error_source="Test",
+                short_error_message="Test",
+                error_source_message="Test"
+            )
 
     @pytest.fixture
     def mock_data_path(self):
