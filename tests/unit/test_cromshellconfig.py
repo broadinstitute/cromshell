@@ -1,8 +1,10 @@
-from cromshell.utilities import cromshellconfig
+import os
 from importlib import reload
 from pathlib import Path
+
 import pytest
-import os
+
+from cromshell.utilities import cromshellconfig
 
 
 def reset_cromshellconfig(mock_data_path):
