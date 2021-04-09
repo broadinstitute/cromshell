@@ -92,7 +92,7 @@ def create_directory(dir_path: str, parents: bool = True, exist_ok: bool = False
     """Creates a Directory
     - dir_path: full path to directory being created
     - parents: whether the new directory will need to be nested
-                in new parent directories
+    in new parent directories
     - exist_ok: whether to raise an exception if directory already exists"""
 
     try:
@@ -104,12 +104,23 @@ def create_directory(dir_path: str, parents: bool = True, exist_ok: bool = False
         raise
 
 
-def copy_files_to_directory(directory: str, input_files: []):
+def copy_files_to_directory(directory: str, input_files: list or str):
     """Copies files to specified directory"""
 
-    for file in input_files:
-        if file is not None:
-            shutil.copy(file, directory)
+    # check dir exists
+    if not Path(directory).exists():
+        raise FileNotFoundError(f"Directory '{directory}' does not exist")
+
+    if type(input_files) is list:
+        for file in input_files:
+            if file is not None:
+                if not Path(file).exists():
+                    raise FileNotFoundError(f"Directory '{file}' does not exist")
+                shutil.copy(file, directory)
+    else:
+        if not Path(input_files).exists():
+            raise FileNotFoundError(f"Directory '{input_files}' does not exist")
+        shutil.copy(input_files, directory)
 
 
 def log_error_and_raise_exception(
