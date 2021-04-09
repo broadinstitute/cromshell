@@ -101,9 +101,9 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
         run_directory, [wdl, wdl_json, options_json, dependencies_zip]
     )
 
-    # 3. Update config.submission_file:
+    # 3. Update config.submission_file_path:
     update_submission_file(
-        config.cromwell_server, config.submission_file, wdl, workflow_status
+        config.cromwell_server, config.submission_file_path, wdl, workflow_status
     )
 
     return 0
