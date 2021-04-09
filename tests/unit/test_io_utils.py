@@ -44,21 +44,24 @@ class TestIOUtilities:
     def test_is_workflow_id_valid(self):
 
         with pytest.raises(Exception):
-            io_utils.is_workflow_id_valid(workflow_id=None), \
-            "Should raise an error if empty string is given"
+            io_utils.is_workflow_id_valid(
+                workflow_id=None
+            ), "Should raise an error if empty string is given"
 
         assert not io_utils.is_workflow_id_valid(
-            workflow_id="7ef69ca-6l9-44489-8ed-fce2876312c"), \
-            "Workflow ids not following 8-4-4-4-12 bock length " \
+            workflow_id="7ef69ca-6l9-44489-8ed-fce2876312c"
+        ), (
+            "Workflow ids not following 8-4-4-4-12 bock length "
             "pattern should return False"
+        )
 
         assert not io_utils.is_workflow_id_valid(
-            workflow_id="7ez69ca5-6l9h-4449-8ej1-mce28763712c"), \
-            "Workflow ids characters must only be `a` through `f`"
+            workflow_id="7ez69ca5-6l9h-4449-8ej1-mce28763712c"
+        ), "Workflow ids characters must only be `a` through `f`"
 
         assert io_utils.is_workflow_id_valid(
-            workflow_id="7ef69ca5-0a9a-4449-8ed1-fce28763712c"), \
-            "Should return True with valid ID"
+            workflow_id="7ef69ca5-0a9a-4449-8ed1-fce28763712c"
+        ), "Should return True with valid ID"
 
     # Skipping because there isn't logic in function. Testing would
     # be helpful later if the function ends up supporting file paths to
@@ -129,9 +132,7 @@ class TestIOUtilities:
             ), "Should fail because folder does not exist"
 
         # Test function works with proper dir and file
-        io_utils.copy_files_to_directory(
-            directory=temp_folder, input_files=file_to_cp
-        )
+        io_utils.copy_files_to_directory(directory=temp_folder, input_files=file_to_cp)
         copied_file = Path(temp_folder).joinpath(file_to_cp.name)
         print(copied_file)
         assert copied_file.exists(), "Temp folder should have been created"
@@ -144,7 +145,7 @@ class TestIOUtilities:
             io_utils.log_error_and_raise_exception(
                 error_source="Test",
                 short_error_message="Test",
-                error_source_message="Test"
+                error_source_message="Test",
             )
 
     @pytest.fixture

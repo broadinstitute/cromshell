@@ -8,7 +8,7 @@ class TestHTTPUtilities:
     """Test http_utils  functions and variables"""
 
     def test_check_http_request_status_code(
-            self, mock_failed_response, mock_pass_response
+        self, mock_failed_response, mock_pass_response
     ):
 
         # asserts that an exception is raised by the function
