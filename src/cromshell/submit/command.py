@@ -5,16 +5,13 @@ import logging
 import shutil
 import subprocess
 from datetime import datetime
-from pathlib import Path
-from pathlib import PurePath
+from pathlib import Path, PurePath
 
 import click
 import requests
 
 from cromshell import log
-from cromshell.utilities import cromshellconfig
-from cromshell.utilities import http_utils
-from cromshell.utilities import io_utils
+from cromshell.utilities import cromshellconfig, http_utils, io_utils
 from cromshell.utilities.io_utils import dead_turtle
 
 LOGGER = logging.getLogger(__name__)

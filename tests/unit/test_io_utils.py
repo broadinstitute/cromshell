@@ -1,10 +1,10 @@
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 
 from cromshell.utilities import io_utils
-from pathlib import Path, PurePath
-
-import tempfile
-import shutil
 
 
 class TestIOUtilities:
