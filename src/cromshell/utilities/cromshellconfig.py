@@ -137,7 +137,7 @@ def __get_submission_file(config_directory, sub_file_name):
     sub_file_path = os.path.join(config_directory, sub_file_name)
     if not Path(sub_file_path).exists():
         Path(sub_file_path).touch()
-        submission_header = f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
+        submission_header = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
         with Path(sub_file_path).open("w") as f:
             f.write(submission_header)
     return sub_file_path
