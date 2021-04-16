@@ -30,7 +30,7 @@ class TestSubmit:
             submit_command.womtool_validate_wdl_and_json(
                 wdl=workflow_wdl_path, wdl_json=workflow_json_path
             )
-            is 0
+            == 0
         ), "Womtool should have marked valid workflow as valid."
 
     # Skipping test because function requires connection to cromwell server

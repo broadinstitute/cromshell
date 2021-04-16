@@ -85,11 +85,10 @@ def assert_file_is_not_empty(file_name: str, file_description: str):
         return
     if not Path(file_name).exists():
         LOGGER.error("ERROR: %s does not exist: %s", file_description, file_name)
-        raise Exception("ERROR: %s does not exist: %s", file_description, file_name)
-    else:
-        if 0 == os.stat(file_name).st_size:
-            LOGGER.error("ERROR: %s is empty: %s.", file_description, file_name)
-            raise Exception("ERROR: %s is empty: %s.", file_description, file_name)
+        raise Exception("ERROR: %s does not exist: %s" % file_description, file_name)
+    elif os.stat(file_name).st_size == 0:
+        LOGGER.error("ERROR: %s is empty: %s.", file_description, file_name)
+        raise Exception("ERROR: %s is empty: %s." % file_description, file_name)
 
 
 def is_workflow_id_valid(workflow_id: str):

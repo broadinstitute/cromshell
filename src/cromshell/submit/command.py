@@ -49,7 +49,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
     http_utils.assert_can_communicate_with_server(config)
 
     # Submit workflow to Cromwell Server
-    LOGGER.info(f"Submitting job to server: {cromshellconfig.cromwell_server}")
+    LOGGER.info("Submitting job to server: %s", cromshellconfig.cromwell_server)
     request_out = submit_workflow_to_server(
         wdl, wdl_json, options_json, dependencies_zip, config
     )
@@ -125,9 +125,11 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
     womtool_path = shutil.which("womtool")
     if womtool_path is not None:
         validation_output = subprocess.run(
-            [womtool_path, "validate", wdl, "-i", wdl_json], capture_output=True
+            [womtool_path, "validate", wdl, "-i", wdl_json],
+            capture_output=True,
+            check=True,
         )
-        if 0 == validation_output.returncode:
+        if validation_output.returncode == 0:
             LOGGER.info("WDL and JSON are valid.")
             return 0
         else:
@@ -184,8 +186,8 @@ def update_submission_file(
         "",  # Place holder for Alias column
     ]
 
-    with open(submission_file, "a") as f:
-        writer = csv.writer(f, delimiter="\t", lineterminator="\n")
+    with open(submission_file, "a") as sub_f:
+        writer = csv.writer(sub_f, delimiter="\t", lineterminator="\n")
         writer.writerow(submission_row)
 
 
