@@ -9,6 +9,9 @@ from termcolor import colored
 
 LOGGER = logging.getLogger(__name__)
 
+workflow_id_pattern = re.compile(
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+)
 
 def dead_turtle():
     """Print Dead Turtle"""
@@ -80,23 +83,18 @@ def doomed_logo():
 def assert_file_is_not_empty(file_name: str, file_description: str):
     """Confirm the provided file exist and is not empty."""
 
-    if file_name is None:
-        LOGGER.info("%s was not provided", file_description)
-        return
     if not Path(file_name).exists():
         LOGGER.error("ERROR: %s does not exist: %s", file_description, file_name)
-        raise Exception("ERROR: %s does not exist: %s" % file_description, file_name)
+        raise FileExistsError("ERROR: %s does not exist: %s" % file_description, file_name)
     elif os.stat(file_name).st_size == 0:
         LOGGER.error("ERROR: %s is empty: %s.", file_description, file_name)
-        raise Exception("ERROR: %s is empty: %s." % file_description, file_name)
+        raise EOFError("ERROR: %s is empty: %s." % file_description, file_name)
 
 
 def is_workflow_id_valid(workflow_id: str):
     """Validates a workflow id"""
 
-    pattern = re.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
-
-    return True if pattern.match(workflow_id) else False
+    return True if workflow_id_pattern.match(workflow_id) else False
 
 
 def pretty_print_json(json_text: str):
