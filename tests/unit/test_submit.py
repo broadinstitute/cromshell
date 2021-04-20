@@ -1,4 +1,6 @@
+import os
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -36,15 +38,22 @@ class TestSubmit:
     # Skipping test because function requires connection to cromwell server
     # def test_submit_workflow_to_server(self, mock_data_path):
 
-    def test_update_submission_file(self, mock_data_path):
-        submission_file_path = mock_data_path.joinpath("submit/submission_file.text")
-        submission_file_template_path = mock_data_path.joinpath(
+    def test_update_submission_file(self, mock_data_path, temp_dir_path):
+
+        submission_file_path = mock_data_path.joinpath(
             "submit/submission_file_template.text"
         )
+        temp_submission_file = str(temp_dir_path) + "/submission_file.text"
+        # Create a temp dir to store temp submission file
+        os.mkdir(temp_dir_path)
+        # Copy submission file template to temp dir
+        shutil.copyfile(submission_file_path, temp_submission_file)
 
+        # Run update submission file command which should append a line to the
+        # temp submission with the provided info
         submit_command.update_submission_file(
             cromwell_server="https://cromwell-UnitTest.dsde-methods.broadinstitute.org",
-            submission_file=submission_file_path,
+            submission_file=temp_submission_file,
             wdl="/made/up/path/UnitTest.wdl",
             workflow_status={
                 "id": "73650b78-64e5-4ce7-a73e-3eb264133f20",
@@ -52,6 +61,8 @@ class TestSubmit:
             },
         )
 
+        # Create a dic which will be used to test whether the submission
+        # correctly added to the submission file
         testing_submission_row = [
             "date_time",
             "https://cromwell-UnitTest.dsde-methods.broadinstitute.org",
@@ -60,20 +71,21 @@ class TestSubmit:
             "Submitted",
             "",
         ]
-        # Open the mock submission file that was recently updated and compare the last
+
+        # Open the temp submission file that was recently updated and compare the last
         # row with the expected
-        with open(submission_file_path) as f:
+        with open(temp_submission_file) as f:
             last_line = f.readlines()[-1]
-            last_line_columns = last_line.split("\t")
+            last_line_columns = last_line.split()
 
-            assert last_line_columns[1] == testing_submission_row[1]
-            assert last_line_columns[2] == testing_submission_row[2]
-            assert last_line_columns[3] == testing_submission_row[3]
-            assert last_line_columns[4] == testing_submission_row[4]
-            assert last_line_columns[4] == testing_submission_row[4]
+            # Compare each column in the last line dictionary with expected
+            # results dictionary. Range starts from 1 to skip the date_time column
+            # which would be difficult to coordinate a comparison.
+            for i in range(1, len(last_line_columns)):
+                assert last_line_columns[i] == testing_submission_row[i]
 
-        # Reset mock submission file with template
-        shutil.copy(submission_file_template_path, submission_file_path)
+        # Delete temp dir with template
+        shutil.rmtree(temp_dir_path)
 
     @pytest.fixture
     def mock_data_path(self):
@@ -82,3 +94,7 @@ class TestSubmit:
     @pytest.fixture
     def workflows_path(self):
         return Path(__file__).parents[1].joinpath("workflows/")
+
+    @pytest.fixture
+    def temp_dir_path(self):
+        return Path(tempfile.gettempdir() + "/test_io_utility/")
