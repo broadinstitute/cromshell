@@ -1,5 +1,7 @@
+import io
 import shutil
 import tempfile
+from contextlib import redirect_stdout
 from pathlib import Path
 
 import pytest
@@ -11,17 +13,6 @@ class TestIOUtilities:
     """Test io_utils  functions and variables"""
 
     def test_assert_file_is_not_empty(self):
-
-        # asserts that an exception is NOT raised by the function,
-        # if file path was not given. In cases an optional file
-        # is being checked and the user didn't not provide the file path then no
-        # exception should be raised.
-        try:
-            io_utils.assert_file_is_not_empty(
-                file_name=None, file_description="Io Utils"
-            )
-        except Exception as exc:
-            assert False, f"Function should not have raised any exception {exc}"
 
         # asserts that an exception is NOT raised by the function,
         # because we are giving the path to this current unit test
@@ -63,10 +54,26 @@ class TestIOUtilities:
             workflow_id="7ef69ca5-0a9a-4449-8ed1-fce28763712c"
         ), "Should return True with valid ID"
 
-    # Skipping because there isn't logic in function. Testing would
-    # be helpful later if the function ends up supporting file paths to
-    # JSONs or dictionaries as input
-    # def test_pretty_print_json(self):
+    def test_pretty_print_json(self):
+
+        # String holds the expected printout from function in a string, which includes
+        # 4 space indentation and new line characters
+        testing_out = (
+            """{\n    "id": "4bf7ca9c-0b39-48fb-9af7-83e3e488f62b",\n"""
+            """    "status": "Submitted"\n}\n"""
+        )
+
+        # Here the function is being run and allows us to redirect the stdout which
+        # would be what the function prints to the screen to file like object
+        func_stdout = io.StringIO()
+        with redirect_stdout(func_stdout):
+            io_utils.pretty_print_json(
+                """{"id": "4bf7ca9c-0b39-48fb-9af7-83e3e488f62b",
+                "status": "Submitted"}"""
+            )
+
+        # assert the function stdout is the same as the expected out
+        assert func_stdout.getvalue() == testing_out
 
     def test_create_directory(self, temp_dir_path):
 
@@ -91,12 +98,7 @@ class TestIOUtilities:
 
         # Test that exception is not raised in this case even though
         # folder already exists, because `exist_ok` variable is set to `True`.
-        try:
-            io_utils.create_directory(
-                dir_path=temp_folder, parents=False, exist_ok=True
-            )
-        except Exception as exc:
-            assert False, f"Should not raise exception b/c exist_Ok set to True {exc}"
+        io_utils.create_directory(dir_path=temp_folder, parents=False, exist_ok=True)
 
         # Test that nested folders are not created if `parents` is set to `False`
         with pytest.raises(FileNotFoundError):

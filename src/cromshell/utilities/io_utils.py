@@ -13,6 +13,7 @@ workflow_id_pattern = re.compile(
     "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 )
 
+
 def dead_turtle():
     """Print Dead Turtle"""
 
@@ -85,7 +86,9 @@ def assert_file_is_not_empty(file_name: str, file_description: str):
 
     if not Path(file_name).exists():
         LOGGER.error("ERROR: %s does not exist: %s", file_description, file_name)
-        raise FileExistsError("ERROR: %s does not exist: %s" % file_description, file_name)
+        raise FileExistsError(
+            "ERROR: %s does not exist: %s" % file_description, file_name
+        )
     elif os.stat(file_name).st_size == 0:
         LOGGER.error("ERROR: %s is empty: %s.", file_description, file_name)
         raise EOFError("ERROR: %s is empty: %s." % file_description, file_name)
