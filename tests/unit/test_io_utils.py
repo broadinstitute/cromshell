@@ -13,25 +13,42 @@ from cromshell.utilities import io_utils
 class TestIOUtilities:
     """Test io_utils  functions and variables"""
 
-    def test_assert_file_is_not_empty(self):
+    def test_assert_file_is_not_empty_file_exists(self):
 
         # asserts that an exception is NOT raised by the function,
         # because we are giving the path to this current unit test
-        # file which should exist.
+        # file which should exist and is not empty.
         current_file_name = Path(__file__).parent.absolute()
         try:
             io_utils.assert_file_is_not_empty(
-                file_name=current_file_name, file_description="Io Utils"
+                file_path=current_file_name, file_description="Io Utils"
             )
         except Exception as exc:
             assert False, f"Function should not have raised any exception {exc}"
 
         # asserts that an exception is raised by the function,
-        # because we are giving the a fake file path which shouldn't exist
-        with pytest.raises(Exception):
+        # because we are giving it a fake file path which shouldn't exist
+        with pytest.raises(FileExistsError):
             io_utils.assert_file_is_not_empty(
-                file_name="/fake/file/path", file_description="Io Utils"
+                file_path="/fake/file/path", file_description="Io Utils"
             ), "Provided a fake file path, function is fail"
+
+    def test_assert_file_is_not_empty(self, temp_dir_path):
+
+        # Create temp file path
+        empty_temp_file_path = Path(temp_dir_path + "/empty.text")
+        # Check temp does not exits
+        if not os.path.exists(empty_temp_file_path):
+            with open(empty_temp_file_path, "w"):  # Create temp file
+                pass
+
+        with pytest.raises(EOFError):
+            io_utils.assert_file_is_not_empty(
+                file_path=empty_temp_file_path, file_description="Io Utils"
+            ), "Provided a fake file path, function is fail"
+
+        # Delete temp file
+        os.remove(empty_temp_file_path)
 
     def test_is_workflow_id_valid(self):
 

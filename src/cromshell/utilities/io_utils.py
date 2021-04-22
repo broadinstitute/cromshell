@@ -81,17 +81,17 @@ def doomed_logo():
     )
 
 
-def assert_file_is_not_empty(file_name: str, file_description: str):
+def assert_file_is_not_empty(file_path: str, file_description: str):
     """Confirm the provided file exist and is not empty."""
 
-    if not Path(file_name).exists():
-        LOGGER.error("ERROR: %s does not exist: %s", file_description, file_name)
+    if not Path(file_path).exists():
+        LOGGER.error("ERROR: %s does not exist: %s", file_description, file_path)
         raise FileExistsError(
-            "ERROR: %s does not exist: %s" % file_description, file_name
+            "ERROR: %s does not exist: %s", file_description, file_path
         )
-    elif os.stat(file_name).st_size == 0:
-        LOGGER.error("ERROR: %s is empty: %s.", file_description, file_name)
-        raise EOFError("ERROR: %s is empty: %s." % file_description, file_name)
+    elif os.stat(file_path).st_size == 0:
+        LOGGER.error("ERROR: %s is empty: %s.", file_description, file_path)
+        raise EOFError("ERROR: %s is empty: %s.", file_description, file_path)
 
 
 def is_workflow_id_valid(workflow_id: str):
