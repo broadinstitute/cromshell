@@ -1,4 +1,5 @@
 import io
+import os
 import shutil
 import tempfile
 from contextlib import redirect_stdout
@@ -77,43 +78,79 @@ class TestIOUtilities:
 
     def test_create_directory(self, temp_dir_path):
 
-        temp_folder = Path(temp_dir_path + "/test_io_utility/")
-        temp_folder_parents = Path(temp_dir_path + "/test_io_utility/parent1/parent2/")
+        test_io_utility_temp_folder = Path(temp_dir_path + "/test_io_utility/")
 
         # Delete test dir if exists from previous test run
-        if temp_folder.exists():
-            shutil.rmtree(temp_folder)
+        if test_io_utility_temp_folder.exists():
+            shutil.rmtree(test_io_utility_temp_folder)
 
         # Test that function is able to create a folder.
-        io_utils.create_directory(dir_path=temp_folder, parents=False, exist_ok=False)
-        assert temp_folder.exists(), "Temp folder should have been created"
+        io_utils.create_directory(
+            dir_path=test_io_utility_temp_folder, parents=False, exist_ok=False
+        )
+        assert (
+            test_io_utility_temp_folder.exists()
+        ), "Temp folder should have been created"
+
+        # Delete temp folder
+        shutil.rmtree(test_io_utility_temp_folder)
+
+    def test_create_directory_exist_ok(self, temp_dir_path):
+        test_io_utility_temp_folder = Path(temp_dir_path + "/test_io_utility/")
+
+        # Delete test dir if exists from previous test run
+        if test_io_utility_temp_folder.exists():
+            shutil.rmtree(test_io_utility_temp_folder)
+
+        # Create test_io_utility_temp_folder
+        os.mkdir(test_io_utility_temp_folder)
 
         # Test that function fails and raises an error because `exist_ok`
         # is set to `False` and the folder its being asked to create already
         # exists from the previous lines.
         with pytest.raises(FileExistsError):
             io_utils.create_directory(
-                dir_path=temp_folder, parents=False, exist_ok=False
+                dir_path=test_io_utility_temp_folder, parents=False, exist_ok=False
             ), "Should fail because folder already exists from previous test"
 
         # Test that exception is not raised in this case even though
         # folder already exists, because `exist_ok` variable is set to `True`.
-        io_utils.create_directory(dir_path=temp_folder, parents=False, exist_ok=True)
+        io_utils.create_directory(
+            dir_path=test_io_utility_temp_folder, parents=False, exist_ok=True
+        )
+
+        # Delete temp folder
+        shutil.rmtree(test_io_utility_temp_folder)
+
+    def test_create_directory_parents(self, temp_dir_path):
+
+        test_io_utility_temp_folder = Path(temp_dir_path + "/test_io_utility/")
+        test_io_utility_temp_folder_parents = Path(
+            temp_dir_path + "/test_io_utility/parent1/parent2/"
+        )
+
+        # Delete test dir if exists from previous test run
+        if test_io_utility_temp_folder.exists():
+            shutil.rmtree(test_io_utility_temp_folder)
 
         # Test that nested folders are not created if `parents` is set to `False`
         with pytest.raises(FileNotFoundError):
             io_utils.create_directory(
-                dir_path=temp_folder_parents, parents=False, exist_ok=False
+                dir_path=test_io_utility_temp_folder_parents,
+                parents=False,
+                exist_ok=False,
             ), "Should fail because folder is nested and `parents` is set to `False`"
 
         # Test that nested folders are created if `parents` is set to `True`
         io_utils.create_directory(
-            dir_path=temp_folder_parents, parents=True, exist_ok=False
+            dir_path=test_io_utility_temp_folder_parents, parents=True, exist_ok=False
         )
-        assert temp_folder_parents.exists(), "Temp folder should have been created"
+        assert (
+            test_io_utility_temp_folder_parents.exists()
+        ), "Temp folder should have been created"
 
         # Delete temp folder
-        shutil.rmtree(temp_folder)
+        shutil.rmtree(test_io_utility_temp_folder)
 
     def test_copy_files_to_directory(self, temp_dir_path):
 

@@ -109,7 +109,9 @@ def pretty_print_json(json_text: str):
     print(json.dumps(loaded_json, indent=4, sort_keys=True))
 
 
-def create_directory(dir_path: str, parents: bool = True, exist_ok: bool = False):
+def create_directory(
+    dir_path: str or Path, parents: bool = True, exist_ok: bool = False
+):
     """Creates a Directory
     - dir_path: full path to directory being created
     - parents: whether the new directory will need to be nested
@@ -125,7 +127,7 @@ def create_directory(dir_path: str, parents: bool = True, exist_ok: bool = False
         raise
 
 
-def copy_files_to_directory(directory: str, input_files: list or str):
+def copy_files_to_directory(directory: str or Path, input_files: list or str):
     """Copies files to specified directory"""
 
     # check dir exists
