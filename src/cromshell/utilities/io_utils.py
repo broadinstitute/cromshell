@@ -97,7 +97,10 @@ def assert_file_is_not_empty(file_path: str or Path, file_description: str):
 def is_workflow_id_valid(workflow_id: str):
     """Validates a workflow id"""
 
-    return True if workflow_id_pattern.match(workflow_id) else False
+    if workflow_id == "":
+        raise ValueError("Empty String")
+    else:
+        return True if workflow_id_pattern.match(workflow_id) else False
 
 
 def pretty_print_json(json_text: str):

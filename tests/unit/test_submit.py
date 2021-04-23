@@ -11,9 +11,6 @@ from cromshell.submit import command as submit_command
 class TestSubmit:
     """Test the submit command functions"""
 
-    # Skipping test because function simply holds other functions
-    # def test_validate_input(self, mock_data_path):
-
     def test_womtool_validate_invalid_wdl_and_json(self, workflows_path):
         workflow_wdl_path = workflows_path.joinpath("not_valid.wdl")
         workflow_json_path = workflows_path.joinpath("not_valid.json")
@@ -24,6 +21,8 @@ class TestSubmit:
                 wdl=workflow_wdl_path, wdl_json=workflow_json_path
             )
 
+    # @pytest.mark.parametrize(
+    #     "test_wdl_path, test_json_path", [(self.workflows_path.joinpath("helloWorld.wdl"), 0), ("2+4", 0), ("6*9", 0)])
     def test_womtool_validate_valid_wdl_and_json(self, workflows_path):
         workflow_wdl_path = workflows_path.joinpath("helloWorld.wdl")
         workflow_json_path = workflows_path.joinpath("helloWorld.json")
@@ -35,8 +34,6 @@ class TestSubmit:
             == 0
         ), "Womtool should have marked valid workflow as valid."
 
-    # Skipping test because function requires connection to cromwell server
-    # def test_submit_workflow_to_server(self, mock_data_path):
 
     def test_update_submission_file(self, mock_data_path, temp_dir_path):
 

@@ -35,16 +35,6 @@ workflow WillFailTester
                 boot_disk_size_gb         = boot_disk_size_gb
         }
 
-        call PassRunsLong {
-            input:
-                docker                    = docker,
-                mem                       = mem,
-                preemptible_attempts      = preemptible_attempts,
-                disk_space_gb             = disk_space_gb,
-                cpu                       = cpu,
-                boot_disk_size_gb         = boot_disk_size_gb
-        }
-
     output {
     }
 }

@@ -57,6 +57,11 @@ class TestIOUtilities:
                 workflow_id=None
             ), "Should raise an error if empty string is given"
 
+        with pytest.raises(ValueError):
+            io_utils.is_workflow_id_valid(
+                workflow_id=""
+            ), "Should raise an error if empty string is given"
+
         assert not io_utils.is_workflow_id_valid(
             workflow_id="7ef69ca-6l9-44489-8ed-fce2876312c"
         ), (
