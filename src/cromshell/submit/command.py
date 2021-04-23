@@ -17,6 +17,21 @@ from cromshell.utilities.io_utils import dead_turtle
 LOGGER = logging.getLogger(__name__)
 
 
+class ValidationError(Exception):
+    """Raised when input WDL or JSON does not pass Womtool Validation"""
+    pass
+
+
+class WorkflowIDError(Exception):
+    """Raised when Workflow ID does not meet the correct format"""
+    pass
+
+
+class WorkflowStatusError(Exception):
+    """Raised when Workflow Status of a recently submitted workflow
+    is not 'Submitted'"""
+    pass
+
 @click.command(name="submit")
 @click.argument("wdl", type=click.Path(exists=True), required=True)
 @click.argument("wdl_json", type=click.Path(exists=True), required=True)
@@ -26,7 +41,7 @@ LOGGER = logging.getLogger(__name__)
     type=click.Path(exists=True),
     required=False,
     help="JSON file containing configuration options "
-    "for the execution of the workflow.",
+         "for the execution of the workflow.",
 )
 @click.option(
     "-d",
@@ -34,8 +49,8 @@ LOGGER = logging.getLogger(__name__)
     type=click.Path(exists=True),
     required=False,
     help="ZIP file containing workflow source files that are "
-    "used to resolve local imports. This zip bundle will be "
-    "unpacked in a sandbox accessible to this workflow.",
+         "used to resolve local imports. This zip bundle will be "
+         "unpacked in a sandbox accessible to this workflow.",
 )
 @click.pass_obj
 def main(config, wdl, wdl_json, options_json, dependencies_zip):
@@ -67,19 +82,23 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
     # 2.A If the status is not `Submitted`, something went wrong:
     if workflow_status["status"] != "Submitted":
         log.display_logo(dead_turtle)
-        io_utils.log_error_and_raise_exception(
-            error_source="Cromshell Server",
-            error_source_message=request_out.text,
-            short_error_message="Server reports job was not properly submitted.",
+
+        LOGGER.error(f"Error: Server reports job was not properly submitted.")
+        LOGGER.error(f"Cromshell Server Message: {request_out.text}")
+        raise WorkflowStatusError(
+            f"Error: Server reports job was not properly submitted.\n"
+            f"Cromshell Server Message: {request_out.text}"
         )
 
     # 2.B If the ID is not an ID, something went wrong:
     if not io_utils.is_workflow_id_valid(workflow_status["id"]):
         log.display_logo(dead_turtle)
-        io_utils.log_error_and_raise_exception(
-            error_source="Cromshell Server",
-            error_source_message=request_out.text,
-            short_error_message="Did not get a valid ID back. Something went wrong.",
+
+        LOGGER.error(f"Error: Did not get a valid ID back. Something went wrong.")
+        LOGGER.error(f"Cromshell Server Message: {request_out.text}")
+        raise WorkflowIDError(
+            f"Error: Did not get a valid ID back. Something went wrong.\n"
+            f"Cromshell Server Message: {request_out.text}"
         )
 
     # Everything checks out, display success to terminal
@@ -135,10 +154,16 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
             LOGGER.info("WDL and JSON are valid.")
             return 0
         else:
-            io_utils.log_error_and_raise_exception(
-                error_source="Womtool",
-                error_source_message=validation_output.stderr.decode("utf-8"),
-                short_error_message="WDL and JSON files do not validate",
+
+            error_source = "Womtool"
+            error_source_message = validation_output.stderr.decode("utf-8")
+            short_error_message = "WDL and JSON files do not validate"
+
+            LOGGER.error(f"Error: {short_error_message}")
+            LOGGER.error(f"{error_source} Message: {error_source_message}")
+            raise ValidationError(
+                f"Error: {short_error_message}\n"
+                f"{error_source} Message: {error_source_message}"
             )
 
 
@@ -151,9 +176,10 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
     # only if they are not NONE. To do this none_context is used to pass to the file
     # handler, which avoids errors if optional files are NONE.
     with open(wdl, "rb") as wdl_file, open(wdl_json, "rb") as wdl_json_file, (
-        open(options_json, "rb") if options_json is not None else none_context
+            open(options_json, "rb") if options_json is not None else none_context
     ) as options_file, (
-        open(dependencies_zip, "rb") if dependencies_zip is not None else none_context
+            open(dependencies_zip,
+                 "rb") if dependencies_zip is not None else none_context
     ) as dependencies_file:
 
         submission_params = {
@@ -175,7 +201,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
 
 
 def update_submission_file(
-    cromwell_server: str, submission_file: str, wdl: str, workflow_status: dict
+        cromwell_server: str, submission_file: str, wdl: str, workflow_status: dict
 ):
     """Update the submission file with recently submitted job"""
 

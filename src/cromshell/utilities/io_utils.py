@@ -81,7 +81,7 @@ def doomed_logo():
     )
 
 
-def assert_file_is_not_empty(file_path: str, file_description: str):
+def assert_file_is_not_empty(file_path: str or Path, file_description: str):
     """Confirm the provided file exist and is not empty."""
 
     if not Path(file_path).exists():
@@ -144,22 +144,3 @@ def copy_files_to_directory(directory: str or Path, input_files: list or str):
         if not Path(input_files).exists():
             raise FileNotFoundError(f"Directory '{input_files}' does not exist")
         shutil.copy(input_files, directory)
-
-
-def log_error_and_raise_exception(
-    error_source: str, short_error_message: str, error_source_message: str
-):
-    """Prints out error message and url response
-    to terminal. Also logs/raises error message and url response.
-
-    - short_error_message: simple version of error message
-    - error_source_message: error message given from source
-    - error_source: Name of tool/package giving the error
-    """
-
-    LOGGER.error(f"Error: {short_error_message}")
-    LOGGER.error(f"{error_source} Message: {error_source_message}")
-    raise Exception(
-        f"Error: {short_error_message}\n"
-        f"{error_source} Message: {error_source_message}"
-    )
