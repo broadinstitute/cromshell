@@ -8,32 +8,62 @@ import pytest
 from cromshell.submit import command as submit_command
 
 
+@pytest.fixture
+def mock_data_path():
+    return Path(__file__).parent.joinpath("mock_data/")
+
+
+# @pytest.fixture
+# def workflows_path():
+#     return Path(__file__).parents[1].joinpath("workflows/")
+workflows_path = Path(__file__).parents[1].joinpath("workflows/")
+
+
+@pytest.fixture
+def temp_dir_path():
+    return Path(tempfile.gettempdir() + "/test_io_utility/")
+
+
 class TestSubmit:
     """Test the submit command functions"""
 
-    def test_womtool_validate_invalid_wdl_and_json(self, workflows_path):
-        workflow_wdl_path = workflows_path.joinpath("not_valid.wdl")
-        workflow_json_path = workflows_path.joinpath("not_valid.json")
+    @pytest.mark.parametrize(
+        "test_wdl_path, test_json_path",
+        [
+            (
+                workflows_path.joinpath("not_valid.wdl"),
+                workflows_path.joinpath("helloWorld.json"),
+            ),
+            (
+                workflows_path.joinpath("helloWorld.wdl"),
+                workflows_path.joinpath("not_valid.json"),
+            ),
+            (
+                workflows_path.joinpath("not_valid.wdl"),
+                workflows_path.joinpath("not_valid.json"),
+            ),
+        ],
+    )
+    def test_womtool_validate_not_valid_wdl_and_json(
+        self, test_wdl_path, test_json_path
+    ):
 
         # asserts that an exception is raised by the function
         with pytest.raises(Exception):
             submit_command.womtool_validate_wdl_and_json(
-                wdl=workflow_wdl_path, wdl_json=workflow_json_path
-            )
+                wdl=str(test_wdl_path), wdl_json=str(test_json_path)
+            ), "Womtool should have marked not valid workflow as not valid."
 
-    # @pytest.mark.parametrize(
-    #     "test_wdl_path, test_json_path", [(self.workflows_path.joinpath("helloWorld.wdl"), 0), ("2+4", 0), ("6*9", 0)])
-    def test_womtool_validate_valid_wdl_and_json(self, workflows_path):
+    def test_womtool_validate_valid_wdl_and_json(self):
         workflow_wdl_path = workflows_path.joinpath("helloWorld.wdl")
         workflow_json_path = workflows_path.joinpath("helloWorld.json")
 
         assert (
             submit_command.womtool_validate_wdl_and_json(
-                wdl=workflow_wdl_path, wdl_json=workflow_json_path
+                wdl=str(workflow_wdl_path), wdl_json=str(workflow_json_path)
             )
             == 0
         ), "Womtool should have marked valid workflow as valid."
-
 
     def test_update_submission_file(self, mock_data_path, temp_dir_path):
 
@@ -83,15 +113,3 @@ class TestSubmit:
 
         # Delete temp dir with template
         shutil.rmtree(temp_dir_path)
-
-    @pytest.fixture
-    def mock_data_path(self):
-        return Path(__file__).parent.joinpath("mock_data/")
-
-    @pytest.fixture
-    def workflows_path(self):
-        return Path(__file__).parents[1].joinpath("workflows/")
-
-    @pytest.fixture
-    def temp_dir_path(self):
-        return Path(tempfile.gettempdir() + "/test_io_utility/")
