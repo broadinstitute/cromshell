@@ -86,12 +86,10 @@ def assert_file_is_not_empty(file_path: str or Path, file_description: str):
 
     if not Path(file_path).exists():
         LOGGER.error("ERROR: %s does not exist: %s", file_description, file_path)
-        raise FileExistsError(
-            "ERROR: %s does not exist: %s", file_description, file_path
-        )
-    elif os.stat(file_path).st_size == 0:
+        raise FileExistsError(f"ERROR: {file_description} does not exist: {file_path}")
+    if os.stat(file_path).st_size == 0:
         LOGGER.error("ERROR: %s is empty: %s.", file_description, file_path)
-        raise EOFError("ERROR: %s is empty: %s.", file_description, file_path)
+        raise EOFError(f"ERROR: {file_description} is empty: {file_path}.")
 
 
 def is_workflow_id_valid(workflow_id: str):
@@ -99,8 +97,8 @@ def is_workflow_id_valid(workflow_id: str):
 
     if workflow_id == "":
         raise ValueError("Empty String")
-    else:
-        return True if workflow_id_pattern.match(workflow_id) else False
+
+    return bool(workflow_id_pattern.match(workflow_id))
 
 
 def pretty_print_json(json_text: str):
@@ -125,7 +123,8 @@ def create_directory(
         Path.mkdir(Path(dir_path), parents=parents, exist_ok=exist_ok)
     except FileExistsError:
         LOGGER.error(
-            f"Unable to create directory '{dir_path}' because directory already exists."
+            "Unable to create directory '%s' because directory already exists.",
+            dir_path,
         )
         raise
 
@@ -137,7 +136,7 @@ def copy_files_to_directory(directory: str or Path, input_files: list or str):
     if not Path(directory).exists():
         raise FileNotFoundError(f"Directory '{directory}' does not exist")
 
-    if type(input_files) is list:
+    if isinstance(input_files, list):
         for file in input_files:
             if file is not None:
                 if not Path(file).exists():

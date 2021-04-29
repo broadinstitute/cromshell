@@ -20,20 +20,14 @@ LOGGER = logging.getLogger(__name__)
 class ValidationError(Exception):
     """Raised when input WDL or JSON does not pass Womtool Validation"""
 
-    pass
-
 
 class WorkflowIDError(Exception):
     """Raised when Workflow ID does not meet the correct format"""
-
-    pass
 
 
 class WorkflowStatusError(Exception):
     """Raised when Workflow Status of a recently submitted workflow
     is not 'Submitted'"""
-
-    pass
 
 
 @click.command(name="submit")
@@ -88,7 +82,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
         log.display_logo(dead_turtle)
 
         LOGGER.error("Error: Server reports job was not properly submitted.")
-        LOGGER.error(f"Cromshell Server Message: {request_out.text}")
+        LOGGER.error("Cromshell Server Message: %s", request_out.text)
         raise WorkflowStatusError(
             f"Error: Server reports job was not properly submitted.\n"
             f"Cromshell Server Message: {request_out.text}"
@@ -99,7 +93,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
         log.display_logo(dead_turtle)
 
         LOGGER.error("Error: Did not get a valid ID back. Something went wrong.")
-        LOGGER.error(f"Cromshell Server Message: {request_out.text}")
+        LOGGER.error("Cromshell Server Message: %s", request_out.text)
         raise WorkflowIDError(
             f"Error: Did not get a valid ID back. Something went wrong.\n"
             f"Cromshell Server Message: {request_out.text}"
@@ -156,19 +150,18 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
         )
         if validation_output.returncode == 0:
             LOGGER.info("WDL and JSON are valid.")
-            return 0
         else:
-
             error_source = "Womtool"
             error_source_message = validation_output.stderr.decode("utf-8")
             short_error_message = "WDL and JSON files do not validate"
 
-            LOGGER.error(f"Error: {short_error_message}")
-            LOGGER.error(f"{error_source} Message: {error_source_message}")
+            LOGGER.error("Error: %s", short_error_message)
+            LOGGER.error("%s Message: %s", error_source, error_source_message)
             raise ValidationError(
                 f"Error: {short_error_message}\n"
                 f"{error_source} Message: {error_source_message}"
             )
+    return 0
 
 
 def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, config):
@@ -223,4 +216,4 @@ def update_submission_file(
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter
