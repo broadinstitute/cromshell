@@ -20,14 +20,18 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+
       - name: Setup Python
-          uses: actions/setup-python@v1
-          with:
-            python-version: ${{ matrix.python }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
       - name: Install Tox
         run: pip install tox
+
       - name: Install Dev Requirments
         run: pip install -r dev-requirements.txt
+
       - name: Run Tox
         # Run tox using the version of Python in `PATH`
         run: tox -e py
