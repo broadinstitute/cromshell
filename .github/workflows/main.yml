@@ -34,4 +34,4 @@ jobs:
 
       - name: Run Tox
         # Run tox using the version of Python in `PATH`
-        run: tox -e py
+        run: tox -e lint
