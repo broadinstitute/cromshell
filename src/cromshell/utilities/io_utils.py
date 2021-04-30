@@ -10,7 +10,7 @@ from termcolor import colored
 LOGGER = logging.getLogger(__name__)
 
 workflow_id_pattern = re.compile(
-    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
 )
 
 
@@ -98,7 +98,7 @@ def is_workflow_id_valid(workflow_id: str):
     if workflow_id == "":
         raise ValueError("Empty String")
 
-    return bool(workflow_id_pattern.match(workflow_id))
+    return workflow_id_pattern.match(workflow_id)
 
 
 def pretty_print_json(json_text: str):

@@ -58,10 +58,8 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
 
     validate_input(wdl, wdl_json, options_json, dependencies_zip)
 
-    # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
 
-    # Submit workflow to Cromwell Server
     LOGGER.info("Submitting job to server: %s", cromshellconfig.cromwell_server)
     request_out = submit_workflow_to_server(
         wdl, wdl_json, options_json, dependencies_zip, config
