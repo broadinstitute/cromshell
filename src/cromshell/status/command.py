@@ -1,15 +1,15 @@
+import csv
 import fileinput
 import json
 import logging
 
 import click
 import requests
-import csv
 
+from cromshell import log
 from cromshell.utilities import cromshellconfig
 from cromshell.utilities import http_utils
 from cromshell.utilities import io_utils
-from cromshell import log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +35,11 @@ def main(config, workflow_id):
     http_utils.assert_can_communicate_with_server(config)
 
     # Request workflow status
-    request_out = requests.get(f"{config.cromwell_api_workflow_id}/status")
+    request_out = requests.get(
+        f"{config.cromwell_api_workflow_id}/status",
+        timeout=config.requests_connect_timeout,
+        verify=config.requests_verify_certs
+    )
 
     requested_status_json = request_out.content.decode("utf-8")
     workflow_status_description = json.loads(request_out.content)
@@ -95,8 +99,8 @@ def main(config, workflow_id):
         print("\t".join(reader.fieldnames))
         for row in reader:
             if (
-                row["CROMWELL_SERVER"] == config.cromwell_server
-                and row["RUN_ID"] == workflow_id
+                    row["CROMWELL_SERVER"] == config.cromwell_server
+                    and row["RUN_ID"] == workflow_id
             ):
                 row["STATUS"] = workflow_status
                 print("\t".join(x for x in row.values() if x))

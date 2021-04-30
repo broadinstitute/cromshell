@@ -2,6 +2,7 @@ import csv
 import json
 import logging
 import os
+import warnings
 from enum import Enum
 from pathlib import Path
 
@@ -27,6 +28,25 @@ CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
+# Request defaults
+requests_connect_timeout = 5
+requests_verify_certs = True
+
+
+def override_requests_cert_parameters(skip_certs: bool):
+    """Override requests settings for certs verification"""
+
+    global requests_verify_certs
+
+    if skip_certs is True:
+        requests_verify_certs = False
+        LOGGER.warning("Skipping server TLS certificate verification.")
+        # Since the log message regarding skipping certification is printed out
+        # in the line above we will hide any future requests warning
+        # about not verifying certs.
+        warnings.filterwarnings(
+            "ignore", message="Unverified HTTPS request is being made to"
+        )
 
 
 class WorkflowStatuses(Enum):
@@ -138,23 +158,55 @@ def __load_cromshell_config_file(config_directory, config_file_name):
     return config_options
 
 
-def __get_cromwell_server():
+def __get_cromwell_server(config_options: dict):
     """Get Cromshell Server URL from configuration options"""
 
-    if not cromshell_config_options["cromwell_server"]:
+    if not config_options["cromwell_server"]:
         raise Exception(f'Cromshell config file is missing "cromwell_server"')
 
     LOGGER.info("Setting cromwell server to cromwell url from config file.")
-    LOGGER.info(cromshell_config_options["cromwell_server"])
+    LOGGER.info(config_options["cromwell_server"])
 
-    return cromshell_config_options["cromwell_server"]
+    return config_options["cromwell_server"]
+
+
+def resolve_requests_connect_timeout(timeout_cli: int):
+    """Override the default request timeout duration.
+
+    By default the timeout duration is 5 sec, however
+    if the option is specified in the cromshell config file or
+    command line then this overrides the default.
+    CLI > Config File > Default
+    """
+
+    global requests_connect_timeout
+
+    # If timeout is specified in cli then use it to override default/config file
+    if timeout_cli:
+        LOGGER.info("Setting requests timeout from command line options.")
+        LOGGER.info("Request Timeout value: %d sec", timeout_cli)
+        requests_connect_timeout = timeout_cli
+
+    # If timeout is specified in cromshell config file then use it to override default
+    elif "requests_timeout" in cromshell_config_options:
+        LOGGER.info("Setting requests timeout from value in config file.")
+        LOGGER.info(
+            "Request Timeout value: %d sec",
+            cromshell_config_options["requests_timeout"]
+        )
+        # Set the requests_connect_timeout variable to timeout value in config file.
+        requests_connect_timeout = cromshell_config_options["requests_timeout"]
+    else:
+        LOGGER.info("Using requests default timeout duration.")
+        LOGGER.info("Request Timeout value: %d sec", requests_connect_timeout)
 
 
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
 submission_file_path = __get_submission_file(config_dir, SUBMISSION_FILE_NAME)
+# TODO: Validate cromshell_config_options keys
 cromshell_config_options = __load_cromshell_config_file(
     config_dir, CROMSHELL_CONFIG_FILE_NAME
 )
-cromwell_server = __get_cromwell_server()
+cromwell_server = __get_cromwell_server(cromshell_config_options)
 cromwell_api = cromwell_server + api_string
