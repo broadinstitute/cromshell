@@ -50,7 +50,27 @@ class TestIOUtilities:
         # Delete temp file
         os.remove(empty_temp_file_path)
 
-    def test_is_workflow_id_valid(self):
+    @pytest.mark.parametrize(
+        "workflow_id, validity, assert_msg",
+        [
+            (
+                "7ef69ca-6l9-44489-8ed-fce2876312c",
+                False,
+                "Should return false if workflow id is not hexadecimal"
+            ),
+            (
+                "7ez69ca5-6l9h-4449-8ej1-mce28763712c",
+                False,
+                "Should return false if workflow id is not hexadecimal"
+            ),
+            (
+                "7ef69ca5-0a9a-4449-8ed1-fce28763712c",
+                True,
+                "Should return True with valid ID"
+            ),
+        ]
+    )
+    def test_is_workflow_id_valid(self, workflow_id, validity, assert_msg):
 
         with pytest.raises(TypeError):
             io_utils.is_workflow_id_valid(
@@ -62,20 +82,9 @@ class TestIOUtilities:
                 workflow_id=""
             ), "Should raise an error if empty string is given"
 
-        assert not io_utils.is_workflow_id_valid(
-            workflow_id="7ef69ca-6l9-44489-8ed-fce2876312c"
-        ), (
-            "Workflow ids not following 8-4-4-4-12 bock length "
-            "pattern should return False"
-        )
-
-        assert not io_utils.is_workflow_id_valid(
-            workflow_id="7ez69ca5-6l9h-4449-8ej1-mce28763712c"
-        ), "Workflow ids characters must only be `a` through `f`"
-
-        assert io_utils.is_workflow_id_valid(
-            workflow_id="7ef69ca5-0a9a-4449-8ed1-fce28763712c"
-        ), "Should return True with valid ID"
+        assert bool(io_utils.is_workflow_id_valid(
+            workflow_id=workflow_id
+        )) is validity, assert_msg
 
     def test_pretty_print_json(self):
 

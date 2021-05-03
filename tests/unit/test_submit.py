@@ -13,9 +13,6 @@ def mock_data_path():
     return Path(__file__).parent.joinpath("mock_data/")
 
 
-# @pytest.fixture
-# def workflows_path():
-#     return Path(__file__).parents[1].joinpath("workflows/")
 workflows_path = Path(__file__).parents[1].joinpath("workflows/")
 
 
