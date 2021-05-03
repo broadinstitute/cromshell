@@ -163,7 +163,7 @@ def __get_cromwell_server(config_options: dict):
     """Get Cromshell Server URL from configuration options"""
 
     if not config_options["cromwell_server"]:
-        raise Exception(f'Cromshell config file is missing "cromwell_server"')
+        raise FileNotFoundError('Cromshell config file is missing "cromwell_server"')
 
     LOGGER.info("Setting cromwell server to cromwell url from config file.")
     LOGGER.info(config_options["cromwell_server"])
@@ -193,7 +193,7 @@ def resolve_requests_connect_timeout(timeout_cli: int):
         LOGGER.info("Setting requests timeout from value in config file.")
         LOGGER.info(
             "Request Timeout value: %d sec",
-            cromshell_config_options["requests_timeout"]
+            cromshell_config_options["requests_timeout"],
         )
         # Set the requests_connect_timeout variable to timeout value in config file.
         requests_connect_timeout = cromshell_config_options["requests_timeout"]

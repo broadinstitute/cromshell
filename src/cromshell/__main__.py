@@ -4,6 +4,7 @@ from sys import argv
 import click
 
 from cromshell.utilities import cromshellconfig
+
 from .status import command as status
 from .submit import command as submit
 
