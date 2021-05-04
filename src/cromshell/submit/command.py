@@ -65,6 +65,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
         wdl, wdl_json, options_json, dependencies_zip, config
     )
 
+    # TODO: Refactor these post submission checks into a single checking function
     # Check to make sure that we actually submitted the job correctly
     # 1. Check for any initial failure by server to accept the job.
     http_utils.check_http_request_status_code(
@@ -101,6 +102,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
     log.display_logo(io_utils.turtle)
     io_utils.pretty_print_json(request_out.text)
 
+    # TODO: Refactor these file manipulations into its own "cleanup" function?
     # If we get here, we successfully submitted the job and should track it locally:
     # 1. Create a directory to hold function input files, using server name
     run_directory = Path(config.config_dir).joinpath(
@@ -186,7 +188,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
             submission_params["workflowDependencies"] = dependencies_file
 
         requests_out = requests.post(
-            f"{config.cromwell_server}{config.api_string}",
+            f"{config.cromwell_server}{config.API_STRING}",
             files=submission_params,
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,

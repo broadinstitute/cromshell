@@ -11,19 +11,20 @@ LOGGER = logging.getLogger(__name__)
 """Setup Cromshell config details. Intended to be used as a singleton"""
 
 # Set Cromshell Configuration Default Values
-metadata_parameters = "excludeKey=submittedFiles&expandSubWorkflows=true"
+METADATA_PARAMETERS = "excludeKey=submittedFiles&expandSubWorkflows=true"
 slim_metadata_parameters = (
     "=includeKey=id&includeKey=executionStatus&includeKey=backendStatus&includeKey"
     "=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
     "=subWorkflowMetadata&includeKey=subWorkflowId"
 )
-api_string = "/api/workflows/v1"
+API_STRING = "/api/workflows/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
 cromwell_api = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
+SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
 CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
@@ -137,9 +138,8 @@ def __get_submission_file(config_directory, sub_file_name):
     sub_file_path = os.path.join(config_directory, sub_file_name)
     if not Path(sub_file_path).exists():
         Path(sub_file_path).touch()
-        submission_header = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
         with Path(sub_file_path).open("w") as f:
-            f.write(submission_header)
+            f.write(SUBMISSION_FILE_HEADER)
     return sub_file_path
 
 
@@ -211,4 +211,4 @@ cromshell_config_options = __load_cromshell_config_file(
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
 local_folder_name = cromwell_server.replace("https://", "").replace("http://", "")
-cromwell_api = cromwell_server + api_string
+cromwell_api = cromwell_server + API_STRING
