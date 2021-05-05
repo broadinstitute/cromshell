@@ -32,6 +32,10 @@ jobs:
       - name: Install Dev Requirments
         run: pip install -r dev-requirements.txt
 
-      - name: Run Tox
+      - name: Run Tox lint commands
         # Run tox using the version of Python in `PATH`
         run: tox -e lint
+
+      - name: Run Pytest through Tox
+        # Run tox using the version of Python in `PATH`
+        run: tox -e unit
