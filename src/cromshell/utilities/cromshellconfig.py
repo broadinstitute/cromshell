@@ -52,6 +52,8 @@ def override_requests_cert_parameters(skip_certs: bool):
 
 
 class WorkflowStatuses(Enum):
+    """Enum to hold possible status of workflow status"""
+
     Failed = ["Failed", "fail"]
     Aborted = ["Aborted", "abort"]
     Running = ["Running"]
@@ -93,11 +95,11 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
             "Workflow id and cromwell server not specified. Using default cromwell "
             "server "
         )
-        LOGGER.info(f"Server: {cromwell_server}")
+        LOGGER.info("Server: %s", cromwell_server)
     elif server_user:
         cromwell_server = server_user
         LOGGER.info("Cromwell server URL was overridden by command line argument")
-        LOGGER.info(f"Server: {cromwell_server}")
+        LOGGER.info("Server: %s", cromwell_server)
     else:
         LOGGER.info(
             "Checking submission file for associated cromwell server with the provided "
@@ -113,8 +115,8 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                         "Cromwell server set to matching workflow id in submission "
                         "file. "
                     )
-                    LOGGER.info(f"WorkflowID: {workflow_id}")
-                    LOGGER.info(f"Server: {cromwell_server}")
+                    LOGGER.info("WorkflowID: %s", workflow_id)
+                    LOGGER.info("Server: %s", cromwell_server)
                     id_in_file = True
                     break
             if not id_in_file:
@@ -138,8 +140,8 @@ def __get_submission_file(config_directory, sub_file_name):
     sub_file_path = os.path.join(config_directory, sub_file_name)
     if not Path(sub_file_path).exists():
         Path(sub_file_path).touch()
-        with Path(sub_file_path).open("w") as f:
-            f.write(SUBMISSION_FILE_HEADER)
+        with Path(sub_file_path).open("w") as sub_file:
+            sub_file.write(SUBMISSION_FILE_HEADER)
     return sub_file_path
 
 
@@ -147,14 +149,14 @@ def __load_cromshell_config_file(config_directory, config_file_name):
     """Load options from Cromshell Config File to dictionary"""
     # TODO: Add more config settings to validate user key and values
 
-    cromshell_config_file = os.path.join(config_directory, config_file_name)
-    if not Path(cromshell_config_file).exists():
-        LOGGER.error(f"Cromshell config file {cromshell_config_file} was not found")
-        LOGGER.error(f"Please create {cromshell_config_file}")
-        raise Exception(f"Cromshell config file {cromshell_config_file} was not found")
+    cromshell_config_path = os.path.join(config_directory, config_file_name)
+    if not Path(cromshell_config_path).exists():
+        LOGGER.error("Cromshell config file %s was not found", cromshell_config_path)
+        LOGGER.error("Please create %s", cromshell_config_path)
+        raise Exception(f"Cromshell config file {cromshell_config_path} was not found")
 
-    with open(cromshell_config_file, "r") as f:
-        config_options = json.loads(f.read())
+    with open(cromshell_config_path, "r") as cromshell_config_file:
+        config_options = json.loads(cromshell_config_file.read())
 
     return config_options
 
