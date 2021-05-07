@@ -106,11 +106,9 @@ def pretty_print_json(json_text: str):
 
     - json_text: content of the json, NOT json file path"""
 
-    # TODO: Instead of printing directly to stdout it's usually good practice to either
-    #  output to a String or accept a stream to print to as an input.
-
     loaded_json = json.loads(json_text)
-    print(json.dumps(loaded_json, indent=4, sort_keys=True))
+    pretty_json = json.dumps(loaded_json, indent=4, sort_keys=True)
+    print(pretty_json)
 
 
 def create_directory(
