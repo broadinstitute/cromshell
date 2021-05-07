@@ -1,7 +1,5 @@
 import io
 import os
-import shutil
-import tempfile
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -19,12 +17,10 @@ class TestIOUtilities:
         # because we are giving the path to this current unit test
         # file which should exist and is not empty.
         current_file_name = Path(__file__).parent.absolute()
-        try:
-            io_utils.assert_file_is_not_empty(
-                file_path=current_file_name, file_description="Io Utils"
-            )
-        except Exception as exc:
-            assert False, f"Function should not have raised any exception {exc}"
+
+        io_utils.assert_file_is_not_empty(
+            file_path=current_file_name, file_description="Io Utils"
+        )
 
         # asserts that an exception is raised by the function,
         # because we are giving it a fake file path which shouldn't exist
@@ -33,10 +29,10 @@ class TestIOUtilities:
                 file_path="/fake/file/path", file_description="Io Utils"
             ), "Provided a fake file path, function is fail"
 
-    def test_assert_file_is_not_empty(self, temp_dir_path):
+    def test_assert_file_is_not_empty(self, tmp_path):
 
         # Create temp file path
-        empty_temp_file_path = Path(temp_dir_path + "/empty.text")
+        empty_temp_file_path = tmp_path / "empty.text"
         # Check temp does not exits
         if not os.path.exists(empty_temp_file_path):
             with open(empty_temp_file_path, "w"):  # Create temp file
@@ -46,9 +42,6 @@ class TestIOUtilities:
             io_utils.assert_file_is_not_empty(
                 file_path=empty_temp_file_path, file_description="Io Utils"
             ), "Provided a fake file path, function is fail"
-
-        # Delete temp file
-        os.remove(empty_temp_file_path)
 
     @pytest.mark.parametrize(
         "workflow_id, validity, assert_msg",
@@ -107,13 +100,9 @@ class TestIOUtilities:
         # assert the function stdout is the same as the expected out
         assert func_stdout.getvalue() == testing_out
 
-    def test_create_directory(self, temp_dir_path):
+    def test_create_directory(self, tmp_path):
 
-        test_io_utility_temp_folder = Path(temp_dir_path + "/test_io_utility/")
-
-        # Delete test dir if exists from previous test run
-        if test_io_utility_temp_folder.exists():
-            shutil.rmtree(test_io_utility_temp_folder)
+        test_io_utility_temp_folder = tmp_path / "test_io_utility"
 
         # Test that function is able to create a folder.
         io_utils.create_directory(
@@ -123,18 +112,11 @@ class TestIOUtilities:
             test_io_utility_temp_folder.exists()
         ), "Temp folder should have been created"
 
-        # Delete temp folder
-        shutil.rmtree(test_io_utility_temp_folder)
-
-    def test_create_directory_exist_ok(self, temp_dir_path):
-        test_io_utility_temp_folder = Path(temp_dir_path + "/test_io_utility/")
-
-        # Delete test dir if exists from previous test run
-        if test_io_utility_temp_folder.exists():
-            shutil.rmtree(test_io_utility_temp_folder)
+    def test_create_directory_exist_ok(self, tmp_path):
 
         # Create test_io_utility_temp_folder
-        os.mkdir(test_io_utility_temp_folder)
+        test_io_utility_temp_folder = tmp_path / "test_io_utility"
+        test_io_utility_temp_folder.mkdir()
 
         # Test that function fails and raises an error because `exist_ok`
         # is set to `False` and the folder its being asked to create already
@@ -150,19 +132,11 @@ class TestIOUtilities:
             dir_path=test_io_utility_temp_folder, parents=False, exist_ok=True
         )
 
-        # Delete temp folder
-        shutil.rmtree(test_io_utility_temp_folder)
+    def test_create_directory_parents(self, tmp_path):
 
-    def test_create_directory_parents(self, temp_dir_path):
-
-        test_io_utility_temp_folder = Path(temp_dir_path + "/test_io_utility/")
-        test_io_utility_temp_folder_parents = Path(
-            temp_dir_path + "/test_io_utility/parent1/parent2/"
+        test_io_utility_temp_folder_parents = (
+            tmp_path / "test_io_utility" / "parent1" / "parent2"
         )
-
-        # Delete test dir if exists from previous test run
-        if test_io_utility_temp_folder.exists():
-            shutil.rmtree(test_io_utility_temp_folder)
 
         # Test that nested folders are not created if `parents` is set to `False`
         with pytest.raises(FileNotFoundError):
@@ -180,18 +154,12 @@ class TestIOUtilities:
             test_io_utility_temp_folder_parents.exists()
         ), "Temp folder should have been created"
 
-        # Delete temp folder
-        shutil.rmtree(test_io_utility_temp_folder)
-
-    def test_copy_files_to_directory(self, temp_dir_path):
-
-        temp_folder = Path(temp_dir_path + "/test_io_utility/")
-        io_utils.create_directory(temp_folder)
+    def test_copy_files_to_directory(self, tmp_path):
 
         # Test that dummy file should fail
         with pytest.raises(FileNotFoundError):
             io_utils.copy_files_to_directory(
-                directory=temp_folder, input_files="/dummy/file"
+                directory=tmp_path, input_files="/dummy/file"
             ), "Should fail because folder does not exist"
 
         # Test that dummy dir should fail
@@ -202,17 +170,11 @@ class TestIOUtilities:
             ), "Should fail because folder does not exist"
 
         # Test function works with proper dir and file
-        io_utils.copy_files_to_directory(directory=temp_folder, input_files=file_to_cp)
-        copied_file = Path(temp_folder).joinpath(file_to_cp.name)
+        io_utils.copy_files_to_directory(directory=tmp_path, input_files=file_to_cp)
+        copied_file = Path(tmp_path).joinpath(file_to_cp.name)
         print(copied_file)
         assert copied_file.exists(), "Temp folder should have been created"
-        # Delete temp folder
-        shutil.rmtree(temp_folder)
 
     @pytest.fixture
     def mock_data_path(self):
         return Path(__file__).parent.joinpath("mock_data/")
-
-    @pytest.fixture
-    def temp_dir_path(self):
-        return tempfile.gettempdir()

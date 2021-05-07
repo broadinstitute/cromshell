@@ -12,12 +12,9 @@ class TestHTTPUtilities:
     ):
 
         # asserts that an exception is raised by the function
-        try:
-            http_utils.check_http_request_status_code(
-                short_error_message="TEST", response=mock_pass_response
-            )
-        except Exception as exc:
-            assert False, f"Function should not have raised any exception {exc}"
+        http_utils.check_http_request_status_code(
+            short_error_message="TEST", response=mock_pass_response
+        )
 
         # asserts that an exception is raised by the function
         with pytest.raises(Exception):

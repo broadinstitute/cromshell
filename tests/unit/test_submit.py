@@ -1,4 +1,3 @@
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -62,14 +61,13 @@ class TestSubmit:
             == 0
         ), "Womtool should have marked valid workflow as valid."
 
-    def test_update_submission_file(self, mock_data_path, temp_dir_path):
+    def test_update_submission_file(self, mock_data_path, tmp_path):
 
         submission_file_path = mock_data_path.joinpath(
             "submit/submission_file_template.text"
         )
-        temp_submission_file = str(temp_dir_path) + "/submission_file.text"
-        # Create a temp dir to store temp submission file
-        os.mkdir(temp_dir_path)
+        temp_submission_file = str(tmp_path) + "/submission_file.text"
+
         # Copy submission file template to temp dir
         shutil.copyfile(submission_file_path, temp_submission_file)
 
@@ -107,6 +105,3 @@ class TestSubmit:
             # which would be difficult to coordinate a comparison.
             for i in range(1, len(last_line_columns)):
                 assert last_line_columns[i] == testing_submission_row[i]
-
-        # Delete temp dir with template
-        shutil.rmtree(temp_dir_path)
