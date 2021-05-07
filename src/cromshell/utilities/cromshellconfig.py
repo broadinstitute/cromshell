@@ -52,7 +52,7 @@ def override_requests_cert_parameters(skip_certs: bool):
 
 
 class WorkflowStatuses(Enum):
-    """Enum to hold possible status of workflow status"""
+    """Enum to hold all possible status of workflow"""
 
     Failed = ["Failed", "fail"]
     Aborted = ["Aborted", "abort"]
