@@ -45,7 +45,7 @@ class TestSubmit:
     ):
 
         # asserts that an exception is raised by the function
-        with pytest.raises(Exception):
+        with pytest.raises(submit_command.ValidationError):
             submit_command.womtool_validate_wdl_and_json(
                 wdl=str(test_wdl_path), wdl_json=str(test_json_path)
             ), "Womtool should have marked not valid workflow as not valid."

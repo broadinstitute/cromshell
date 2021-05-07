@@ -143,16 +143,19 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
 
     womtool_path = shutil.which("womtool")
     if womtool_path is not None:
-        validation_output = subprocess.run(
-            [womtool_path, "validate", wdl, "-i", wdl_json],
-            capture_output=True,
-            check=True,
-        )
-        if validation_output.returncode == 0:
-            LOGGER.info("WDL and JSON are valid.")
-        else:
+
+        validation_output = None
+        try:
+            validation_output = subprocess.run(
+                [womtool_path, "validate", wdl, "-i", wdl_json],
+                capture_output=True,
+                check=True,
+            )
+            if validation_output.returncode == 0:
+                LOGGER.info("WDL and JSON are valid.")
+        except subprocess.CalledProcessError as validation_output_error:
             error_source = "Womtool"
-            error_source_message = validation_output.stderr.decode("utf-8")
+            error_source_message = validation_output_error.stderr.decode("utf-8")
             short_error_message = "WDL and JSON files do not validate"
 
             LOGGER.error("Error: %s", short_error_message)
@@ -161,6 +164,7 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
                 f"Error: {short_error_message}\n"
                 f"{error_source} Message: {error_source_message}"
             )
+
     return 0
 
 
