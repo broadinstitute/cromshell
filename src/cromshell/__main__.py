@@ -4,7 +4,9 @@ from sys import argv
 import click
 
 from cromshell.utilities import cromshellconfig
+
 from .status import command as status
+from .submit import command as submit
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
@@ -100,6 +102,7 @@ def version():
 
 # Update with new sub-commands:
 main_entry.add_command(status.main)
+main_entry.add_command(submit.main)
 
 
 if __name__ == "__main__":

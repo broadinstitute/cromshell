@@ -1,8 +1,10 @@
-from cromshell.utilities import cromshellconfig
+import os
 from importlib import reload
 from pathlib import Path
+
 import pytest
-import os
+
+from cromshell.utilities import cromshellconfig
 
 
 def reset_cromshellconfig(mock_data_path):
@@ -21,16 +23,16 @@ class TestCromshellConfig:
         reload(cromshellconfig)
 
         assert (
-                cromshellconfig.slim_metadata_parameters is not None
+            cromshellconfig.slim_metadata_parameters is not None
         ), "slim_metadata_parameters should equal not None"
 
         assert (
-                cromshellconfig.slim_metadata_parameters != ""
+            cromshellconfig.slim_metadata_parameters != ""
         ), "slim_metadata_parameters should not be empty."
 
         test_slim_parameters = (
-                "expandSubWorkflows=true"
-                + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
+            "expandSubWorkflows=true"
+            + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
         )
         cromshellconfig.override_slim_metadata_parameters("expandSubWorkflows=true")
         assert cromshellconfig.slim_metadata_parameters == test_slim_parameters, (
@@ -43,11 +45,11 @@ class TestCromshellConfig:
         reload(cromshellconfig)
 
         assert (
-                cromshellconfig.cromwell_server is not None
+            cromshellconfig.cromwell_server is not None
         ), "Cromwell server variable should not be empty"
 
     def test_resolve_cromwell_config_server_address_provided_server_url(
-            self, mock_data_path
+        self, mock_data_path
     ):
         """Test when server url only is given to function."""
 
@@ -64,7 +66,7 @@ class TestCromshellConfig:
         )
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_present(
-            self, mock_data_path
+        self, mock_data_path
     ):
         """Test when workflow id only is given to function and id
         is present in submission file."""
@@ -77,11 +79,11 @@ class TestCromshellConfig:
             workflow_id=mock_workflow_id_present
         )
         assert (
-                cromshellconfig.cromwell_server == mock_cromwell_url
+            cromshellconfig.cromwell_server == mock_cromwell_url
         ), f"Cromwell server variable should be set to {mock_cromwell_url}"
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_absent(
-            self, mock_data_path
+        self, mock_data_path
     ):
         """Test when workflow id only is given to function and id
         is NOT present in submission file."""
@@ -94,11 +96,11 @@ class TestCromshellConfig:
             workflow_id=mock_workflow_id_absent
         )
         assert (
-                cromshellconfig.cromwell_server == default_cromwell_url
+            cromshellconfig.cromwell_server == default_cromwell_url
         ), f"Cromwell server variable should be set to {default_cromwell_url}"
 
     def test_resolve_cromwell_config_server_address_provided_workflow_id_and_server(
-            self, mock_data_path
+        self, mock_data_path
     ):
         """Cromwell url parameter should supersede workflow id look up"""
 
@@ -110,7 +112,7 @@ class TestCromshellConfig:
             server_user=test_cromwell_url, workflow_id=mock_workflow_id_present
         )
         assert (
-                cromshellconfig.cromwell_server == test_cromwell_url
+            cromshellconfig.cromwell_server == test_cromwell_url
         ), f"Cromwell server variable should be set to {test_cromwell_url}"
 
     def test_config_dir(self):
@@ -128,14 +130,14 @@ class TestCromshellConfig:
     def test_submission_file(self):
         reload(cromshellconfig)
         assert (
-                cromshellconfig.submission_file_path is not None
+            cromshellconfig.submission_file_path is not None
         ), "Submission file variable should be set "
 
         path_to_submission = os.path.join(
             Path.home(), ".cromshell", cromshellconfig.SUBMISSION_FILE_NAME
         )
         assert (
-                cromshellconfig.submission_file_path == path_to_submission
+            cromshellconfig.submission_file_path == path_to_submission
         ), f"Submission file path should be {path_to_submission} "
 
         assert Path(
@@ -145,7 +147,7 @@ class TestCromshellConfig:
     def test_cromwell_server(self):
         reload(cromshellconfig)
         assert (
-                cromshellconfig.cromwell_server is not None
+            cromshellconfig.cromwell_server is not None
         ), "Cromwell server should be set"
 
     def test__load_cromshell_config_options(self, mock_data_path):
@@ -164,15 +166,14 @@ class TestCromshellConfig:
         reload(cromshellconfig)
 
         assert (
-            cromshellconfig.requests_verify_certs, "By default certs should be verified"
-        )
+            cromshellconfig.requests_verify_certs
+        ), "By default certs should be verified"
 
         # Use the function below to disable cert verification.
         cromshellconfig.override_requests_cert_parameters(True)
         assert (
-                not cromshellconfig.requests_verify_certs,
-                "Request certification should be overridden to be False"
-        )
+            not cromshellconfig.requests_verify_certs
+        ), "Request certification should be overridden to be False"
 
     def test_resolve_requests_connect_timeout_default(self):
         reload(cromshellconfig)
@@ -187,11 +188,11 @@ class TestCromshellConfig:
         cromshellconfig.resolve_requests_connect_timeout(timeout_from_command_line)
 
         assert (
-                cromshellconfig.requests_connect_timeout is not None
+            cromshellconfig.requests_connect_timeout is not None
         ), "By Default the requests timeout should be set to its default int"
 
     def test_resolve_requests_connect_timeout_given_config_file_value(
-            self, test_config_options_with_timeout
+        self, test_config_options_with_timeout
     ):
         reload(cromshellconfig)
         # CLI > Config File > Default
@@ -204,11 +205,11 @@ class TestCromshellConfig:
         cromshellconfig.resolve_requests_connect_timeout(timeout_from_command_line)
 
         assert (
-                cromshellconfig.requests_connect_timeout == 7
+            cromshellconfig.requests_connect_timeout == 7
         ), "Requests timeout duration should be set to 7 sec"
 
     def test_resolve_requests_connect_timeout_given_cli_value(
-            self, test_config_options_with_timeout
+        self, test_config_options_with_timeout
     ):
         reload(cromshellconfig)
         # CLI > Config File > Default
@@ -221,7 +222,7 @@ class TestCromshellConfig:
         cromshellconfig.resolve_requests_connect_timeout(timeout_from_command_line)
 
         assert (
-                cromshellconfig.requests_connect_timeout == 10
+            cromshellconfig.requests_connect_timeout == 10
         ), "Requests timeout duration should be set to 10 sec"
 
     @pytest.fixture
@@ -233,14 +234,11 @@ class TestCromshellConfig:
         config_demo = {
             "random_arg1": True,
             "requests_timeout": 7,
-            "random_arg2": "Value"
+            "random_arg2": "Value",
         }
         return config_demo
 
     @pytest.fixture
     def test_config_options_without_timeout(self):
-        config_demo = {
-            "random_arg1": True,
-            "random_arg2": "Value"
-        }
+        config_demo = {"random_arg1": True, "random_arg2": "Value"}
         return config_demo

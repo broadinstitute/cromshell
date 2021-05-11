@@ -7,9 +7,7 @@ import click
 import requests
 
 from cromshell import log
-from cromshell.utilities import cromshellconfig
-from cromshell.utilities import http_utils
-from cromshell.utilities import io_utils
+from cromshell.utilities import cromshellconfig, http_utils, io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,7 +36,7 @@ def main(config, workflow_id):
     request_out = requests.get(
         f"{config.cromwell_api_workflow_id}/status",
         timeout=config.requests_connect_timeout,
-        verify=config.requests_verify_certs
+        verify=config.requests_verify_certs,
     )
 
     requested_status_json = request_out.content.decode("utf-8")
@@ -99,8 +97,8 @@ def main(config, workflow_id):
         print("\t".join(reader.fieldnames))
         for row in reader:
             if (
-                    row["CROMWELL_SERVER"] == config.cromwell_server
-                    and row["RUN_ID"] == workflow_id
+                row["CROMWELL_SERVER"] == config.cromwell_server
+                and row["RUN_ID"] == workflow_id
             ):
                 row["STATUS"] = workflow_status
                 print("\t".join(x for x in row.values() if x))

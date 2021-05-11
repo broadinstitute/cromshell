@@ -1,10 +1,9 @@
 import logging
-import sys
 
 import requests
 
-from cromshell.utilities import io_utils
 from cromshell import log
+from cromshell.utilities import io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ def assert_can_communicate_with_server(config):
         )
     except ConnectionError:
         LOGGER.error("Failed to connect to %s", config.cromwell_server)
-        raise Exception("Failed to connect to %s", config.cromwell_server)
+        raise Exception(f"Failed to connect to {config.cromwell_server}")
     except requests.exceptions.RequestException:
         LOGGER.error("Failed to connect to %s", config.cromwell_server)
         raise Exception(f"Failed to connect to {config.cromwell_server}")
@@ -31,5 +30,28 @@ def assert_can_communicate_with_server(config):
             "Error: Cannot communicate with Cromwell server: %s", config.cromwell_server
         )
         raise Exception(
-            "Error: Cannot communicate with Cromwell server: %s", config.cromwell_server
+            f"Error: Cannot communicate with Cromwell server: {config.cromwell_server}"
+        )
+
+
+def check_http_request_status_code(
+    short_error_message: str, response: requests.models.Response
+):
+    """Check request response "ok" key. Response.ok returns
+    False if status_code is equal to or greater than 400.
+
+    - short_error_message: simple version of error message
+    - response: output from request
+    """
+
+    if not response.ok:
+        LOGGER.error(short_error_message)
+        LOGGER.error("Reason: %s", response.reason)
+        LOGGER.error("Status_code: %s", response.status_code)
+        LOGGER.error("Message: %s", response.text)
+        raise Exception(
+            f"{short_error_message}\n"
+            f"Reason: {response.reason}\n"
+            f"Status_code: {response.status_code}\n"
+            f"Message: {response.text}"
         )

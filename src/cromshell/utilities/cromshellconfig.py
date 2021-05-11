@@ -11,23 +11,25 @@ LOGGER = logging.getLogger(__name__)
 """Setup Cromshell config details. Intended to be used as a singleton"""
 
 # Set Cromshell Configuration Default Values
-metadata_parameters = "excludeKey=submittedFiles&expandSubWorkflows=true"
+METADATA_PARAMETERS = "excludeKey=submittedFiles&expandSubWorkflows=true"
 slim_metadata_parameters = (
     "=includeKey=id&includeKey=executionStatus&includeKey=backendStatus&includeKey"
     "=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
     "=subWorkflowMetadata&includeKey=subWorkflowId"
 )
-api_string = "/api/workflows/v1"
+API_STRING = "/api/workflows/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
 cromwell_api = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
+SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
 CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
+local_folder_name = None
 # Request defaults
 requests_connect_timeout = 5
 requests_verify_certs = True
@@ -50,6 +52,8 @@ def override_requests_cert_parameters(skip_certs: bool):
 
 
 class WorkflowStatuses(Enum):
+    """Enum to hold all possible status of workflow"""
+
     Failed = ["Failed", "fail"]
     Aborted = ["Aborted", "abort"]
     Running = ["Running"]
@@ -91,11 +95,11 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
             "Workflow id and cromwell server not specified. Using default cromwell "
             "server "
         )
-        LOGGER.info(f"Server: {cromwell_server}")
+        LOGGER.info("Server: %s", cromwell_server)
     elif server_user:
         cromwell_server = server_user
         LOGGER.info("Cromwell server URL was overridden by command line argument")
-        LOGGER.info(f"Server: {cromwell_server}")
+        LOGGER.info("Server: %s", cromwell_server)
     else:
         LOGGER.info(
             "Checking submission file for associated cromwell server with the provided "
@@ -111,8 +115,8 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                         "Cromwell server set to matching workflow id in submission "
                         "file. "
                     )
-                    LOGGER.info(f"WorkflowID: {workflow_id}")
-                    LOGGER.info(f"Server: {cromwell_server}")
+                    LOGGER.info("WorkflowID: %s", workflow_id)
+                    LOGGER.info("Server: %s", cromwell_server)
                     id_in_file = True
                     break
             if not id_in_file:
@@ -136,9 +140,8 @@ def __get_submission_file(config_directory, sub_file_name):
     sub_file_path = os.path.join(config_directory, sub_file_name)
     if not Path(sub_file_path).exists():
         Path(sub_file_path).touch()
-        submission_header = f"DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
-        with Path(sub_file_path).open("w") as f:
-            f.write(submission_header)
+        with Path(sub_file_path).open("w") as sub_file:
+            sub_file.write(SUBMISSION_FILE_HEADER)
     return sub_file_path
 
 
@@ -146,14 +149,14 @@ def __load_cromshell_config_file(config_directory, config_file_name):
     """Load options from Cromshell Config File to dictionary"""
     # TODO: Add more config settings to validate user key and values
 
-    cromshell_config_file = os.path.join(config_directory, config_file_name)
-    if not Path(cromshell_config_file).exists():
-        LOGGER.error(f"Cromshell config file {cromshell_config_file} was not found")
-        LOGGER.error(f"Please create {cromshell_config_file}")
-        raise Exception(f"Cromshell config file {cromshell_config_file} was not found")
+    cromshell_config_path = os.path.join(config_directory, config_file_name)
+    if not Path(cromshell_config_path).exists():
+        LOGGER.error("Cromshell config file %s was not found", cromshell_config_path)
+        LOGGER.error("Please create %s", cromshell_config_path)
+        raise Exception(f"Cromshell config file {cromshell_config_path} was not found")
 
-    with open(cromshell_config_file, "r") as f:
-        config_options = json.loads(f.read())
+    with open(cromshell_config_path, "r") as cromshell_config_file:
+        config_options = json.loads(cromshell_config_file.read())
 
     return config_options
 
@@ -162,7 +165,7 @@ def __get_cromwell_server(config_options: dict):
     """Get Cromshell Server URL from configuration options"""
 
     if not config_options["cromwell_server"]:
-        raise Exception(f'Cromshell config file is missing "cromwell_server"')
+        raise FileNotFoundError('Cromshell config file is missing "cromwell_server"')
 
     LOGGER.info("Setting cromwell server to cromwell url from config file.")
     LOGGER.info(config_options["cromwell_server"])
@@ -192,7 +195,7 @@ def resolve_requests_connect_timeout(timeout_cli: int):
         LOGGER.info("Setting requests timeout from value in config file.")
         LOGGER.info(
             "Request Timeout value: %d sec",
-            cromshell_config_options["requests_timeout"]
+            cromshell_config_options["requests_timeout"],
         )
         # Set the requests_connect_timeout variable to timeout value in config file.
         requests_connect_timeout = cromshell_config_options["requests_timeout"]
@@ -209,4 +212,5 @@ cromshell_config_options = __load_cromshell_config_file(
     config_dir, CROMSHELL_CONFIG_FILE_NAME
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
-cromwell_api = cromwell_server + api_string
+local_folder_name = cromwell_server.replace("https://", "").replace("http://", "")
+cromwell_api = cromwell_server + API_STRING
