@@ -1,4 +1,3 @@
-import json
 import logging
 
 import click
@@ -11,20 +10,24 @@ LOGGER = logging.getLogger(__name__)
 
 @click.command(name="metadata")
 @click.argument("workflow_id")
+# Setting is_flag=False, flag_value=value tells Click that the
+# option can still be passed a value, but if only the flag is
+# given the flag_value is used.
 @click.option(
-    "--slim_metadata_parameters",
-    type=str,
+    "--slim_metadata",
+    is_flag=False,
+    flag_value="=includeKey=id&includeKey=executionStatus&includeKey=backendStatus"
+    "&includeKey=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
+    "=subWorkflowMetadata&includeKey=subWorkflowId",
     help="Get a subset of the metadata for a workflow",
 )
 @click.pass_obj
-def main(config, workflow_id, slim_metadata_parameters):
+def main(config, workflow_id, slim_metadata):
     """Get the full metadata of a workflow."""
 
     LOGGER.info("metadata")
 
     config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
-
-    cromshellconfig.override_slim_metadata_parameters(slim_metadata_parameters)
 
     # Set cromwell server using submission file. Running the function below with
     # passing only the workflow id overrides the default cromwell url set in the
@@ -36,11 +39,18 @@ def main(config, workflow_id, slim_metadata_parameters):
     http_utils.assert_can_communicate_with_server(config)
 
     # Request workflow status
-    request_out = requests.get(
-        f"{config.cromwell_api_workflow_id}/metadata?{config.METADATA_PARAMETERS}",
-        timeout=config.requests_connect_timeout,
-        verify=config.requests_verify_certs,
-    )
+    if slim_metadata:
+        request_out = requests.get(
+            f"{config.cromwell_api_workflow_id}/metadata?{slim_metadata}",
+            timeout=config.requests_connect_timeout,
+            verify=config.requests_verify_certs,
+        )
+    else:
+        request_out = requests.get(
+            f"{config.cromwell_api_workflow_id}/metadata?{config.METADATA_PARAMETERS}",
+            timeout=config.requests_connect_timeout,
+            verify=config.requests_verify_certs,
+        )
 
     requested_metadata_json = request_out.content.decode("utf-8")
 

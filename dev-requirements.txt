@@ -10,5 +10,5 @@ cython
 sphinx
 sphinx-rtd-theme
 mypy==0.770
-click
+click>=8.0.0
 termcolor
