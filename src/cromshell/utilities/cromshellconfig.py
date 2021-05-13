@@ -12,11 +12,6 @@ LOGGER = logging.getLogger(__name__)
 
 # Set Cromshell Configuration Default Values
 METADATA_PARAMETERS = "excludeKey=submittedFiles&expandSubWorkflows=true"
-slim_metadata_parameters = (
-    "=includeKey=id&includeKey=executionStatus&includeKey=backendStatus&includeKey"
-    "=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
-    "=subWorkflowMetadata&includeKey=subWorkflowId"
-)
 API_STRING = "/api/workflows/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
@@ -63,18 +58,6 @@ class WorkflowStatuses(Enum):
     Running = ["Running"]
     Succeeded = ["Succeeded"]
     DOOMED = ["DOOMED"]
-
-
-def override_slim_metadata_parameters(slim_metadata_param):
-    """Override Cromwell Slim Metadata Key From Command Line"""
-
-    global slim_metadata_parameters
-
-    if slim_metadata_param:
-        slim_metadata_parameters = (
-            slim_metadata_param
-            + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
-        )
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
