@@ -151,9 +151,14 @@ def __load_cromshell_config_file(config_directory, config_file_name):
 
     cromshell_config_path = os.path.join(config_directory, config_file_name)
     if not Path(cromshell_config_path).exists():
-        LOGGER.error("Cromshell config file %s was not found", cromshell_config_path)
-        LOGGER.error("Please create %s", cromshell_config_path)
-        raise Exception(f"Cromshell config file {cromshell_config_path} was not found")
+        LOGGER.info("Cromshell config file %s was not found", cromshell_config_path)
+        LOGGER.info("Creating %s", cromshell_config_path)
+
+        config_template = '{\n"cromwell_server": "[enter server url]"\n}'
+
+        Path(cromshell_config_path).touch()
+        with Path(cromshell_config_path).open("w") as crom_config_file:
+            crom_config_file.write(config_template)
 
     with open(cromshell_config_path, "r") as cromshell_config_file:
         config_options = json.loads(cromshell_config_file.read())
