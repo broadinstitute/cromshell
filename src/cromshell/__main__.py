@@ -6,9 +6,9 @@ import click
 from cromshell.utilities import cromshellconfig
 
 from .abort import command as abort
+from .metadata import command as metadata
 from .status import command as status
 from .submit import command as submit
-from .metadata import command as metadata
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
