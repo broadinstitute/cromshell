@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 # option can still be passed a value, but if only the flag is
 # given the flag_value is used.
 @click.option(
-    "--slim_metadata",
+    "--slim-metadata",
     is_flag=False,
     flag_value="=includeKey=id&includeKey=executionStatus&includeKey=backendStatus"
     "&includeKey=status&includeKey=callRoot&expandSubWorkflows=true&includeKey"
@@ -38,12 +38,12 @@ def main(config, workflow_id, slim_metadata):
 
     # Request workflow metadata
     raw_workflow_metadata = get_workflow_metadata(
-            meta_par=config.METADATA_PARAMETERS,
-            slim_meta=slim_metadata,
-            api_workflow_id=config.cromwell_api_workflow_id,
-            timeout=config.requests_connect_timeout,
-            verify_certs=config.requests_verify_certs,
-        )
+        meta=config.METADATA_PARAMETERS,
+        slim_meta=slim_metadata,
+        api_workflow_id=config.cromwell_api_workflow_id,
+        timeout=config.requests_connect_timeout,
+        verify_certs=config.requests_verify_certs,
+    )
 
     workflow_metadata_json = raw_workflow_metadata.content.decode("utf-8")
 
@@ -53,7 +53,7 @@ def main(config, workflow_id, slim_metadata):
 
 
 def get_workflow_metadata(
-    meta_par: str,
+    meta: str,
     slim_meta: str,
     api_workflow_id: str,
     timeout: int,
@@ -63,13 +63,10 @@ def get_workflow_metadata(
     a workflow from the cromwell server."""
 
     # If set, use slim_meta as metadata parameter to be used in api requests
-    if slim_meta:
-        meta_par = slim_meta
+    meta_par = slim_meta if slim_meta else meta
 
     return requests.get(
-        f"{api_workflow_id}/metadata?{meta_par}",
-        timeout=timeout,
-        verify=verify_certs
+        f"{api_workflow_id}/metadata?{meta_par}", timeout=timeout, verify=verify_certs
     )
 
 
