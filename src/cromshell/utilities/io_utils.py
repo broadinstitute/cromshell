@@ -51,7 +51,7 @@ def turtle():
 
 
 def doomed_logo():
-    """Print Doom """
+    """Print Doom"""
 
     print(
         colored(
