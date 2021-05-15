@@ -84,8 +84,13 @@ def get_workflow_metadata(
     """Use requests to get the metadata or sub-metadata of
     a workflow from the cromwell server."""
 
-    raw_workflow_metadata = requests.get(
+    requests_out = requests.get(
         f"{api_workflow_id}/metadata?{meta_par}", timeout=timeout, verify=verify_certs
     )
 
-    return raw_workflow_metadata.content.decode("utf-8")
+    http_utils.check_http_request_status_code(
+        short_error_message="Failed to get metadata",
+        response=requests_out
+    )
+
+    return requests_out.content.decode("utf-8")
