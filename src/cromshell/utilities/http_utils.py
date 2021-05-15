@@ -39,8 +39,9 @@ def check_http_request_status_code(
     response: requests.models.Response,
     raise_exception: bool = True,
 ):
-    """Check request response "ok" key. Response.ok returns
-    False if status_code is equal to or greater than 400.
+    """Check request response "ok" key value. If status_code is
+    equal to or greater than 400 Response.ok returns
+    False and checker function will fail with error.
 
     - short_error_message: simple version of error message
     - response: output from request
@@ -52,7 +53,7 @@ def check_http_request_status_code(
         LOGGER.error("Status_code: %s", response.status_code)
         LOGGER.error("Message: %s", response.text)
         if raise_exception:
-            raise Exception(
+            raise requests.exceptions.RequestException(
                 f"{short_error_message}\n"
                 f"Reason: {response.reason}\n"
                 f"Status_code: {response.status_code}\n"
