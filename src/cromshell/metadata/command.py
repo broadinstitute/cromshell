@@ -89,7 +89,3 @@ def get_workflow_metadata(
     )
 
     return raw_workflow_metadata.content.decode("utf-8")
-
-
-if __name__ == "__main__":
-    main()  # pylint: disable=no-value-for-parameter
