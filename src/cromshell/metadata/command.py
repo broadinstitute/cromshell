@@ -14,15 +14,6 @@ LOGGER = logging.getLogger(__name__)
 @click.option(
     "--key",
     "-k",
-    default=[
-        "id",
-        "executionStatus",
-        "backendStatus",
-        "status",
-        "callRoot&expandSubWorkflows=true",
-        "subWorkflowMetadata",
-        "subWorkflowId",
-    ],
     show_default=True,
     multiple=True,
     help="Use keys to get a subset of the metadata for a workflow. Will use default"
@@ -44,9 +35,12 @@ def main(config, workflow_id: str, key: list):
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
 
-    # If set, create a key string from list of key to use
-    # as metadata parameter for api requests
-    metadata_parameter = process_keys(key) if key else config.METADATA_PARAMETERS
+    # Resolve and get metadata keys from cli, config file, or config default
+    metadata_parameter = resolve_and_return_metadata_keys(
+        cli_key=key,
+        cromshell_config_options=config.cromshell_config_options,
+        config_metadata_param=config.METADATA_PARAMETERS,
+    )
 
     # Request workflow metadata
     workflow_metadata_json = get_workflow_metadata(
@@ -73,6 +67,28 @@ def process_keys(list_of_keys: list) -> str:
         final_key += f"includeKey={key}"
 
     return final_key
+
+
+def resolve_and_return_metadata_keys(
+        cli_key: list,
+        cromshell_config_options: dict,
+        config_metadata_param: str,
+):
+    # If keys is specified in cli then use this first
+    if cli_key:
+        LOGGER.info("Using metadata key(s) from command line options.")
+        return process_keys(cli_key)
+
+    # If timeout is specified in cromshell config file then use it to override default
+    elif "metadata_keys" in cromshell_config_options:
+        LOGGER.info("Setting metadata key(s) from value in config file.")
+        # Set the requests_connect_timeout variable to timeout value in config file.
+        return process_keys(cromshell_config_options["metadata_keys"])
+
+    # Return the default keys from config module constant
+    else:
+        LOGGER.info("No metadata keys were found in cli or config file.")
+        return config_metadata_param
 
 
 def get_workflow_metadata(
