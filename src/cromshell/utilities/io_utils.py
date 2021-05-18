@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-
+from pygments import highlight, lexers, formatters
 from termcolor import colored
 
 LOGGER = logging.getLogger(__name__)
@@ -101,18 +101,32 @@ def is_workflow_id_valid(workflow_id: str):
     return workflow_id_pattern.match(workflow_id)
 
 
-def pretty_print_json(json_text: str):
+def color_json(formatted_json: str) -> str:
+    return highlight(
+        formatted_json,
+        lexers.JsonLexer(),
+        formatters.TerminalFormatter()
+    )
+
+
+def pretty_print_json(format_json: str or dict, add_color: bool = False):
     """Prints JSON String in a fancy way
 
-    - json_text: content of the json, NOT json file path"""
+    - json_text: valid json string or dictionary, NOT json file path"""
 
-    loaded_json = json.loads(json_text)
+    if format_json is type(str):
+        loaded_json = json.loads(format_json)
+    else:
+        loaded_json = format_json
     pretty_json = json.dumps(loaded_json, indent=4, sort_keys=True)
-    print(pretty_json)
+    if add_color:
+        print(color_json(pretty_json))
+    else:
+        print(pretty_json)
 
 
 def create_directory(
-    dir_path: str or Path, parents: bool = True, exist_ok: bool = False
+        dir_path: str or Path, parents: bool = True, exist_ok: bool = False
 ):
     """Creates a Directory
     - dir_path: full path to directory being created
