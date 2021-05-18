@@ -49,7 +49,7 @@ def main(config, workflow_id: str, key: list):
         verify_certs=config.requests_verify_certs,
     )
 
-    io_utils.pretty_print_json(workflow_metadata_json)
+    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
 
     return 0
 
@@ -107,4 +107,4 @@ def get_workflow_metadata(
         short_error_message="Failed to get metadata", response=requests_out
     )
 
-    return requests_out.content.decode("utf-8")
+    return requests_out.json()
