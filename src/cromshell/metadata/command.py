@@ -10,15 +10,14 @@ LOGGER = logging.getLogger(__name__)
 
 @click.command(name="metadata")
 @click.argument("workflow_id")
-# If multiple is set to True then the argument is accepts multiple times.
+# If 'multiple' is set to True then the argument is accepted multiple times.
 @click.option(
     "--key",
     "-k",
     show_default=True,
     multiple=True,
-    help="Use keys to get a subset of the metadata for a workflow. Will use default"
-         "keys if key is not provided in the command line option. Add option name"
-         "before adding key (e.g. '-k id -k status ...')",
+    help="Use keys to get a subset of the metadata for a workflow. Multiple keys "
+    "can be set by add option name before adding key (e.g. '-k id -k status ...')",
 )
 @click.pass_obj
 def main(config, workflow_id: str, key: list):
@@ -70,9 +69,9 @@ def process_keys(list_of_keys: list) -> str:
 
 
 def resolve_and_return_metadata_keys(
-        cli_key: list,
-        cromshell_config_options: dict,
-        config_metadata_param: str,
+    cli_key: list,
+    cromshell_config_options: dict,
+    config_metadata_param: str,
 ):
     # If keys is specified in cli then use this first
     if cli_key:
@@ -105,8 +104,7 @@ def get_workflow_metadata(
     )
 
     http_utils.check_http_request_status_code(
-        short_error_message="Failed to get metadata",
-        response=requests_out
+        short_error_message="Failed to get metadata", response=requests_out
     )
 
     return requests_out.content.decode("utf-8")
