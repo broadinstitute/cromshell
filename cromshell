@@ -1581,6 +1581,11 @@ function _notifyHelper()
       echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email}
       break
     fi
+		# Clean the temporary file just in case.  
+		# This might need to happen because of how this helper gets called.
+		# Not sure the trap is working properly (i.e. it doesn't seem to be calling at_exit).
+		rm ${statusFile}
+
     # wait for 10 seconds:
     sleep 10
   done 
