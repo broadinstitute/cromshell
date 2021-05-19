@@ -453,6 +453,8 @@ function assertCanCommunicateWithServer
   curl -s ${1}/api/workflows/v1/backends > ${f}  
   grep -q 'supportedBackends' ${f}
   r=$?
+	# Do some cleanup here for daemon processes.
+	rm ${f}
   if [[ ${r} -ne 0 ]] ; then
     turtleDead 
     error "Error: Cannot communicate with Cromwell server: ${serverName}"
@@ -846,7 +848,7 @@ function status()
   assertCanCommunicateWithServer ${2}
   local f=$( makeTemp )
   curl -s ${2}/api/workflows/v1/${1}/status > ${f}
-  [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && return 2
+  [[ $? -ne 0 ]] && error "Could not connect to Cromwell server." && rm -f ${f} && return 2
 
   grep -qE '"Failed"|"Aborted"|"fail"' ${f}
   r=$?
@@ -897,6 +899,9 @@ function status()
   cp ${CROMWELL_SUBMISSIONS_FILE} ${CROMWELL_SUBMISSIONS_FILE}.bak
   awk "BEGIN { FS=OFS=\"\t\" } { if ((\$3 == \"${1}\") && (\$2 == \"${2}\")) { \$5=\"${workflowStatus}\"; }; print }" ${CROMWELL_SUBMISSIONS_FILE}.bak > ${CROMWELL_SUBMISSIONS_FILE}
   #sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g" ${CROMWELL_SUBMISSIONS_FILE}
+
+	# Do some cleanup here for daemons:
+	rm -f ${f} ${tmpExecutionStatusCount} ${tmpMetadata}
 
   return ${retVal}
 }
@@ -1584,7 +1589,7 @@ function _notifyHelper()
 		# Clean the temporary file just in case.  
 		# This might need to happen because of how this helper gets called.
 		# Not sure the trap is working properly (i.e. it doesn't seem to be calling at_exit).
-		rm ${statusFile}
+		rm -f ${statusFile}
 
     # wait for 10 seconds:
     sleep 10
