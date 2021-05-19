@@ -102,11 +102,7 @@ def is_workflow_id_valid(workflow_id: str):
 
 
 def color_json(formatted_json: str) -> str:
-    return highlight(
-        formatted_json,
-        lexers.JsonLexer(),
-        formatters.TerminalFormatter()
-    )
+    return highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
 
 
 def pretty_print_json(format_json: str or dict, add_color: bool = False):
