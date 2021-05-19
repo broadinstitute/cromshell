@@ -43,6 +43,6 @@ def main(config, workflow_id: str):
         verify_certs=config.requests_verify_certs,
     )
 
-    io_utils.pretty_print_json(workflow_metadata_json)
+    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
 
     return 0
