@@ -24,7 +24,8 @@ class TestSubmit:
     """Test the submit command functions"""
 
     womtool_path = shutil.which("womtool")
-    if womtool_path is not None:  # If womtool is installed run validation tests
+    if womtool_path is not None:  # If womtool is installed run womtool validation tests
+
         @pytest.mark.parametrize(
             "test_wdl_path, test_json_path",
             [
