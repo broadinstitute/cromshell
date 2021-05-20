@@ -453,8 +453,8 @@ function assertCanCommunicateWithServer
   curl -s ${1}/api/workflows/v1/backends > ${f}  
   grep -q 'supportedBackends' ${f}
   r=$?
-	# Do some cleanup here for daemon processes.
-	rm ${f}
+  # Do some cleanup here for daemon processes.
+  rm -f ${f}
   if [[ ${r} -ne 0 ]] ; then
     turtleDead 
     error "Error: Cannot communicate with Cromwell server: ${serverName}"
@@ -524,8 +524,8 @@ function alias_workflow()
 function populateWorkflowIdAndServerFromAlias()
 {
     local alias_name=${1}
-		WORKFLOW_ID=$(awk "BEGIN{FS=\"\t\"}{if (\$6 == \"${alias_name}\") {print}}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
-		WORKFLOW_SERVER_URL=$(awk "BEGIN{FS=\"\t\"}{if (\$6 == \"${alias_name}\") {print}}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
+    WORKFLOW_ID=$(awk "BEGIN{FS=\"\t\"}{if (\$6 == \"${alias_name}\") {print}}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $3}')
+    WORKFLOW_SERVER_URL=$(awk "BEGIN{FS=\"\t\"}{if (\$6 == \"${alias_name}\") {print}}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $2}')
 
     if [[ -z ${WORKFLOW_ID} ]]; then
       error "Invalid workflow/alias: ${alias_name}"
@@ -552,6 +552,9 @@ function populateWorkflowIdAndServerUrl()
       grep ${WORKFLOW_ID} ${CROMWELL_SUBMISSIONS_FILE} > ${tmpFile}
       r=$?
       [[ ${r} -eq 0 ]] && WORKFLOW_SERVER_URL=$( awk '{print $2}' ${tmpFile} )
+
+      # Do some cleanup here for daemon processes.
+      rm -f  ${tmpFile}
  else
     if [[ -n "$userSpecifiedId" ]]; then
       populateWorkflowIdAndServerFromAlias ${userSpecifiedId}
@@ -788,7 +791,7 @@ function submit()
 
   assertCanCommunicateWithServer ${CROMWELL_URL}
 
-	echo "Submitting job to server: ${CROMWELL_URL}"
+  echo "Submitting job to server: ${CROMWELL_URL}"
 
   local response=$(curl -s -F workflowSource=@${wdl}  ${2:+ -F workflowInputs=@${json}} ${3:+ -F workflowOptions=@${optionsJson}} ${4:+ -F workflowDependencies=@${dependenciesZip}} ${CROMWELL_URL}/api/workflows/v1)
   r=$?
@@ -900,8 +903,8 @@ function status()
   awk "BEGIN { FS=OFS=\"\t\" } { if ((\$3 == \"${1}\") && (\$2 == \"${2}\")) { \$5=\"${workflowStatus}\"; }; print }" ${CROMWELL_SUBMISSIONS_FILE}.bak > ${CROMWELL_SUBMISSIONS_FILE}
   #sed -i .bak -e "s#\\(.*${1}.*\\.wdl\\)\\t*.*#\\1$(printf '\t')${workflowStatus}#g" ${CROMWELL_SUBMISSIONS_FILE}
 
-	# Do some cleanup here for daemons:
-	rm -f ${f} ${tmpExecutionStatusCount} ${tmpMetadata}
+  # Do some cleanup here for daemons:
+  rm -f ${f} ${tmpExecutionStatusCount} ${tmpMetadata}
 
   return ${retVal}
 }
@@ -1012,6 +1015,9 @@ function execution-status-count()
       jq '.. | .calls? | values | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' "${tempFile}"
       checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
     fi
+
+    # Do some cleanup here for daemon processes.
+    rm -f  ${tempFile}
   done
 }
 
@@ -1088,6 +1094,8 @@ function printTaskStatus()
     failedShards=$(tr '\n' ' ' < ${tmpFailedShardsFile} | sed -E 's/\[( )+//' | sed -E 's/( )+\]//')
     echo -e "${taskStatus}${indent}\tFailed shards: ${failedShards}${COLOR_NORM}"
   fi
+
+  rm -f ${tmpFailedShardsFile} ${tmpStatusesFile}
 }
 
 # Bring up a browser window to view timing information on the job.
@@ -1533,7 +1541,8 @@ function notify()
     # Send the script to the server:
     local tmpOut=$( makeTemp )
     scp ${SCRIPTDIR}/${SCRIPTNAME} ${hostServer}:~/. &> ${tmpOut}
-    [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && error "$(cat ${tmpOut})" && exit 7
+    [[ $? -ne 0 ]] && error "ERROR: Could not copy cromshell to server ${hostServer}" && error "$(cat ${tmpOut})" && rm -f ${tmpOut} && exit 7
+    rm -f ${tmpOut}
 
     # Spin off notification process on the server:
     results=$( ssh ${hostServer} "~/${SCRIPTNAME} _rawNotify ${WORKFLOW_ID} ${email} ${WORKFLOW_SERVER_URL}" )
@@ -1586,10 +1595,10 @@ function _notifyHelper()
       echo -e "CROMWELL Task ${completionStatus}:\n\n${id}\n\non\n\n${cromwellServer}\n\n${separator}\n\nStatus:\n$(cat ${statusFile})\n\n${separator}\nMetadata:\n${metaData}\n\n${separator}\nSent by $( whoami )@$( hostname ) on $( date ) \n\n\n" | mail -n -s "Cromwell Task ${completionStatus} [${cromwellServer}] ${workflowFile}" ${email}
       break
     fi
-		# Clean the temporary file just in case.  
-		# This might need to happen because of how this helper gets called.
-		# Not sure the trap is working properly (i.e. it doesn't seem to be calling at_exit).
-		rm -f ${statusFile}
+    # Clean the temporary file just in case.  
+    # This might need to happen because of how this helper gets called.
+    # Not sure the trap is working properly (i.e. it doesn't seem to be calling at_exit).
+    rm -f ${statusFile}
 
     # wait for 10 seconds:
     sleep 10
@@ -1903,8 +1912,8 @@ if ${ISINTERACTIVESHELL} ; then
   esac
 
   # Don't check JQ version if we're notifying.
-	# Why do this, you might ask?
-	# Because it's easier to hack our code than to get Broad IT to update software on our servers.
+  # Why do this, you might ask?
+  # Because it's easier to hack our code than to get Broad IT to update software on our servers.
   if [[ "${SUB_COMMAND_FOR_DISPLAY}" != "notify" ]] ; then
     checkJQVersion
     r=$?
