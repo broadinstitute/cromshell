@@ -192,7 +192,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
             submission_params["workflowDependencies"] = dependencies_file
 
         requests_out = requests.post(
-            f"{config.cromwell_server}{config.API_STRING}",
+            f"{config.get_cromwell_api()}",
             files=submission_params,
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,

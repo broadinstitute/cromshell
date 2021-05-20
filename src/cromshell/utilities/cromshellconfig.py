@@ -20,7 +20,6 @@ slim_metadata_parameters = (
 API_STRING = "/api/workflows/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
-cromwell_api = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
@@ -178,6 +177,11 @@ def __get_cromwell_server(config_options: dict):
     return config_options["cromwell_server"]
 
 
+def get_cromwell_api():
+    """Return a string combining the cromwell server and api string"""
+    return f"{cromwell_server}{API_STRING}"
+
+
 def resolve_requests_connect_timeout(timeout_cli: int):
     """Override the default request timeout duration.
 
@@ -218,4 +222,3 @@ cromshell_config_options = __load_cromshell_config_file(
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
 local_folder_name = cromwell_server.replace("https://", "").replace("http://", "")
-cromwell_api = cromwell_server + API_STRING

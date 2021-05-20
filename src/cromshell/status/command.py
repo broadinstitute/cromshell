@@ -21,13 +21,14 @@ def main(config, workflow_id):
     LOGGER.info("status")
 
     ret_val = 0
-    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
 
     # Set cromwell server using submission file. Running the function below with
     # passing only the workflow id overrides the default cromwell url set in the
     # cromshell config file, command line argument, and environment. This takes
     # place only if the workflow id is found in the submission file.
     cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
+
+    config.cromwell_api_workflow_id = f"{config.get_cromwell_api()}/{workflow_id}"
 
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
