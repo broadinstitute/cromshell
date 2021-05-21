@@ -83,12 +83,10 @@ class TestIOUtilities:
         [
             (
                 (
-                    """{"id": "4bf7ca9c-0b39-48fb-9af7-83e3e488f62b",
-                    "status": "Submitted"}"""
+                    """{"id":"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b","status":"Submitted"}"""
                 ),
                 (
-                    """{\n    "id": "4bf7ca9c-0b39-48fb-9af7-83e3e488f62b",\n"""
-                    """    "status": "Submitted"\n}\n"""
+                    """\"{\\"id\\":\\"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b\\",\\"status\\":\\"Submitted\\"}\"\n"""
                 ),
             ),
         ],
