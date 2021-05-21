@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from cromshell.metadata import command as metadata_command
@@ -11,18 +9,18 @@ class TestMetadata:
     @pytest.mark.parametrize(
         "test_keys, test_keys_string_out",
         [
-            (["id"], "=includeKey=id"),
-            (["id", "status"], "=includeKey=id&includeKey=status"),
+            (["id"], "includeKey=id"),
+            (["id", "status"], "includeKey=id&includeKey=status"),
             (
                 ["id", "status", "backendStatus"],
-                "=includeKey=id&includeKey=status&includeKey=backendStatus"
+                "includeKey=id&includeKey=status&includeKey=backendStatus"
             ),
         ]
     )
     def test_process_keys(self, test_keys, test_keys_string_out):
         assert metadata_command.process_keys(
             test_keys,
-            expand_subworkflow=False
+            not_expand_subworkflow=False
         ) == test_keys_string_out
 
     @pytest.mark.parametrize(
@@ -36,14 +34,14 @@ class TestMetadata:
     def test_empty_process_keys(self, test_keys):
         with pytest.raises(ValueError):
             metadata_command.process_keys(
-                list_of_keys=test_keys, expand_subworkflow=False
+                list_of_keys=test_keys, not_expand_subworkflow=False
             ), "Should fail if given empty list."
 
     @pytest.mark.parametrize(
         "test_keys, test_expand_subworkflows, test_keys_string_out",
         [
-            (["id"], False, "=includeKey=id"),
-            (["id"], True, "=includeKey=id&expandSubWorkflows=true"),
+            (["id"], False, "includeKey=id"),
+            (["id"], True, "includeKey=id&expandSubWorkflows=true"),
         ]
     )
     def test_process_keys_expand_subworkflows_flag(
@@ -54,7 +52,7 @@ class TestMetadata:
     ):
         assert metadata_command.process_keys(
             test_keys,
-            expand_subworkflow=test_expand_subworkflows
+            not_expand_subworkflow=test_expand_subworkflows
         ) == test_keys_string_out
 
     @pytest.mark.parametrize(
@@ -65,21 +63,21 @@ class TestMetadata:
                 ["id"],
                 {"metadata_keys": "key"},
                 "Metadata_Keys_Constant",
-                "=includeKey=id"
+                "includeKey=id"
             ),
             # Config keys should be used if cli empty
             (
                 [],
                 {"metadata_keys": ["key"]},
                 "Metadata_Keys_Constant",
-                "=includeKey=key"
+                "includeKey=key"
             ),
             # Metadata should be used by default if no keys found in cli or config
             (
                 [],
                 {"cromwell": ["stuff"]},
-                "=includeKey=Metadata_Keys_Constant",
-                "=includeKey=Metadata_Keys_Constant"
+                "includeKey=Metadata_Keys_Constant",
+                "includeKey=Metadata_Keys_Constant"
             ),
         ]
     )
@@ -94,5 +92,5 @@ class TestMetadata:
             cli_key=test_keys,
             cromshell_config_options=test_cromshell_config_options,
             config_metadata_param=test_config_metadata_param,
-            expand_subworkflow=False
+            not_expand_subworkflow=False
         ) == out_str
