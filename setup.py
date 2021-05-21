@@ -19,6 +19,7 @@ setup(
     termcolor
     click
     requests
+    pygments
     """.split(
         "\n"
     ),
