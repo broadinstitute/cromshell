@@ -10,17 +10,21 @@ LOGGER = logging.getLogger(__name__)
 
 @click.command(name="metadata")
 @click.argument("workflow_id")
-# If 'multiple' is set to True then the argument is accepted multiple times.
 @click.option(
     "--key",
     "-k",
-    show_default=True,
     multiple=True,
     help="Use keys to get a subset of the metadata for a workflow. Multiple keys "
     "can be set by add option name before adding key (e.g. '-k id -k status ...')",
 )
+@click.option(
+    "--not_expand_subworkflow",
+    is_flag=True,
+    default=True,
+    help="Do not expand subworkflow info in metadata",
+)
 @click.pass_obj
-def main(config, workflow_id: str, key: list):
+def main(config, workflow_id: str, key: list, not_expand_subworkflow: bool):
     """Get the full metadata of a workflow."""
 
     LOGGER.info("metadata")
@@ -39,6 +43,7 @@ def main(config, workflow_id: str, key: list):
         cli_key=key,
         cromshell_config_options=config.cromshell_config_options,
         config_metadata_param=config.METADATA_PARAMETERS,
+        expand_subworkflow=not_expand_subworkflow,
     )
 
     # Request workflow metadata
@@ -54,35 +59,57 @@ def main(config, workflow_id: str, key: list):
     return 0
 
 
-def process_keys(list_of_keys: list) -> str:
-    final_key = ""
-    for key in list_of_keys:
+def process_keys(list_of_keys: list, expand_subworkflow: bool) -> str:
+    """Using a list of cromwell metadata keys as input
+    this function creates a string with appropriate characters
+    that can be used when getting a workflow's metadata"""
 
-        # If string of key is empty add an '=' to begin the string,
-        # else add '&' to prep it for the key that will be added.
-        final_key += "&" if final_key else "="
+    if not list_of_keys:
+        LOGGER.error("Function process_keys was given an empty list.")
+        raise ValueError("Function process_keys was given an empty list.")
+    else:
+        final_key = ""
+        for key in list_of_keys:
+            if not key:
+                LOGGER.error(
+                    "Function process_keys was given an empty element in list."
+                )
+                raise ValueError(
+                    "Function process_keys was given an empty element in list."
+                )
 
-        # Append key to string of key
-        final_key += f"includeKey={key}"
+            # If string of key is empty add an '=' to begin the string,
+            # else add '&' to prep it for the key that will be added.
+            final_key += "&" if final_key else "="
 
-    return final_key
+            # Append key to string of key
+            final_key += f"includeKey={key}"
+
+        if expand_subworkflow:
+            final_key += "&expandSubWorkflows=true"
+
+        return final_key
 
 
 def resolve_and_return_metadata_keys(
     cli_key: list,
     cromshell_config_options: dict,
     config_metadata_param: str,
-):
+    expand_subworkflow,
+) -> str:
     # If keys is specified in cli then use this first
     if cli_key:
         LOGGER.info("Using metadata key(s) from command line options.")
-        return process_keys(cli_key)
+        return process_keys(list_of_keys=cli_key, expand_subworkflow=expand_subworkflow)
 
     # If timeout is specified in cromshell config file then use it to override default
     elif "metadata_keys" in cromshell_config_options:
         LOGGER.info("Setting metadata key(s) from value in config file.")
         # Set the requests_connect_timeout variable to timeout value in config file.
-        return process_keys(cromshell_config_options["metadata_keys"])
+        return process_keys(
+            list_of_keys=cromshell_config_options["metadata_keys"],
+            expand_subworkflow=expand_subworkflow
+        )
 
     # Return the default keys from config module constant
     else:
