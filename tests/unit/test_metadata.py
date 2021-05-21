@@ -13,15 +13,15 @@ class TestMetadata:
             (["id", "status"], "includeKey=id&includeKey=status"),
             (
                 ["id", "status", "backendStatus"],
-                "includeKey=id&includeKey=status&includeKey=backendStatus"
+                "includeKey=id&includeKey=status&includeKey=backendStatus",
             ),
-        ]
+        ],
     )
     def test_process_keys(self, test_keys, test_keys_string_out):
-        assert metadata_command.process_keys(
-            test_keys,
-            not_expand_subworkflow=False
-        ) == test_keys_string_out
+        assert (
+            metadata_command.process_keys(test_keys, not_expand_subworkflow=False)
+            == test_keys_string_out
+        )
 
     @pytest.mark.parametrize(
         "test_keys",
@@ -29,7 +29,7 @@ class TestMetadata:
             [],  # Asserts failure on empty dictionary
             [""],  # Asserts failure on dictionary with empty string
             ["id", ""],  # Asserts failure on dictionary with empty element
-        ]
+        ],
     )
     def test_empty_process_keys(self, test_keys):
         with pytest.raises(ValueError):
@@ -42,18 +42,17 @@ class TestMetadata:
         [
             (["id"], False, "includeKey=id"),
             (["id"], True, "includeKey=id&expandSubWorkflows=true"),
-        ]
+        ],
     )
     def test_process_keys_expand_subworkflows_flag(
-            self,
-            test_keys,
-            test_expand_subworkflows,
-            test_keys_string_out
+        self, test_keys, test_expand_subworkflows, test_keys_string_out
     ):
-        assert metadata_command.process_keys(
-            test_keys,
-            not_expand_subworkflow=test_expand_subworkflows
-        ) == test_keys_string_out
+        assert (
+            metadata_command.process_keys(
+                test_keys, not_expand_subworkflow=test_expand_subworkflows
+            )
+            == test_keys_string_out
+        )
 
     @pytest.mark.parametrize(
         "test_keys, test_cromshell_config_options, test_config_metadata_param, out_str",
@@ -63,34 +62,37 @@ class TestMetadata:
                 ["id"],
                 {"metadata_keys": "key"},
                 "Metadata_Keys_Constant",
-                "includeKey=id"
+                "includeKey=id",
             ),
             # Config keys should be used if cli empty
             (
                 [],
                 {"metadata_keys": ["key"]},
                 "Metadata_Keys_Constant",
-                "includeKey=key"
+                "includeKey=key",
             ),
             # Metadata should be used by default if no keys found in cli or config
             (
                 [],
                 {"cromwell": ["stuff"]},
                 "includeKey=Metadata_Keys_Constant",
-                "includeKey=Metadata_Keys_Constant"
+                "includeKey=Metadata_Keys_Constant",
             ),
-        ]
+        ],
     )
     def test_resolve_and_return_metadata_keys(
-            self,
-            test_keys,
-            test_cromshell_config_options,
-            test_config_metadata_param,
-            out_str,
+        self,
+        test_keys,
+        test_cromshell_config_options,
+        test_config_metadata_param,
+        out_str,
     ):
-        assert metadata_command.resolve_and_return_metadata_keys(
-            cli_key=test_keys,
-            cromshell_config_options=test_cromshell_config_options,
-            config_metadata_param=test_config_metadata_param,
-            not_expand_subworkflow=False
-        ) == out_str
+        assert (
+            metadata_command.resolve_and_return_metadata_keys(
+                cli_key=test_keys,
+                cromshell_config_options=test_cromshell_config_options,
+                config_metadata_param=test_config_metadata_param,
+                not_expand_subworkflow=False,
+            )
+            == out_str
+        )
