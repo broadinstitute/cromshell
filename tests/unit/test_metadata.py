@@ -19,7 +19,9 @@ class TestMetadata:
     )
     def test_process_keys(self, test_keys, test_keys_string_out):
         assert (
-            metadata_command.process_keys(test_keys, not_expand_subworkflow=False)
+            metadata_command.process_keys_and_flags(
+                test_keys, not_expand_subworkflow=False
+            )
             == test_keys_string_out
         )
 
@@ -33,7 +35,7 @@ class TestMetadata:
     )
     def test_empty_process_keys(self, test_keys):
         with pytest.raises(ValueError):
-            metadata_command.process_keys(
+            metadata_command.process_keys_and_flags(
                 list_of_keys=test_keys, not_expand_subworkflow=False
             ), "Should fail if given empty list."
 
@@ -48,7 +50,7 @@ class TestMetadata:
         self, test_keys, test_expand_subworkflows, test_keys_string_out
     ):
         assert (
-            metadata_command.process_keys(
+            metadata_command.process_keys_and_flags(
                 test_keys, not_expand_subworkflow=test_expand_subworkflows
             )
             == test_keys_string_out
