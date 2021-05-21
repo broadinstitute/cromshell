@@ -10,8 +10,14 @@ LOGGER = logging.getLogger(__name__)
 
 @click.command(name="slim-metadata")
 @click.argument("workflow_id")
+@click.option(
+    "--not_expand_subworkflow",
+    is_flag=True,
+    default=True,
+    help="Do not expand subworkflow info in metadata",
+)
 @click.pass_obj
-def main(config, workflow_id: str):
+def main(config, workflow_id: str, not_expand_subworkflow: bool):
     """Get a subset of the workflow metadata using default keys."""
 
     LOGGER.info("slim-metadata")
@@ -21,9 +27,7 @@ def main(config, workflow_id: str):
         "executionStatus",
         "backendStatus",
         "status",
-        "callRoot&expandSubWorkflows=true",
-        "subWorkflowMetadata",
-        "subWorkflowId",
+        "callRoot",
     ]
 
     config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
@@ -37,7 +41,9 @@ def main(config, workflow_id: str):
 
     # Request workflow metadata. Uses function from the metadata command.
     workflow_metadata_json = metadata_command.get_workflow_metadata(
-        meta_par=metadata_command.process_keys(keys),
+        meta_par=metadata_command.process_keys(
+            keys, not_expand_subworkflow=not_expand_subworkflow
+        ),
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,

@@ -43,7 +43,7 @@ def main(config, workflow_id: str, key: list, not_expand_subworkflow: bool):
         cli_key=key,
         cromshell_config_options=config.cromshell_config_options,
         config_metadata_param=config.METADATA_PARAMETERS,
-        expand_subworkflow=not_expand_subworkflow,
+        not_expand_subworkflow=not_expand_subworkflow,
     )
 
     # Request workflow metadata
@@ -59,7 +59,7 @@ def main(config, workflow_id: str, key: list, not_expand_subworkflow: bool):
     return 0
 
 
-def process_keys(list_of_keys: list, expand_subworkflow: bool) -> str:
+def process_keys(list_of_keys: list, not_expand_subworkflow: bool) -> str:
     """Using a list of cromwell metadata keys as input
     this function creates a string with appropriate characters
     that can be used when getting a workflow's metadata"""
@@ -78,14 +78,14 @@ def process_keys(list_of_keys: list, expand_subworkflow: bool) -> str:
                     "Function process_keys was given an empty element in list."
                 )
 
-            # If string of key is empty add an '=' to begin the string,
-            # else add '&' to prep it for the key that will be added.
-            final_key += "&" if final_key else "="
+            # If string of key is empty add nothing, but if it contains a string
+            # add '&' to prep it for the key that will be added.
+            final_key += "&" if final_key else ""
 
             # Append key to string of key
             final_key += f"includeKey={key}"
 
-        if expand_subworkflow:
+        if not_expand_subworkflow:
             final_key += "&expandSubWorkflows=true"
 
         return final_key
@@ -95,12 +95,15 @@ def resolve_and_return_metadata_keys(
     cli_key: list,
     cromshell_config_options: dict,
     config_metadata_param: str,
-    expand_subworkflow,
+    not_expand_subworkflow,
 ) -> str:
     # If keys is specified in cli then use this first
     if cli_key:
         LOGGER.info("Using metadata key(s) from command line options.")
-        return process_keys(list_of_keys=cli_key, expand_subworkflow=expand_subworkflow)
+        return process_keys(
+            list_of_keys=cli_key,
+            not_expand_subworkflow=not_expand_subworkflow
+        )
 
     # If timeout is specified in cromshell config file then use it to override default
     elif "metadata_keys" in cromshell_config_options:
@@ -108,7 +111,7 @@ def resolve_and_return_metadata_keys(
         # Set the requests_connect_timeout variable to timeout value in config file.
         return process_keys(
             list_of_keys=cromshell_config_options["metadata_keys"],
-            expand_subworkflow=expand_subworkflow
+            not_expand_subworkflow=not_expand_subworkflow
         )
 
     # Return the default keys from config module constant
