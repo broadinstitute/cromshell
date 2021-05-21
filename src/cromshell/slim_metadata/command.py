@@ -41,7 +41,7 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
 
     # Request workflow metadata. Uses function from the metadata command.
     workflow_metadata_json = metadata_command.get_workflow_metadata(
-        meta_par=metadata_command.process_keys(
+        meta_par=metadata_command.process_keys_and_flags(
             keys, not_expand_subworkflow=not_expand_subworkflow
         ),
         api_workflow_id=config.cromwell_api_workflow_id,

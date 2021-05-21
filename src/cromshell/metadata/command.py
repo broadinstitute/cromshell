@@ -59,23 +59,25 @@ def main(config, workflow_id: str, key: list, not_expand_subworkflow: bool):
     return 0
 
 
-def process_keys(list_of_keys: list, not_expand_subworkflow: bool) -> str:
+def process_keys_and_flags(list_of_keys: list, not_expand_subworkflow: bool) -> str:
     """Using a list of cromwell metadata keys as input
     this function creates a string with appropriate characters
     that can be used when getting a workflow's metadata"""
 
     if not list_of_keys:
-        LOGGER.error("Function process_keys was given an empty list.")
-        raise ValueError("Function process_keys was given an empty list.")
+        LOGGER.error("Function process_keys_and_flags was given an empty list.")
+        raise ValueError("Function process_keys_and_flags was given an empty list.")
     else:
         final_key = ""
         for key in list_of_keys:
             if not key:
                 LOGGER.error(
-                    "Function process_keys was given an empty element in list."
+                    "Function process_keys_and_flags "
+                    "was given an empty element in list."
                 )
                 raise ValueError(
-                    "Function process_keys was given an empty element in list."
+                    "Function process_keys_and_flags "
+                    "was given an empty element in list."
                 )
 
             # If string of key is empty add nothing, but if it contains a string
@@ -100,7 +102,7 @@ def resolve_and_return_metadata_keys(
     # If keys is specified in cli then use this first
     if cli_key:
         LOGGER.info("Using metadata key(s) from command line options.")
-        return process_keys(
+        return process_keys_and_flags(
             list_of_keys=cli_key, not_expand_subworkflow=not_expand_subworkflow
         )
 
@@ -108,7 +110,7 @@ def resolve_and_return_metadata_keys(
     elif "metadata_keys" in cromshell_config_options:
         LOGGER.info("Setting metadata key(s) from value in config file.")
         # Set the requests_connect_timeout variable to timeout value in config file.
-        return process_keys(
+        return process_keys_and_flags(
             list_of_keys=cromshell_config_options["metadata_keys"],
             not_expand_subworkflow=not_expand_subworkflow,
         )
