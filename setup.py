@@ -17,6 +17,9 @@ setup(
     install_requires="""
     dataclasses
     termcolor
+    click
+    requests
+    pygments
     """.split(
         "\n"
     ),

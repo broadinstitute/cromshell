@@ -12,3 +12,5 @@ sphinx-rtd-theme
 mypy==0.770
 click>=8.0.0
 termcolor
+requests
+pygments
