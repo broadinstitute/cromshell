@@ -106,6 +106,7 @@ def resolve_and_return_metadata_keys(
     # If keys is specified in cli then use this first
     if cli_key:
         LOGGER.info("Using metadata key(s) from command line options.")
+        LOGGER.info("Metadata keys set to: %s", cli_key)
         return process_keys_and_flags(
             list_of_keys=cli_key, not_expand_subworkflow=not_expand_subworkflow
         )
@@ -113,6 +114,9 @@ def resolve_and_return_metadata_keys(
     # If timeout is specified in cromshell config file then use it to override default
     elif "metadata_keys" in cromshell_config_options:
         LOGGER.info("Setting metadata key(s) from value in config file.")
+        LOGGER.info(
+            "Metadata keys set to: %s", cromshell_config_options["metadata_keys"]
+        )
         # Set the requests_connect_timeout variable to timeout value in config file.
         return process_keys_and_flags(
             list_of_keys=cromshell_config_options["metadata_keys"],
