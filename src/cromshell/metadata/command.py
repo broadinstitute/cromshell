@@ -29,11 +29,11 @@ def main(config, workflow_id: str, key: list, not_expand_subworkflow: bool):
 
     LOGGER.info("metadata")
 
-    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
-
     # Overrides the default cromwell url set in the cromshell config file or
     # command line argument if the workflow id is found in the submission file.
     cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
+
+    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
 
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
@@ -99,6 +99,10 @@ def resolve_and_return_metadata_keys(
     config_metadata_param: str,
     not_expand_subworkflow,
 ) -> str:
+    """Determines which metadata keys to use from cli, config file, and default
+    parameters, then returns a string of the processed keys ready to be used
+    in an api call."""
+
     # If keys is specified in cli then use this first
     if cli_key:
         LOGGER.info("Using metadata key(s) from command line options.")

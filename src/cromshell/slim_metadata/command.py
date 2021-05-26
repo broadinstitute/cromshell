@@ -30,11 +30,11 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
         "callRoot",
     ]
 
-    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
-
     # Overrides the default cromwell url set in the cromshell config file or
     # command line argument if the workflow id is found in the submission file.
     cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
+
+    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
 
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
