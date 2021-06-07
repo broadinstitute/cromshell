@@ -123,7 +123,7 @@ def combine_keys_and_flags(
     if not list_of_keys:
         LOGGER.error("Function combine_keys_and_flags was given an empty list.")
         raise ValueError("Function combine_keys_and_flags was given an empty list.")
-    elif None in list_of_keys:
+    elif "" in list_of_keys:
         LOGGER.error(
             "Function combine_keys_and_flags was given a list with empty element."
         )
