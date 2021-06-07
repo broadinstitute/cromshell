@@ -43,7 +43,7 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
 
     LOGGER.info("Metadata keys set to: %s", keys)
 
-    processed_metadata_parameter = metadata_command.process_keys_and_flags(
+    combined_metadata_parameter = metadata_command.combine_keys_and_flags(
         list_of_keys=keys,
         exclude_keys=False,
         not_expand_subworkflow=not_expand_subworkflow,
@@ -51,7 +51,7 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
 
     # Request workflow metadata. Uses function from the metadata command.
     workflow_metadata_json = metadata_command.get_workflow_metadata(
-        meta_params=processed_metadata_parameter,
+        meta_params=combined_metadata_parameter,
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
