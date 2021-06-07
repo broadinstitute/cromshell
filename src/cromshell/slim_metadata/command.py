@@ -28,6 +28,8 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
         "backendStatus",
         "status",
         "callRoot",
+        "subWorkflowMetadata",
+        "subWorkflowId",
     ]
 
     # Overrides the default cromwell url set in the cromshell config file or
@@ -39,11 +41,17 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
 
+    LOGGER.info("Metadata keys set to: %s", keys)
+
+    processed_metadata_parameter = metadata_command.process_keys_and_flags(
+        list_of_keys=keys,
+        exclude_keys=False,
+        not_expand_subworkflow=not_expand_subworkflow,
+    )
+
     # Request workflow metadata. Uses function from the metadata command.
     workflow_metadata_json = metadata_command.get_workflow_metadata(
-        meta_par=metadata_command.process_keys_and_flags(
-            keys, not_expand_subworkflow=not_expand_subworkflow
-        ),
+        meta_params=processed_metadata_parameter,
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
