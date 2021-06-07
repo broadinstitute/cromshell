@@ -68,6 +68,7 @@ def main(
     if using_default_meta_param:
         exclude_keys = True
 
+    # Combine keys and flags into a dictionary
     processed_metadata_parameter = process_keys_and_flags(
         list_of_keys=metadata_parameter,
         exclude_keys=exclude_keys,
