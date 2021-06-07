@@ -69,7 +69,7 @@ def main(
         exclude_keys = True
 
     # Combine keys and flags into a dictionary
-    processed_metadata_parameter = process_keys_and_flags(
+    combined_metadata_parameter = combine_keys_and_flags(
         list_of_keys=metadata_parameter,
         exclude_keys=exclude_keys,
         not_expand_subworkflow=not_expand_subworkflow,
@@ -77,7 +77,7 @@ def main(
 
     # Request workflow metadata
     workflow_metadata_json = get_workflow_metadata(
-        meta_params=processed_metadata_parameter,
+        meta_params=combined_metadata_parameter,
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
@@ -114,21 +114,21 @@ def resolve_and_return_metadata_keys(
         return config_metadata_param["keys"], True
 
 
-def process_keys_and_flags(
+def combine_keys_and_flags(
         list_of_keys: list, exclude_keys: bool, not_expand_subworkflow: bool
 ) -> dict:
     """This functions organises a list of cromwell metadata keys and flags into a
      dictionary that can passed to requests library"""
 
     if not list_of_keys:
-        LOGGER.error("Function process_keys_and_flags was given an empty list.")
-        raise ValueError("Function process_keys_and_flags was given an empty list.")
+        LOGGER.error("Function combine_keys_and_flags was given an empty list.")
+        raise ValueError("Function combine_keys_and_flags was given an empty list.")
     elif None in list_of_keys:
         LOGGER.error(
-            "Function process_keys_and_flags was given a list with empty element."
+            "Function combine_keys_and_flags was given a list with empty element."
         )
         raise ValueError(
-            "Function process_keys_and_flags was given a list with empty element."
+            "Function combine_keys_and_flags was given a list with empty element."
         )
     else:
         # Determines whether the list of keys will be used to exclude or
