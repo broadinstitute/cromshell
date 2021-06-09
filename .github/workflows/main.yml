@@ -42,6 +42,9 @@ jobs:
       - name: Create Alias for WomTool
         run: alias womtool='java -jar '${PWD}'/womtool-*'
 
+      - name: Confirm Alias for WomTool
+        run: womtool --help
+
       - name: Run Tox lint commands
         # Run tox using the version of Python in `PATH`
         run: tox -e lint
