@@ -32,6 +32,16 @@ jobs:
       - name: Install Dev Requirments
         run: pip install -r dev-requirements.txt
 
+      # Use curl to get the JSON response for the latest release
+      # Use grep to find the line containing file URL
+      # Use cut and tr to extract the URL
+      # Use wget to download it
+      - name: Install Latest WomTool
+        run: curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep "browser_download_url.*womtool" | cut -d '"' -f 4 | wget -qi -
+
+      - name: Create Alias for WomTool
+        run: alias womtool='java -jar '${PWD}'/womtool-*'
+
       - name: Run Tox lint commands
         # Run tox using the version of Python in `PATH`
         run: tox -e lint
