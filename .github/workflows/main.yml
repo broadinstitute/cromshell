@@ -56,7 +56,7 @@ jobs:
         run: bash
 
       - name: check alias
-        run: type alias
+        run: tail ~/.bashrc
 
       - name: list alias
         run: alias -p
