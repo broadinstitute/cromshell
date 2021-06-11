@@ -49,7 +49,7 @@ jobs:
         run: ls .
 
       - name: Create Alias for WomTool
-        run: alias womtool='java -jar '${PWD}'/womtool-*'
+        run: builtin alias womtool='java -jar '${PWD}'/womtool-*'
 
       - name: list alias
         run: alias -p
