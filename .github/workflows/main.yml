@@ -51,6 +51,9 @@ jobs:
       - name: Create Alias for WomTool
         run: builtin alias womtool='java -jar '${PWD}'/womtool-*'
 
+      - name: check alias
+        run: type alias
+
       - name: list alias
         run: alias -p
 
