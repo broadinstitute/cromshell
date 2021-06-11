@@ -52,7 +52,7 @@ jobs:
         run: alias womtool='java -jar '${PWD}'/womtool-*'
 
       - name: list alias
-        run: alias
+        run: alias -p
 
       - name: Confirm Alias for WomTool
         run: womtool --help
