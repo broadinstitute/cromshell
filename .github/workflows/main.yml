@@ -49,7 +49,11 @@ jobs:
         run: ls .
 
       - name: Create Alias for WomTool
-        run: alias womtool="java -jar ${PWD}/womtool-*"
+        #run: alias womtool="java -jar ${PWD}/womtool-*"
+        run: echo 'alias hi="java -jar '${PWD}'/womtool-*"' >> ~/.bashrc
+
+      - name: run bash
+        run: bash
 
       - name: check alias
         run: type alias
