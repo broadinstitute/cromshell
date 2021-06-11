@@ -33,10 +33,10 @@ jobs:
         run: pip install -r dev-requirements.txt
 
       - name: Install downloaders
-        run: apt update -y && apt upgrade -y && apt install -y curl wget
+        run: sudo apt update -y && sudo apt upgrade -y && sudo apt install -y curl wget
 
       - name: Install Java
-        run: apt install -y --no-install-recommends default-jre
+        run: sudo apt install -y --no-install-recommends default-jre
 
       # Use curl to get the JSON response for the latest release
       # Use grep to find the line containing file URL
