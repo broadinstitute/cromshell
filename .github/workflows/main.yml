@@ -45,6 +45,9 @@ jobs:
       - name: Install Latest WomTool
         run: curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep "browser_download_url.*womtool" | cut -d '"' -f 4 | wget -qi -
 
+      - name: list dr
+        run: ls .
+
       - name: Create Alias for WomTool
         run: alias womtool='java -jar '${PWD}'/womtool-*'
 
