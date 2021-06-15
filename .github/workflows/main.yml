@@ -29,7 +29,9 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install pip
-        run: python -m pip install --upgrade pip
+        run: |
+          apt install -y pip
+          pip install --upgrade pip
 
       - name: Install Tox
         run: pip install tox
