@@ -12,9 +12,11 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    container: bshifaw/cromshell-unit-test:latest
     strategy:
       matrix:
         python: [ 3.6, 3.7, 3.8 ]
+
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -31,38 +33,6 @@ jobs:
 
       - name: Install Dev Requirments
         run: pip install -r dev-requirements.txt
-
-      - name: Install downloaders
-        run: sudo apt update -y && sudo apt upgrade -y && sudo apt install -y curl wget
-
-      - name: Install Java
-        run: sudo apt install -y --no-install-recommends default-jre
-
-      # Use curl to get the JSON response for the latest release
-      # Use grep to find the line containing file URL
-      # Use cut and tr to extract the URL
-      # Use wget to download it
-      - name: Install Latest WomTool
-        run: curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep "browser_download_url.*womtool" | cut -d '"' -f 4 | wget -qi -
-
-      - name: list dr
-        run: ls .
-
-      - name: Create Alias for WomTool
-        #run: alias womtool="java -jar ${PWD}/womtool-*"
-        run: echo 'alias womtool="java -jar '${PWD}'/womtool-*"' >> ~/.bashrc
-
-      - name: run bash
-        run: bash
-
-      - name: check alias
-        run: tail ~/.bashrc
-
-      - name: list alias
-        run: alias -p
-
-      - name: Confirm Alias for WomTool
-        run: womtool --help
 
       - name: Run Tox lint commands
         # Run tox using the version of Python in `PATH`
