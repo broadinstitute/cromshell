@@ -143,7 +143,6 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
 
     if shutil.which("womtool") is not None:
 
-        validation_output = None
         try:
             validation_output = subprocess.run(
                 ["womtool", "validate", wdl, "-i", wdl_json],
