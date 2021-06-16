@@ -147,7 +147,8 @@ def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
         try:
             validation_output = subprocess.run(
                 ["womtool", "validate", wdl, "-i", wdl_json],
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 check=True,
             )
             if validation_output.returncode == 0:
