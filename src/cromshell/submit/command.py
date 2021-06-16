@@ -141,13 +141,12 @@ def validate_input(wdl: str, wdl_json: str, options_json: str, dependencies_zip:
 def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
     """If womtool is found in PATH, validates wdl and json"""
 
-    womtool_path = shutil.which("womtool")
-    if womtool_path is not None:
+    if shutil.which("womtool") is not None:
 
         validation_output = None
         try:
             validation_output = subprocess.run(
-                [womtool_path, "validate", wdl, "-i", wdl_json],
+                ["womtool", "validate", wdl, "-i", wdl_json],
                 capture_output=True,
                 check=True,
             )
