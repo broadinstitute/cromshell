@@ -18,7 +18,8 @@ LOGGER = logging.getLogger(__name__)
     "can be set by add option name before adding key (e.g. '-k id -k status ...')",
 )
 @click.option(
-    "--not_expand_subworkflow",
+    "-des"
+    "--dont_expand_subworkflow",
     is_flag=True,
     default=True,
     help="Do not expand subworkflow info in metadata",
@@ -37,7 +38,7 @@ def main(
         config,
         workflow_id: str,
         key: list,
-        not_expand_subworkflow: bool,
+        dont_expand_subworkflows: bool,
         exclude_keys: bool
 ):
     """Get a subset of the workflow metadata using default keys."""
@@ -63,15 +64,15 @@ def main(
     key_action = "include" if not exclude_keys else "exclude"
     LOGGER.info("Metadata keys set to %s: %s", key_action, metadata_parameter)
 
-    combined_metadata_parameter = metadata_command.combine_keys_and_flags(
+    formated_metadata_parameter = metadata_command.format_metadata_params(
         list_of_keys=metadata_parameter,
         exclude_keys=exclude_keys,
-        not_expand_subworkflow=not_expand_subworkflow,
+        expand_subworkflow=dont_expand_subworkflows,
     )
 
     # Request workflow metadata. Uses function from the metadata command.
     workflow_metadata_json = metadata_command.get_workflow_metadata(
-        meta_params=combined_metadata_parameter,
+        meta_params=formated_metadata_parameter,
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
