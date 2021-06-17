@@ -42,7 +42,9 @@ def main(
 ):
     """Get a subset of the workflow metadata using default keys."""
 
-    key_param = str(keys).strip(',').split(',')
+    # If no keys were provided then set key_param to empty else
+    # strip trailing comma from keys and split keys by comma
+    key_param = [] if not keys else str(keys).strip(',').split(',')
 
     LOGGER.info("slim-metadata")
 
