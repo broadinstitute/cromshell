@@ -13,14 +13,14 @@ LOGGER = logging.getLogger(__name__)
 # Set Cromshell Configuration Default Values
 METADATA_PARAMETERS = ["submittedFiles"]
 SLIM_METADATA_PARAMETERS = [
-                            "id",
-                            "executionStatus",
-                            "backendStatus",
-                            "status",
-                            "callRoot",
-                            "subWorkflowMetadata",
-                            "subWorkflowId",
-                           ]
+    "id",
+    "executionStatus",
+    "backendStatus",
+    "status",
+    "callRoot",
+    "subWorkflowMetadata",
+    "subWorkflowId",
+]
 API_STRING = "/api/workflows/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
