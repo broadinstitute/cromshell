@@ -53,7 +53,7 @@ class TestMetadata:
             metadata_command.format_metadata_params(
                 list_of_keys=test_keys,
                 exclude_keys=False,
-                expand_subworkflow=test_expand_subworkflows
+                expand_subworkflow=test_expand_subworkflows,
             )
             == test_keys_string_out
         )
@@ -72,7 +72,7 @@ class TestMetadata:
             metadata_command.format_metadata_params(
                 list_of_keys=test_keys,
                 exclude_keys=test_exclude_keys,
-                expand_subworkflow=False
+                expand_subworkflow=False,
             )
             == test_keys_string_out
         )
