@@ -11,11 +11,10 @@ LOGGER = logging.getLogger(__name__)
 @click.command(name="slim-metadata")
 @click.argument("workflow_id")
 @click.option(
-    "--key",
     "-k",
-    multiple=True,
-    help="Use keys to get a subset of the metadata for a workflow. Multiple keys "
-    "can be set by add option name before adding key (e.g. '-k id -k status ...')",
+    "--keys",
+    help="Use keys to get a subset of the metadata for a workflow. "
+         "Separate multiple keys by comma (e.g. '-k id[,status,...]').",
 )
 @click.option(
     "-des",
@@ -25,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
     help="Do not expand subworkflow info in metadata",
 )
 @click.option(
-    "-e",
+    "-x",
     "--exclude_keys",
     is_flag=True,
     show_default=True,
@@ -37,11 +36,13 @@ LOGGER = logging.getLogger(__name__)
 def main(
     config,
     workflow_id: str,
-    key: list,
+    keys: list,
     dont_expand_subworkflows: bool,
     exclude_keys: bool,
 ):
     """Get a subset of the workflow metadata using default keys."""
+
+    key_param = str(keys).strip(',').split(',')
 
     LOGGER.info("slim-metadata")
 
@@ -49,7 +50,7 @@ def main(
 
     # Resolve and get metadata keys from cli, config file, or config default
     metadata_parameter = resolve_and_return_metadata_keys(
-        cli_key=key,
+        cli_key=key_param,
         cromshell_config_options=config.cromshell_config_options,
         config_slim_metadata_default_param=config.SLIM_METADATA_PARAMETERS,
     )
