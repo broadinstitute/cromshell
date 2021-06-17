@@ -23,6 +23,22 @@ def main(config, workflow_id: str, dont_expand_subworkflows: bool):
 
     LOGGER.info("metadata")
 
+    check_cromwell_server(config=config, workflow_id=workflow_id)
+
+    obtain_and_print_metadata(
+        config=config,
+        metadata_param=config.METADATA_PARAMETERS,
+        exclude_keys=True,
+        expand_subworkflows=dont_expand_subworkflows,
+    )
+
+    return 0
+
+
+def check_cromwell_server(config, workflow_id):
+    """Checks for an associated cromwell server for the workflow_id
+    and checks connection with the cromwell server"""
+
     # Overrides the default cromwell url set in the cromshell config file or
     # command line argument if the workflow id is found in the submission file.
     cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
@@ -32,31 +48,12 @@ def main(config, workflow_id: str, dont_expand_subworkflows: bool):
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
 
-    # Combine keys and flags into a dictionary
-    formated_metadata_parameter = format_metadata_params(
-        list_of_keys=config.METADATA_PARAMETERS,
-        exclude_keys=True,
-        expand_subworkflow=dont_expand_subworkflows,
-    )
-
-    # Request workflow metadata
-    workflow_metadata_json = get_workflow_metadata(
-        meta_params=formated_metadata_parameter,
-        api_workflow_id=config.cromwell_api_workflow_id,
-        timeout=config.requests_connect_timeout,
-        verify_certs=config.requests_verify_certs,
-    )
-
-    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
-
-    return 0
-
 
 def format_metadata_params(
-        list_of_keys: list, exclude_keys: bool, expand_subworkflow: bool
+    list_of_keys: list, exclude_keys: bool, expand_subworkflow: bool
 ) -> dict:
     """This functions organises a list of cromwell metadata keys and flags into a
-     dictionary that can passed to requests library"""
+    dictionary that can passed to requests library"""
 
     if not list_of_keys:
         LOGGER.error("Function format_metadata_params was given an empty list.")
@@ -102,3 +99,26 @@ def get_workflow_metadata(
     )
 
     return requests_out.json()
+
+
+def obtain_and_print_metadata(
+    config, metadata_param: list, exclude_keys: bool, expand_subworkflows: bool
+):
+    """Format metadata parameters and obtains metadata from cromwell server"""
+
+    # Combine keys and flags into a dictionary
+    formatted_metadata_parameter = format_metadata_params(
+        list_of_keys=metadata_param,
+        exclude_keys=exclude_keys,
+        expand_subworkflow=expand_subworkflows,
+    )
+
+    # Request workflow metadata
+    workflow_metadata_json = get_workflow_metadata(
+        meta_params=formatted_metadata_parameter,
+        api_workflow_id=config.cromwell_api_workflow_id,
+        timeout=config.requests_connect_timeout,
+        verify_certs=config.requests_verify_certs,
+    )
+
+    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
