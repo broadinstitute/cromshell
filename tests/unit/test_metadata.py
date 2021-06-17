@@ -19,8 +19,8 @@ class TestMetadata:
     )
     def test_combine_keys_and_flags_combine_keys(self, test_keys, test_keys_string_out):
         assert (
-            metadata_command.combine_keys_and_flags(
-                list_of_keys=test_keys, exclude_keys=False, not_expand_subworkflow=False
+            metadata_command.format_metadata_params(
+                list_of_keys=test_keys, exclude_keys=False, expand_subworkflow=False
             )
             == test_keys_string_out
         )
@@ -35,8 +35,8 @@ class TestMetadata:
     )
     def test_combine_keys_and_flags_empty_keys(self, test_keys):
         with pytest.raises(ValueError):
-            metadata_command.combine_keys_and_flags(
-                list_of_keys=test_keys, exclude_keys=False, not_expand_subworkflow=False
+            metadata_command.format_metadata_params(
+                list_of_keys=test_keys, exclude_keys=False, expand_subworkflow=False
             ), "Should fail if given empty list."
 
     @pytest.mark.parametrize(
@@ -50,10 +50,10 @@ class TestMetadata:
         self, test_keys, test_expand_subworkflows, test_keys_string_out
     ):
         assert (
-            metadata_command.combine_keys_and_flags(
+            metadata_command.format_metadata_params(
                 list_of_keys=test_keys,
                 exclude_keys=False,
-                not_expand_subworkflow=test_expand_subworkflows
+                expand_subworkflow=test_expand_subworkflows
             )
             == test_keys_string_out
         )
@@ -69,10 +69,10 @@ class TestMetadata:
         self, test_keys, test_exclude_keys, test_keys_string_out
     ):
         assert (
-            metadata_command.combine_keys_and_flags(
+            metadata_command.format_metadata_params(
                 list_of_keys=test_keys,
                 exclude_keys=test_exclude_keys,
-                not_expand_subworkflow=False
+                expand_subworkflow=False
             )
             == test_keys_string_out
         )

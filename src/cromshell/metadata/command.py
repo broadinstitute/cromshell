@@ -11,14 +11,14 @@ LOGGER = logging.getLogger(__name__)
 @click.command(name="metadata")
 @click.argument("workflow_id")
 @click.option(
-    "-nes",
-    "--not_expand_subworkflow",
+    "-des",
+    "--dont-expand-subworkflows",
     is_flag=True,
     default=True,
     help="Do not expand subworkflow info in metadata",
 )
 @click.pass_obj
-def main(config, workflow_id: str, not_expand_subworkflow: bool):
+def main(config, workflow_id: str, dont_expand_subworkflows: bool):
     """Get the full metadata of a workflow."""
 
     LOGGER.info("metadata")
@@ -33,15 +33,15 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
     http_utils.assert_can_communicate_with_server(config)
 
     # Combine keys and flags into a dictionary
-    combined_metadata_parameter = combine_keys_and_flags(
+    formated_metadata_parameter = format_metadata_params(
         list_of_keys=config.METADATA_PARAMETERS,
         exclude_keys=True,
-        not_expand_subworkflow=not_expand_subworkflow,
+        expand_subworkflow=dont_expand_subworkflows,
     )
 
     # Request workflow metadata
     workflow_metadata_json = get_workflow_metadata(
-        meta_params=combined_metadata_parameter,
+        meta_params=formated_metadata_parameter,
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
@@ -52,21 +52,21 @@ def main(config, workflow_id: str, not_expand_subworkflow: bool):
     return 0
 
 
-def combine_keys_and_flags(
-        list_of_keys: list, exclude_keys: bool, not_expand_subworkflow: bool
+def format_metadata_params(
+        list_of_keys: list, exclude_keys: bool, expand_subworkflow: bool
 ) -> dict:
     """This functions organises a list of cromwell metadata keys and flags into a
      dictionary that can passed to requests library"""
 
     if not list_of_keys:
-        LOGGER.error("Function combine_keys_and_flags was given an empty list.")
-        raise ValueError("Function combine_keys_and_flags was given an empty list.")
+        LOGGER.error("Function format_metadata_params was given an empty list.")
+        raise ValueError("Function format_metadata_params was given an empty list.")
     elif "" in list_of_keys:
         LOGGER.error(
-            "Function combine_keys_and_flags was given a list with empty element."
+            "Function format_metadata_params was given a list with empty element."
         )
         raise ValueError(
-            "Function combine_keys_and_flags was given a list with empty element."
+            "Function format_metadata_params was given a list with empty element."
         )
     else:
         # Determines whether the list of keys will be used to exclude or
@@ -75,7 +75,7 @@ def combine_keys_and_flags(
 
         final_key = {key_action: list_of_keys}
 
-        if not_expand_subworkflow:
+        if expand_subworkflow:
             final_key["expandSubWorkflows"] = "true"
 
         return final_key
