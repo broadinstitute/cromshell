@@ -18,8 +18,8 @@ LOGGER = logging.getLogger(__name__)
     "can be set by add option name before adding key (e.g. '-k id -k status ...')",
 )
 @click.option(
-    "-des"
-    "--dont_expand_subworkflow",
+    "-des",
+    "--dont-expand-subworkflows",
     is_flag=True,
     default=True,
     help="Do not expand subworkflow info in metadata",
@@ -31,28 +31,21 @@ LOGGER = logging.getLogger(__name__)
     show_default=True,
     default=False,
     help="Toggle to either include or exclude keys that are specified "
-         "by the --keys option or in the cromshell config JSON.",
+    "by the --keys option or in the cromshell config JSON.",
 )
 @click.pass_obj
 def main(
-        config,
-        workflow_id: str,
-        key: list,
-        dont_expand_subworkflows: bool,
-        exclude_keys: bool
+    config,
+    workflow_id: str,
+    key: list,
+    dont_expand_subworkflows: bool,
+    exclude_keys: bool,
 ):
     """Get a subset of the workflow metadata using default keys."""
 
     LOGGER.info("slim-metadata")
 
-    # Overrides the default cromwell url set in the cromshell config file or
-    # command line argument if the workflow id is found in the submission file.
-    cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
-
-    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
-
-    # Check if Cromwell Server Backend works
-    http_utils.assert_can_communicate_with_server(config)
+    metadata_command.check_cromwell_server(config=config, workflow_id=workflow_id)
 
     # Resolve and get metadata keys from cli, config file, or config default
     metadata_parameter = resolve_and_return_metadata_keys(
@@ -64,21 +57,12 @@ def main(
     key_action = "include" if not exclude_keys else "exclude"
     LOGGER.info("Metadata keys set to %s: %s", key_action, metadata_parameter)
 
-    formated_metadata_parameter = metadata_command.format_metadata_params(
-        list_of_keys=metadata_parameter,
+    metadata_command.obtain_and_print_metadata(
+        config=config,
+        metadata_param=metadata_parameter,
         exclude_keys=exclude_keys,
-        expand_subworkflow=dont_expand_subworkflows,
+        expand_subworkflows=dont_expand_subworkflows,
     )
-
-    # Request workflow metadata. Uses function from the metadata command.
-    workflow_metadata_json = metadata_command.get_workflow_metadata(
-        meta_params=formated_metadata_parameter,
-        api_workflow_id=config.cromwell_api_workflow_id,
-        timeout=config.requests_connect_timeout,
-        verify_certs=config.requests_verify_certs,
-    )
-
-    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
 
     return 0
 
