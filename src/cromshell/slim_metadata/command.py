@@ -2,7 +2,6 @@ import logging
 
 import click
 
-from cromshell.utilities import cromshellconfig, http_utils, io_utils
 from cromshell.metadata import command as metadata_command
 
 LOGGER = logging.getLogger(__name__)
