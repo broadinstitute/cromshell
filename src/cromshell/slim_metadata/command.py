@@ -41,11 +41,11 @@ def main(
 ):
     """Get a subset of the workflow metadata using default keys."""
 
+    LOGGER.info("slim-metadata")
+
     # If no keys were provided then set key_param to empty else
     # strip trailing comma from keys and split keys by comma
     key_param = [] if not keys else str(keys).strip(',').split(',')
-
-    LOGGER.info("slim-metadata")
 
     metadata_command.check_cromwell_server(config=config, workflow_id=workflow_id)
 
