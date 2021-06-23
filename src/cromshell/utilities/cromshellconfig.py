@@ -33,6 +33,11 @@ local_folder_name = None
 requests_connect_timeout = 5
 requests_verify_certs = True
 
+CROMSHELL_CONFIG_OPTIONS_TEMPLATE = {
+    "cromwell_server": "String",
+    "requests_timeout": requests_connect_timeout,
+}
+
 
 def override_requests_cert_parameters(skip_certs: bool):
     """Override requests settings for certs verification"""
@@ -144,7 +149,9 @@ def __get_submission_file(config_directory, sub_file_name):
     return sub_file_path
 
 
-def __load_cromshell_config_file(config_directory, config_file_name):
+def __load_cromshell_config_file(
+    config_directory, config_file_name, config_file_template
+):
     """Load options from Cromshell Config File to dictionary"""
     # TODO: Add more config settings to validate user key and values
 
@@ -153,7 +160,7 @@ def __load_cromshell_config_file(config_directory, config_file_name):
         LOGGER.info("Cromshell config file %s was not found", cromshell_config_path)
         LOGGER.info("Creating %s", cromshell_config_path)
 
-        config_template = '{\n"cromwell_server": "[enter server url]"\n}'
+        config_template = json.dumps(config_file_template, indent=2)
 
         Path(cromshell_config_path).touch()
         with Path(cromshell_config_path).open("w") as crom_config_file:
@@ -218,7 +225,7 @@ config_dir = __get_config_dir()
 submission_file_path = __get_submission_file(config_dir, SUBMISSION_FILE_NAME)
 # TODO: Validate cromshell_config_options keys
 cromshell_config_options = __load_cromshell_config_file(
-    config_dir, CROMSHELL_CONFIG_FILE_NAME
+    config_dir, CROMSHELL_CONFIG_FILE_NAME, CROMSHELL_CONFIG_OPTIONS_TEMPLATE
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
 local_folder_name = cromwell_server.replace("https://", "").replace("http://", "")
