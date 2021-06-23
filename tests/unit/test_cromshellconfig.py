@@ -158,7 +158,7 @@ class TestCromshellConfig:
         returned_value = cc__load_cromshell_config_file(
             config_directory=os.path.dirname(mock_data_path),
             config_file_name=cromshellconfig.CROMSHELL_CONFIG_FILE_NAME,
-            config_file_template=cromshellconfig.CROMSHELL_CONFIG_OPTIONS_TEMPLATE
+            config_file_template=cromshellconfig.CROMSHELL_CONFIG_OPTIONS_TEMPLATE,
         )
 
         assert returned_value is not None, "Variable should not be empty"
