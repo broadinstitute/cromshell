@@ -53,7 +53,7 @@ def main(
     metadata_parameter = resolve_and_return_metadata_keys(
         cli_key=key_param,
         cromshell_config_options=config.cromshell_config_options,
-        config_slim_metadata_default_param=config.SLIM_METADATA_PARAMETERS,
+        config_slim_metadata_default_param=config.SLIM_METADATA_DEFAULT_KEYS,
     )
 
     key_action = "include" if not exclude_keys else "exclude"
@@ -63,7 +63,7 @@ def main(
         config=config,
         metadata_param=metadata_parameter,
         exclude_keys=exclude_keys,
-        expand_subworkflows=dont_expand_subworkflows,
+        dont_expand_subworkflows=dont_expand_subworkflows,
     )
 
     return 0
@@ -90,6 +90,6 @@ def resolve_and_return_metadata_keys(
 
     # Return the default keys from config module constant
     else:
-        LOGGER.info("No metadata keys were found in cli or config file.")
+        LOGGER.info("No custom metadata keys were found in cli or config file.")
         # The default metadata key needs to
         return config_slim_metadata_default_param

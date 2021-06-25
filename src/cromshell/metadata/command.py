@@ -27,9 +27,9 @@ def main(config, workflow_id: str, dont_expand_subworkflows: bool):
 
     obtain_and_print_metadata(
         config=config,
-        metadata_param=config.METADATA_PARAMETERS,
+        metadata_param=config.METADATA_KEYS_TO_OMIT,
         exclude_keys=True,
-        expand_subworkflows=dont_expand_subworkflows,
+        dont_expand_subworkflows=dont_expand_subworkflows,
     )
 
     return 0
@@ -53,17 +53,17 @@ def format_metadata_params(
     list_of_keys: list, exclude_keys: bool, expand_subworkflow: bool
 ) -> dict:
     """This functions organises a list of cromwell metadata keys and flags into a
-    dictionary that can passed to requests library"""
+    dictionary that can be passed to requests library"""
 
     if not list_of_keys:
         LOGGER.error("Function format_metadata_params was given an empty list.")
         raise ValueError("Function format_metadata_params was given an empty list.")
     elif "" in list_of_keys:
         LOGGER.error(
-            "Function format_metadata_params was given a list with empty element."
+            "No keys provided when querying metadata parameter."
         )
         raise ValueError(
-            "Function format_metadata_params was given a list with empty element."
+            "One of the provided metadata keys is empty."
         )
     else:
         # Determines whether the list of keys will be used to exclude or
@@ -84,8 +84,8 @@ def get_workflow_metadata(
     timeout: int,
     verify_certs: bool,
 ) -> str:
-    """Use requests to get the metadata or sub-metadata of
-    a workflow from the cromwell server."""
+    """Uses requests to get the metadata or sub-metadata of a workflow
+    from the cromwell server and returns a JSON formatted string."""
 
     requests_out = requests.get(
         f"{api_workflow_id}/metadata",
@@ -102,7 +102,7 @@ def get_workflow_metadata(
 
 
 def obtain_and_print_metadata(
-    config, metadata_param: list, exclude_keys: bool, expand_subworkflows: bool
+    config, metadata_param: list, exclude_keys: bool, dont_expand_subworkflows: bool
 ):
     """Format metadata parameters and obtains metadata from cromwell server"""
 
@@ -110,7 +110,7 @@ def obtain_and_print_metadata(
     formatted_metadata_parameter = format_metadata_params(
         list_of_keys=metadata_param,
         exclude_keys=exclude_keys,
-        expand_subworkflow=expand_subworkflows,
+        expand_subworkflow=dont_expand_subworkflows,
     )
 
     # Request workflow metadata

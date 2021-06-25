@@ -11,8 +11,8 @@ LOGGER = logging.getLogger(__name__)
 """Setup Cromshell config details. Intended to be used as a singleton"""
 
 # Set Cromshell Configuration Default Values
-METADATA_PARAMETERS = ["submittedFiles"]
-SLIM_METADATA_PARAMETERS = [
+METADATA_KEYS_TO_OMIT = ["submittedFiles"]
+SLIM_METADATA_DEFAULT_KEYS = [
     "id",
     "executionStatus",
     "backendStatus",
