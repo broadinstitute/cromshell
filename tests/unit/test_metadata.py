@@ -17,7 +17,7 @@ class TestMetadata:
             ),
         ],
     )
-    def test_combine_keys_and_flags_combine_keys(self, test_keys, test_keys_string_out):
+    def test_format_metadata_params(self, test_keys, test_keys_string_out):
         assert (
             metadata_command.format_metadata_params(
                 list_of_keys=test_keys, exclude_keys=False, expand_subworkflow=False
@@ -33,7 +33,7 @@ class TestMetadata:
             ["id", ""],  # Asserts failure on dictionary with empty element
         ],
     )
-    def test_combine_keys_and_flags_empty_keys(self, test_keys):
+    def test_format_metadata_params_empty_keys(self, test_keys):
         with pytest.raises(ValueError):
             metadata_command.format_metadata_params(
                 list_of_keys=test_keys, exclude_keys=False, expand_subworkflow=False
@@ -46,7 +46,7 @@ class TestMetadata:
             (["id"], True, {"includeKey": ["id"], "expandSubWorkflows": "true"}),
         ],
     )
-    def test_combine_keys_and_flags_subworkflows_flag(
+    def test_format_metadata_params_subworkflows_flag(
         self, test_keys, test_expand_subworkflows, test_keys_string_out
     ):
         assert (
@@ -65,7 +65,7 @@ class TestMetadata:
             (["id"], True, {"excludeKey": ["id"]}),
         ],
     )
-    def test_combine_keys_and_flags_exclude_keys_flag(
+    def test_format_metadata_params_exclude_keys_flag(
         self, test_keys, test_exclude_keys, test_keys_string_out
     ):
         assert (
