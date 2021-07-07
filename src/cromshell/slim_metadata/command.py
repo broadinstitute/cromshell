@@ -13,13 +13,13 @@ LOGGER = logging.getLogger(__name__)
     "-k",
     "--keys",
     help="Use keys to get a subset of the metadata for a workflow. "
-         "Separate multiple keys by comma (e.g. '-k id[,status,...]').",
+    "Separate multiple keys by comma (e.g. '-k id[,status,...]').",
 )
 @click.option(
     "-des",
     "--dont-expand-subworkflows",
     is_flag=True,
-    default=True,
+    default=False,
     help="Do not expand subworkflow info in metadata",
 )
 @click.option(
@@ -45,7 +45,7 @@ def main(
 
     # If no keys were provided then set key_param to empty else
     # strip trailing comma from keys and split keys by comma
-    key_param = [] if not keys else str(keys).strip(',').split(',')
+    key_param = [] if not keys else str(keys).strip(",").split(",")
 
     metadata_command.check_cromwell_server(config=config, workflow_id=workflow_id)
 
@@ -86,6 +86,7 @@ def resolve_and_return_metadata_keys(
     # If metadata_keys is specified in cromshell config file then use it for keys
     elif "slim_metadata_keys" in cromshell_config_options:
         LOGGER.info("Setting metadata key(s) from value in config file.")
+        # TODO: Turn to magic string in the config script once rebased with PR 156
         return cromshell_config_options["slim_metadata_keys"]
 
     # Return the default keys from config module constant

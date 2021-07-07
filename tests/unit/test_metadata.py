@@ -20,7 +20,9 @@ class TestMetadata:
     def test_format_metadata_params(self, test_keys, test_keys_string_out):
         assert (
             metadata_command.format_metadata_params(
-                list_of_keys=test_keys, exclude_keys=False, expand_subworkflow=False
+                list_of_keys=test_keys,
+                exclude_keys=False,
+                dont_expand_subworkflows=True,
             )
             == test_keys_string_out
         )
@@ -36,14 +38,16 @@ class TestMetadata:
     def test_format_metadata_params_empty_keys(self, test_keys):
         with pytest.raises(ValueError):
             metadata_command.format_metadata_params(
-                list_of_keys=test_keys, exclude_keys=False, expand_subworkflow=False
+                list_of_keys=test_keys,
+                exclude_keys=False,
+                dont_expand_subworkflows=True,
             ), "Should fail if given empty list."
 
     @pytest.mark.parametrize(
         "test_keys, test_expand_subworkflows, test_keys_string_out",
         [
-            (["id"], False, {"includeKey": ["id"]}),
-            (["id"], True, {"includeKey": ["id"], "expandSubWorkflows": "true"}),
+            (["id"], True, {"includeKey": ["id"]}),
+            (["id"], False, {"includeKey": ["id"], "expandSubWorkflows": "true"}),
         ],
     )
     def test_format_metadata_params_subworkflows_flag(
@@ -53,7 +57,7 @@ class TestMetadata:
             metadata_command.format_metadata_params(
                 list_of_keys=test_keys,
                 exclude_keys=False,
-                expand_subworkflow=test_expand_subworkflows,
+                dont_expand_subworkflows=test_expand_subworkflows,
             )
             == test_keys_string_out
         )
@@ -72,7 +76,7 @@ class TestMetadata:
             metadata_command.format_metadata_params(
                 list_of_keys=test_keys,
                 exclude_keys=test_exclude_keys,
-                expand_subworkflow=False,
+                dont_expand_subworkflows=True,
             )
             == test_keys_string_out
         )
