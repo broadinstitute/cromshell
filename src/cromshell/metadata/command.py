@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
     "-des",
     "--dont-expand-subworkflows",
     is_flag=True,
-    default=True,
+    default=False,
     help="Do not expand subworkflow info in metadata",
 )
 @click.pass_obj
@@ -50,7 +50,7 @@ def check_cromwell_server(config, workflow_id):
 
 
 def format_metadata_params(
-    list_of_keys: list, exclude_keys: bool, expand_subworkflow: bool
+    list_of_keys: list, exclude_keys: bool, dont_expand_subworkflows: bool
 ) -> dict:
     """This functions organises a list of cromwell metadata keys and flags into a
     dictionary that can be passed to requests library"""
@@ -59,12 +59,8 @@ def format_metadata_params(
         LOGGER.error("No keys provided when querying metadata parameter.")
         raise ValueError("No keys provided when querying metadata parameter.")
     elif "" in list_of_keys:
-        LOGGER.error(
-            "One of the provided metadata keys is empty."
-        )
-        raise ValueError(
-            "One of the provided metadata keys is empty."
-        )
+        LOGGER.error("One of the provided metadata keys is empty.")
+        raise ValueError("One of the provided metadata keys is empty.")
     else:
         # Determines whether the list of keys will be used to exclude or
         # include fields in the metadata.
@@ -72,7 +68,7 @@ def format_metadata_params(
 
         final_key = {key_action: list_of_keys}
 
-        if expand_subworkflow:
+        if dont_expand_subworkflows is False:
             final_key["expandSubWorkflows"] = "true"
 
         return final_key
@@ -110,7 +106,7 @@ def obtain_and_print_metadata(
     formatted_metadata_parameter = format_metadata_params(
         list_of_keys=metadata_param,
         exclude_keys=exclude_keys,
-        expand_subworkflow=dont_expand_subworkflows,
+        dont_expand_subworkflows=dont_expand_subworkflows,
     )
 
     # Request workflow metadata
