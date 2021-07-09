@@ -50,7 +50,7 @@ def check_cromwell_server(config, workflow_id):
 
 
 def format_metadata_params(
-    list_of_keys: list, exclude_keys: bool, dont_expand_subworkflows: bool
+    list_of_keys: list, exclude_keys: bool, expand_subworkflows: bool
 ) -> dict:
     """This functions organises a list of cromwell metadata keys and flags into a
     dictionary that can be passed to requests library"""
@@ -68,7 +68,7 @@ def format_metadata_params(
 
         final_key = {key_action: list_of_keys}
 
-        if dont_expand_subworkflows is False:
+        if expand_subworkflows:
             final_key["expandSubWorkflows"] = "true"
 
         return final_key
@@ -106,7 +106,7 @@ def obtain_and_print_metadata(
     formatted_metadata_parameter = format_metadata_params(
         list_of_keys=metadata_param,
         exclude_keys=exclude_keys,
-        dont_expand_subworkflows=dont_expand_subworkflows,
+        expand_subworkflows=not dont_expand_subworkflows,  # Invert variable
     )
 
     # Request workflow metadata
