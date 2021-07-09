@@ -16,6 +16,9 @@ def main(config, workflow_id):
 
     WORKFLOW_ID can be one or more workflow ids belonging to a running workflow
     separated by a space (e.g. abort [workflow_id1] [[workflow_id2]...] )
+
+    By default the cromwell url set in the configuration file is used, all provided
+    workflow ids must be associated with cromwell url provided in configuration file.
     """
 
     LOGGER.info("abort")
