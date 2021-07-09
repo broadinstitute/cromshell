@@ -9,9 +9,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 @click.command(name="abort")
-@click.argument("workflow_id", required=True, nargs=-1)
+@click.argument("workflow_ids", required=True, nargs=-1)
 @click.pass_obj
-def main(config, workflow_id):
+def main(config, workflow_ids):
     """Abort a running workflow.
 
     WORKFLOW_ID can be one or more workflow ids belonging to a running workflow
@@ -25,7 +25,7 @@ def main(config, workflow_id):
 
     http_utils.assert_can_communicate_with_server(config)
 
-    for wdl_id in workflow_id:
+    for wdl_id in workflow_ids:
 
         requests_out = requests.post(
             f"{config.cromwell_server}{config.API_STRING}/{wdl_id}/abort"
