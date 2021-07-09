@@ -19,28 +19,6 @@ def reset_cromshellconfig(mock_data_path):
 class TestCromshellConfig:
     """Test the cromshell config functions and variables"""
 
-    def test_override_slim_metadata_parameters(self):
-        reload(cromshellconfig)
-
-        assert (
-            cromshellconfig.slim_metadata_parameters is not None
-        ), "slim_metadata_parameters should equal not None"
-
-        assert (
-            cromshellconfig.slim_metadata_parameters != ""
-        ), "slim_metadata_parameters should not be empty."
-
-        test_slim_parameters = (
-            "expandSubWorkflows=true"
-            + "&includeKey=subWorkflowMetadata&includeKey=subWorkflowId"
-        )
-        cromshellconfig.override_slim_metadata_parameters("expandSubWorkflows=true")
-        assert cromshellconfig.slim_metadata_parameters == test_slim_parameters, (
-            "Slim metadata parameters should be set to the"
-            "following after being specified \n"
-            f"{test_slim_parameters}"
-        )
-
     def test_resolve_cromwell_config_server_address_not_empty(self):
         reload(cromshellconfig)
 
