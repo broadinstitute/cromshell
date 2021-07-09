@@ -25,7 +25,7 @@ def main(config, workflow_id):
     for wdl_id in workflow_id:
 
         requests_out = requests.post(
-            f"http://34.73.109.5:8000/api/workflows/v1/{wdl_id}/abort"
+            f"{config.cromwell_server}{config.API_STRING}/{wdl_id}/abort"
         )
 
         http_utils.check_http_request_status_code(
