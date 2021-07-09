@@ -35,7 +35,9 @@ def assert_can_communicate_with_server(config):
 
 
 def check_http_request_status_code(
-    short_error_message: str, response: requests.models.Response
+    short_error_message: str,
+    response: requests.models.Response,
+    raise_exception: bool = True,
 ):
     """Check request response "ok" key. Response.ok returns
     False if status_code is equal to or greater than 400.
@@ -49,9 +51,10 @@ def check_http_request_status_code(
         LOGGER.error("Reason: %s", response.reason)
         LOGGER.error("Status_code: %s", response.status_code)
         LOGGER.error("Message: %s", response.text)
-        raise Exception(
-            f"{short_error_message}\n"
-            f"Reason: {response.reason}\n"
-            f"Status_code: {response.status_code}\n"
-            f"Message: {response.text}"
-        )
+        if raise_exception:
+            raise Exception(
+                f"{short_error_message}\n"
+                f"Reason: {response.reason}\n"
+                f"Status_code: {response.status_code}\n"
+                f"Message: {response.text}"
+            )
