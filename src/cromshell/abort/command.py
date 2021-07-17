@@ -17,8 +17,6 @@ def main(config, workflow_ids):
     WORKFLOW_ID can be one or more workflow ids belonging to a running workflow
     separated by a space (e.g. abort [workflow_id1] [[workflow_id2]...]).
 
-    All provided workflow ids must be associated with cromwell url
-    provided in configuration file or in the cli options.
     """
 
     LOGGER.info("abort")
@@ -35,9 +33,11 @@ def main(config, workflow_ids):
             f"{config.cromwell_server}{config.API_STRING}/{wdl_id}/abort"
         )
 
-        if not requests_out.ok:
-
-            return_code += 1
+        if requests_out.ok:
+            # Todo: Replace input with requests_out.json() once rebased with submit PR
+            io_utils.pretty_print_json(requests_out.text)
+        else:
+            return_code = 1
 
             http_utils.check_http_request_status_code(
                 short_error_message="Failed to abort workflow.",
@@ -46,8 +46,5 @@ def main(config, workflow_ids):
                 # command to abort remaining workflows.
                 raise_exception=False,
             )
-        else:
-            # Todo: Replace input with requests_out.json() once rebased with submit PR
-            io_utils.pretty_print_json(requests_out.text)
 
-    return 0 if return_code == 0 else 1
+    return return_code
