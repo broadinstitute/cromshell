@@ -5,6 +5,7 @@ import click
 
 from cromshell.utilities import cromshellconfig
 
+from .abort import command as abort
 from .status import command as status
 from .submit import command as submit
 
@@ -101,6 +102,7 @@ def version():
 
 
 # Update with new sub-commands:
+main_entry.add_command(abort.main)
 main_entry.add_command(status.main)
 main_entry.add_command(submit.main)
 
