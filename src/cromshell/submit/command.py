@@ -141,14 +141,13 @@ def validate_input(wdl: str, wdl_json: str, options_json: str, dependencies_zip:
 def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
     """If womtool is found in PATH, validates wdl and json"""
 
-    womtool_path = shutil.which("womtool")
-    if womtool_path is not None:
+    if shutil.which("womtool") is not None:
 
-        validation_output = None
         try:
             validation_output = subprocess.run(
-                [womtool_path, "validate", wdl, "-i", wdl_json],
-                capture_output=True,
+                ["womtool", "validate", wdl, "-i", wdl_json],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 check=True,
             )
             if validation_output.returncode == 0:
@@ -192,7 +191,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
             submission_params["workflowDependencies"] = dependencies_file
 
         requests_out = requests.post(
-            f"{config.cromwell_server}{config.API_STRING}",
+            f"{config.get_cromwell_api()}",
             files=submission_params,
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,
