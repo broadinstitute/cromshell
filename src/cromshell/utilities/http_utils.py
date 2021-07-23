@@ -13,7 +13,7 @@ def assert_can_communicate_with_server(config):
 
     try:
         request_out = requests.get(
-            f"{config.cromwell_api}/backends",
+            f"{config.get_cromwell_api()}/backends",
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,
         )

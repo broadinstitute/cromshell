@@ -16,7 +16,7 @@ def override_logo_display_setting(hide_logo):
 
 
 def display_logo(logo):
-    """ Prints logo to screen"""
+    """Prints logo to screen"""
 
     if show_logo:
         logo()
