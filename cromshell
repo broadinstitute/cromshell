@@ -210,6 +210,20 @@ function usage()
   echo -e "  Update cromwell server:"
   echo -e "   update-server          Change which cromwell server jobs will be submitted to."
   echo -e ""
+  echo -e "  Get cost for a workflow"
+  echo -e "   cost [workflow-id] [[workflow-id]...]                  Get the cost for a workflow."
+  echo -e "                                                          Only works for workflows that completed"
+  echo -e "                                                          more than 8 hours ago on GCS."
+  echo -e "                                                          Requires the 'gcp_bq_cost_table.config'"
+  echo -e "                                                          configuration file to exist and contain"
+  echo -e "                                                          the big query cost table for your organization."
+  echo -e "   cost-detailed [workflow-id] [[workflow-id]...]         Get the cost for a workflow at the task level."
+  echo -e "                                                          Only works for workflows that completed"
+  echo -e "                                                          more than 8 hours ago on GCS."
+  echo -e "                                                          Requires the 'gcp_bq_cost_table.config'"
+  echo -e "                                                          configuration file to exist and contain"
+  echo -e "                                                          the big query cost table for your organization."
+  echo -e ""
   echo -e "Return values:"
   echo -e "  0                  SUCCESS"
   echo -e "  ANYTHING_BUT_ZERO  FAILURE/ERROR"
@@ -1481,10 +1495,10 @@ function cost()
   local r=$?
   [[ ${r} -ne 0 ]] && error "bq does not exist.  Must install the big query command-line client." && exit 8
 
-	[ ! -e ${BQ_COST_TABLE_FILE} ] && error "Big Query cost table file does not exist.  Must populate ${BQ_COST_TABLE_FILE} with big query cost table information." && exit 9
+  [ ! -e ${BQ_COST_TABLE_FILE} ] && error "Big Query cost table file does not exist.  Must populate ${BQ_COST_TABLE_FILE} with big query cost table information." && exit 9
 
-	local cost_table=$(head -n1 ${BQ_COST_TABLE_FILE})
-	local id=$1
+  local cost_table=$(head -n1 ${BQ_COST_TABLE_FILE})
+  local id=$1
 
   if [[ "$(uname)" == "Darwin" ]] ; then
     local DATE_CMD=gdate
@@ -1492,27 +1506,27 @@ function cost()
     local DATE_CMD=date
   fi  
 
-	local submissionDate=$( grep "${id}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $1}' )
-	local y=$( echo ${submissionDate} | sed 's#^\([0-9][0-9][0-9][0-9]\).*#\1#' )
-	local m=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
-	local d=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+  local submissionDate=$( grep "${id}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $1}' )
+  local y=$( echo ${submissionDate} | sed 's#^\([0-9][0-9][0-9][0-9]\).*#\1#' )
+  local m=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+  local d=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
 
-	local START_DATE="${y}-${m}-${d}"
-	local END_DATE=$($DATE_CMD +%Y-%m-%d -d "${START_DATE} +4 days")
-	
-	echo "Using cost table: ${cost_table}"
-	echo ""
+  local START_DATE="${y}-${m}-${d}"
+  local END_DATE=$($DATE_CMD +%Y-%m-%d -d "${START_DATE} +4 days")
+  
+  echo "Using cost table: ${cost_table}"
+  echo ""
 
-	local tmp_cost_file=$( makeTemp )
+  local tmp_cost_file=$( makeTemp )
 
-	# Get the cost from Big Query:
-	bq query --use_legacy_sql=false "SELECT sum(cost) FROM \`${cost_table}\`, UNNEST(labels) WHERE value = \"cromwell-${id}\" AND _PARTITIONDATE BETWEEN \"${START_DATE}\" AND \"${END_DATE}\";" > ${tmp_cost_file}
+  # Get the cost from Big Query:
+  bq query --use_legacy_sql=false "SELECT sum(cost) FROM \`${cost_table}\`, UNNEST(labels) WHERE value = \"cromwell-${id}\" AND _PARTITIONDATE BETWEEN \"${START_DATE}\" AND \"${END_DATE}\";" > ${tmp_cost_file}
 
-	# Display the cost:
-	head -n4 ${tmp_cost_file} | tail -n1 | tr -d '| \t'
+  # Display the cost:
+  head -n4 ${tmp_cost_file} | tail -n1 | tr -d '| \t'
 
-	r=$?
-	return $r
+  r=$?
+  return $r
 }
 
 # Get the cost for a workflow ID:
@@ -1522,10 +1536,10 @@ function cost-detailed()
   local r=$?
   [[ ${r} -ne 0 ]] && error "bq does not exist.  Must install the big query command-line client." && exit 8
 
-	[ ! -e ${BQ_COST_TABLE_FILE} ] && error "Big Query cost table file does not exist.  Must populate ${BQ_COST_TABLE_FILE} with big query cost table information." && exit 9
+  [ ! -e ${BQ_COST_TABLE_FILE} ] && error "Big Query cost table file does not exist.  Must populate ${BQ_COST_TABLE_FILE} with big query cost table information." && exit 9
 
-	local cost_table=$(head -n1 ${BQ_COST_TABLE_FILE})
-	local id=$1
+  local cost_table=$(head -n1 ${BQ_COST_TABLE_FILE})
+  local id=$1
 
   if [[ "$(uname)" == "Darwin" ]] ; then
     local DATE_CMD=gdate
@@ -1533,20 +1547,20 @@ function cost-detailed()
     local DATE_CMD=date
   fi  
 
-	local submissionDate=$( grep "${id}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $1}' )
-	local y=$( echo ${submissionDate} | sed 's#^\([0-9][0-9][0-9][0-9]\).*#\1#' )
-	local m=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
-	local d=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+  local submissionDate=$( grep "${id}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $1}' )
+  local y=$( echo ${submissionDate} | sed 's#^\([0-9][0-9][0-9][0-9]\).*#\1#' )
+  local m=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+  local d=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
 
-	local START_DATE="${y}-${m}-${d}"
-	local END_DATE=$($DATE_CMD +%Y-%m-%d -d "${START_DATE} +4 days")
-	
-	echo "Using cost table: ${cost_table}"
-	echo ""
+  local START_DATE="${y}-${m}-${d}"
+  local END_DATE=$($DATE_CMD +%Y-%m-%d -d "${START_DATE} +4 days")
+  
+  echo "Using cost table: ${cost_table}"
+  echo ""
 
-	local tmp_cost_file=$( makeTemp )
+  local tmp_cost_file=$( makeTemp )
 
-	# Get the cost from Big Query:
+  # Get the cost from Big Query:
   bq query \
     --use_legacy_sql=false \
     "SELECT
@@ -1563,8 +1577,8 @@ function cost-detailed()
     ORDER BY 4 DESC
     ;"
 
-	r=$?
-	return $r
+  r=$?
+  return $r
 }
 
 function assertValidEmail() 
