@@ -44,6 +44,9 @@ mkdir -p ${CROMSHELL_CONFIG_DIR}
 CROMWELL_SUBMISSIONS_FILE="${CROMSHELL_CONFIG_DIR}/all.workflow.database.tsv"
 [[ ! -f ${CROMWELL_SUBMISSIONS_FILE} ]] && echo -e "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS" > ${CROMWELL_SUBMISSIONS_FILE}
 
+# Set the GCP big query cost table file:
+BQ_COST_TABLE_FILE=${CROMSHELL_CONFIG_DIR}/gcp_bq_cost_table.config
+
 # Update cromshell submissions file if it needs updating:
 grep -q 'ALIAS$' ${CROMWELL_SUBMISSIONS_FILE} 
 r=$?
@@ -1471,6 +1474,99 @@ function fetch-all()
   return 0
 }
 
+# Get the cost for a workflow ID:
+function cost()
+{
+  which bq &>/dev/null   
+  local r=$?
+  [[ ${r} -ne 0 ]] && error "bq does not exist.  Must install the big query command-line client." && exit 8
+
+	[ ! -e ${BQ_COST_TABLE_FILE} ] && error "Big Query cost table file does not exist.  Must populate ${BQ_COST_TABLE_FILE} with big query cost table information." && exit 9
+
+	local cost_table=$(head -n1 ${BQ_COST_TABLE_FILE})
+	local id=$1
+
+  if [[ "$(uname)" == "Darwin" ]] ; then
+    local DATE_CMD=gdate
+  else
+    local DATE_CMD=date
+  fi  
+
+	local submissionDate=$( grep "${id}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $1}' )
+	local y=$( echo ${submissionDate} | sed 's#^\([0-9][0-9][0-9][0-9]\).*#\1#' )
+	local m=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+	local d=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+
+	local START_DATE="${y}-${m}-${d}"
+	local END_DATE=$($DATE_CMD +%Y-%m-%d -d "${START_DATE} +4 days")
+	
+	echo "Using cost table: ${cost_table}"
+	echo ""
+
+	local tmp_cost_file=$( makeTemp )
+
+	# Get the cost from Big Query:
+	bq query --use_legacy_sql=false "SELECT sum(cost) FROM \`${cost_table}\`, UNNEST(labels) WHERE value = \"cromwell-${id}\" AND _PARTITIONDATE BETWEEN \"${START_DATE}\" AND \"${END_DATE}\";" > ${tmp_cost_file}
+
+	# Display the cost:
+	head -n4 ${tmp_cost_file} | tail -n1 | tr -d '| \t'
+
+	r=$?
+	return $r
+}
+
+# Get the cost for a workflow ID:
+function cost-detailed()
+{
+  which bq &>/dev/null   
+  local r=$?
+  [[ ${r} -ne 0 ]] && error "bq does not exist.  Must install the big query command-line client." && exit 8
+
+	[ ! -e ${BQ_COST_TABLE_FILE} ] && error "Big Query cost table file does not exist.  Must populate ${BQ_COST_TABLE_FILE} with big query cost table information." && exit 9
+
+	local cost_table=$(head -n1 ${BQ_COST_TABLE_FILE})
+	local id=$1
+
+  if [[ "$(uname)" == "Darwin" ]] ; then
+    local DATE_CMD=gdate
+  else
+    local DATE_CMD=date
+  fi  
+
+	local submissionDate=$( grep "${id}" ${CROMWELL_SUBMISSIONS_FILE} | head -n1 | awk '{print $1}' )
+	local y=$( echo ${submissionDate} | sed 's#^\([0-9][0-9][0-9][0-9]\).*#\1#' )
+	local m=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+	local d=$( echo ${submissionDate} | sed 's#^[0-9][0-9][0-9][0-9][0-9][0-9]\([0-9][0-9]\).*#\1#' )
+
+	local START_DATE="${y}-${m}-${d}"
+	local END_DATE=$($DATE_CMD +%Y-%m-%d -d "${START_DATE} +4 days")
+	
+	echo "Using cost table: ${cost_table}"
+	echo ""
+
+	local tmp_cost_file=$( makeTemp )
+
+	# Get the cost from Big Query:
+  bq query \
+    --use_legacy_sql=false \
+    "SELECT
+    wfid.value, service.description, task.value as task_name, sum(cost) as cost
+    FROM
+    \`${cost_table}\` as billing, UNNEST(labels) as wfid, UNNEST(labels) as task
+    WHERE
+    cost > 0
+    AND task.key LIKE \"wdl-task-name\"
+    AND wfid.key LIKE \"cromwell-workflow-id\"
+    AND wfid.value like \"%${id}\"
+    AND _PARTITIONDATE BETWEEN \"${START_DATE}\" AND \"${END_DATE}\"
+    GROUP BY 1,2,3
+    ORDER BY 4 DESC
+    ;"
+
+	r=$?
+	return $r
+}
+
 function assertValidEmail() 
 {
   # Make sure the user gave us a good email address:
@@ -1885,7 +1981,7 @@ if ${ISINTERACTIVESHELL} ; then
 
   # Validate our sub-command:
   case ${SUB_COMMAND} in
-    cleanup|submit|status|logs|execution-status-count|counts|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs|alias)
+    cleanup|submit|status|cost|cost-detailed|logs|execution-status-count|counts|metadata|slim-metadata|timing|abort|notify|list|fetch-all|fetch-logs|list-outputs|alias)
       # This is a good sub-command, so we do not need to do anything. 
       ;;
     _rawNotify)
