@@ -24,7 +24,8 @@ function _cromshell {
                list\:'Display a list jobs submitted through cromshell'
                cleanup\:'Clean up local cached list'
                cost\:'Display workflow cost'
-               cost-detailed\:'Display detailed workflow cost'
+               cost-detailed\:'Display workflow cost broken down by task'
+               update-server\:'Change the cromshell server new jobs will be submited to'
              ))" \
         "*::arg:->args"
 

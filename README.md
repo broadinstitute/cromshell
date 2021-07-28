@@ -99,15 +99,14 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
    * `update-server`
      * Change the cromwell server that new jobs will be submitted to.
 
-   #### Get cost for a workflow
-	 * `cost`
-	   * Get the cost for a workflow.
-		 * Will only work for workflows that completed more than 8 hours ago on GCS.
-		 * Requires the `gcp_bq_cost_table.config` configuration file to exist and contain the big query cost table for your organization.
-	 * `cost-detailed`
-	   * Get the cost for a workflow at the task level.
-		 * Will only work for workflows that completed more than 8 hours ago on GCS.
-		 * Requires the `gcp_bq_cost_table.config` configuration file to exist and contain the big query cost table for your organization.
+   #### Get cost of a workflow
+   Costs are only available for workflows that completed more than 8 hours ago on a `GCS` backend.  
+   Requires the `~/.cromshell/gcp_bq_cost_table.config` configuration file to exist and contain the name of the BigQuery cost table for your organization.
+   * `cost [workflow-id] [[workflow-id]...]`
+     * Get the cost for a workflow.
+   * `cost-detailed [workflow-id] [[workflow-id]...]`
+     * Get the cost for a workflow at the task level.
+
     
  ### Features:
  * Running `submit` will create a new folder in the `~/.cromshell/${CROMWELL_URL}/` directory named with the cromwell job id of the newly submitted job.  
