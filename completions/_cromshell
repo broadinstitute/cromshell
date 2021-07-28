@@ -23,6 +23,8 @@ function _cromshell {
                notify\:'Get email notification on job completion'
                list\:'Display a list jobs submitted through cromshell'
                cleanup\:'Clean up local cached list'
+               cost\:'Display workflow cost'
+               cost-detailed\:'Display detailed workflow cost'
              ))" \
         "*::arg:->args"
 
@@ -33,7 +35,7 @@ function _cromshell {
         alias)
           _alias
         ;;
-        abort|status|metadata|slim-metadata|timing|logs|fetch-logs|list-outputs|fetch-all)
+        abort|status|metadata|slim-metadata|timing|logs|fetch-logs|list-outputs|fetch-all|cost|cost-detailed)
           _id_list_function
         ;;
         list)
