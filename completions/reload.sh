@@ -1,5 +1,6 @@
-#Reload the completions for testing
-#To use just source this file
+# Reload the _cromshell completion file for testing
+# Usage:
+# source reload.sh
 
 fpath=($PWD $fpath)
 unfunction _cromshell
