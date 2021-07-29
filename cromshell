@@ -1538,7 +1538,22 @@ function _cost_helper()
 	local ts1=$( $DATE_CMD +%s -d "${FINISHED_TIME}" )
 	local ts2=$( date +%s )
 	local can_check_cost=$( echo "(${ts2} - ${ts1}) >= (3600 * 24)" | bc )
-	[ $can_check_cost -ne 1 ] && error "Workflow finished less than 24 hours ago.  Cannot check cost.  Please try again later." && exit 12
+
+	if [ $can_check_cost -ne 1 ] ; then
+
+		local total_wait_time_s=$(echo "${ts2} - ${ts1}" | bc)
+		local wait_time_h=$(echo "scale=0;(${ts2} - ${ts1})/3600" | bc)
+		local wait_time_m=$(echo "scale=0;((${ts2} - ${ts1})%3600)/60" | bc)
+		local wait_time_s=$(echo "t=(${ts2} - ${ts1});scale=0;(t%3600)%60" | bc)
+
+		# Format the time:
+		[[ ${#wait_time_h} -lt 2 ]] && wait_time_h="0${wait_time_h}"
+		[[ ${#wait_time_m} -lt 2 ]] && wait_time_m="0${wait_time_m}"
+		[[ ${#wait_time_s} -lt 2 ]] && wait_time_s="0${wait_time_s}"
+
+		error "Workflow finished less than 24 hours ago.  Cannot check cost.  Please wait ${wait_time_h}h:${wait_time_m}m:${wait_time_s}s and try again." 
+		exit 12
+	fi
 
 	# Generate the start and end dates for our query:
 	START_DATE=$($DATE_CMD +%Y-%m-%d -d "${STARTED_TIME} -1 day")
