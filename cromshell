@@ -1493,71 +1493,74 @@ function _cost_helper()
   local id=$1
   local svr=$2
 
-	turtle
-	which bq &>/dev/null   
+  turtle
+  which bq &>/dev/null   
   local r=$?
   [[ ${r} -ne 0 ]] && error "bq does not exist.  Must install the big query command-line client." && exit 8
 
-	# Check for gdate:
+  # Check for gdate:
   if [[ "$(uname)" == "Darwin" ]] ; then
-		which gdate &> /dev/null
-		r=$?
-		[ $r -ne 0 ] && error "Must have coreutils installed for 'gdate'" && exit 13
-	fi
+    which gdate &> /dev/null
+    r=$?
+    [ $r -ne 0 ] && error "Must have coreutils installed for 'gdate'" && exit 13
+  fi
 
   [ ! -e ${BQ_COST_TABLE_FILE} ] && error "Big Query cost table file does not exist.  Must populate ${BQ_COST_TABLE_FILE} with big query cost table information." && exit 9
 
-	# Make sure the given ID is actually in our file:
-	grep -q "${id}" ${CROMWELL_SUBMISSIONS_FILE} 
-	r=$?
-	[ $r -ne 0 ] && error "Given ID is not in your cromwell submissions file (${CROMWELL_SUBMISSIONS_FILE}): ${id}" && exit 10
+  # Make sure the given ID is actually in our file:
+  grep -q "${id}" ${CROMWELL_SUBMISSIONS_FILE} 
+  r=$?
+  [ $r -ne 0 ] && error "Given ID is not in your cromwell submissions file (${CROMWELL_SUBMISSIONS_FILE}): ${id}" && exit 10
 
   COST_TABLE=$(head -n1 ${BQ_COST_TABLE_FILE})
   
-	# Get the time that the workflow finished:
-	error "Fetching workflow finish time..."
-	tmpMetadata=$( makeTemp )
+  # Get the time that the workflow finished:
+  error "Fetching workflow finish time..."
+  tmpMetadata=$( makeTemp )
   curl --compressed -s "${svr}/api/workflows/v1/${id}/metadata?includeKey=workflowProcessingEvents" > ${tmpMetadata}
 
-	[ ! -s ${tmpMetadata} ] && error "Could not communicate with server.  Perhaps try a longer timeout." && exit 15
+  [ ! -s ${tmpMetadata} ] && error "Could not communicate with server.  Perhaps try a longer timeout." && exit 15
 
-	grep -q '"description":"Finished",' ${tmpMetadata}
-	r=$?
-	[ $r -ne 0 ] && error "Workflow ${id} is not finished yet." && exit 11
+  grep -q '"description":"Finished",' ${tmpMetadata}
+  r=$?
+  [ $r -ne 0 ] && error "Workflow ${id} is not finished yet." && exit 11
 
-	STARTED_TIME=$( jq '.workflowProcessingEvents | map(select(.description == "PickedUp")) | .[].timestamp' ${tmpMetadata} | tr -d '"')
-	FINISHED_TIME=$( jq '.workflowProcessingEvents | map(select(.description == "Finished")) | .[].timestamp' ${tmpMetadata} | tr -d '"')
+  STARTED_TIME=$( jq '.workflowProcessingEvents | map(select(.description == "PickedUp")) | .[].timestamp' ${tmpMetadata} | tr -d '"')
+  FINISHED_TIME=$( jq '.workflowProcessingEvents | map(select(.description == "Finished")) | .[].timestamp' ${tmpMetadata} | tr -d '"')
 
-	# Make sure that at least 8h have passed since the workflow finished:
+  # Make sure that at least 8h have passed since the workflow finished:
   if [[ "$(uname)" == "Darwin" ]] ; then
     local DATE_CMD=gdate
   else
     local DATE_CMD=date
   fi  
 
-	local ts1=$( $DATE_CMD +%s -d "${FINISHED_TIME}" )
-	local ts2=$( date +%s )
-	local can_check_cost=$( echo "(${ts2} - ${ts1}) >= (3600 * 24)" | bc )
+	local WAITING_PERIOD_s=$(echo "3600 * 24" | bc)
 
-	if [ $can_check_cost -ne 1 ] ; then
+  local ts1=$( $DATE_CMD +%s -d "${FINISHED_TIME}" )
+  local ts2=$( date +%s )
+  local time_diff=$(echo "${ts2} - ${ts1}" | bc)
+  local can_check_cost=$( echo "${time_diff} >= ${WAITING_PERIOD_s}" | bc )
 
-		local total_wait_time_s=$(echo "${ts2} - ${ts1}" | bc)
-		local wait_time_h=$(echo "scale=0;(${ts2} - ${ts1})/3600" | bc)
-		local wait_time_m=$(echo "scale=0;((${ts2} - ${ts1})%3600)/60" | bc)
-		local wait_time_s=$(echo "t=(${ts2} - ${ts1});scale=0;(t%3600)%60" | bc)
+  if [ $can_check_cost -ne 1 ] ; then
 
-		# Format the time:
-		[[ ${#wait_time_h} -lt 2 ]] && wait_time_h="0${wait_time_h}"
-		[[ ${#wait_time_m} -lt 2 ]] && wait_time_m="0${wait_time_m}"
-		[[ ${#wait_time_s} -lt 2 ]] && wait_time_s="0${wait_time_s}"
+		local total_wait_time_s=$(echo "${WAITING_PERIOD_s} - ${time_diff}" | bc)
+    local wait_time_h=$(echo "scale=0;${total_wait_time_s} / 3600" | bc)
+    local wait_time_m=$(echo "scale=0;(${total_wait_time_s} % 3600) / 60" | bc)
+    local wait_time_s=$(echo "scale=0;(${total_wait_time_s} % 3600) % 60" | bc)
 
-		error "Workflow finished less than 24 hours ago.  Cannot check cost.  Please wait ${wait_time_h}h:${wait_time_m}m:${wait_time_s}s and try again." 
-		exit 12
-	fi
+    # Format the time:
+    [[ ${#wait_time_h} -lt 2 ]] && wait_time_h="0${wait_time_h}"
+    [[ ${#wait_time_m} -lt 2 ]] && wait_time_m="0${wait_time_m}"
+    [[ ${#wait_time_s} -lt 2 ]] && wait_time_s="0${wait_time_s}"
 
-	# Generate the start and end dates for our query:
-	START_DATE=$($DATE_CMD +%Y-%m-%d -d "${STARTED_TIME} -1 day")
-	END_DATE=$($DATE_CMD +%Y-%m-%d -d "${FINISHED_TIME} +1 day")
+    error "Workflow finished less than 24 hours ago.  Cannot check cost.  Please wait ${wait_time_h}h:${wait_time_m}m:${wait_time_s}s and try again." 
+    exit 12
+  fi
+
+  # Generate the start and end dates for our query:
+  START_DATE=$($DATE_CMD +%Y-%m-%d -d "${STARTED_TIME} -1 day")
+  END_DATE=$($DATE_CMD +%Y-%m-%d -d "${FINISHED_TIME} +1 day")
 
   error "Using cost table: ${COST_TABLE}"
   error ""
@@ -1568,7 +1571,7 @@ function cost()
 {
   local id=$1
   local svr=$2
-	_cost_helper $id $svr
+  _cost_helper $id $svr
 
   local tmp_cost_file=$( makeTemp )
 
@@ -1577,15 +1580,15 @@ function cost()
   r=$?
 
   # Display the cost:
-	total_cost=$( head -n4 ${tmp_cost_file} | tail -n1 | tr -d '| \t')
-	[[ "${total_cost}" == NULL ]] && error "Could not retrieve cost - no cost entries found." && exit 14
-	echo -n '$'
-	echo "scale=2;${total_cost}/1" | bc
+  total_cost=$( head -n4 ${tmp_cost_file} | tail -n1 | tr -d '| \t')
+  [[ "${total_cost}" == NULL ]] && error "Could not retrieve cost - no cost entries found." && exit 14
+  echo -n '$'
+  echo "scale=2;${total_cost}/1" | bc
 
-	error ""
-	error "Costs rounded to nearest cent (approximately)."
-	error ""
-	error "WARNING: Costs here DO NOT include any call cached tasks."
+  error ""
+  error "Costs rounded to nearest cent (approximately)."
+  error ""
+  error "WARNING: Costs here DO NOT include any call cached tasks."
 
   return $r
 }
@@ -1595,7 +1598,7 @@ function cost-detailed()
 {
   local id=$1
   local svr=$2
-	_cost_helper $id $svr
+  _cost_helper $id $svr
 
   local tmp_cost_file=$( makeTemp )
 
@@ -1618,29 +1621,29 @@ function cost-detailed()
 
   r=$?
 
-	local total_cost=$(awk '{print $2}' ${tmp_cost_file} | tr '\n' '+' | sed 's#$#0#' | bc)
-	local total_cost=$(echo "scale=2;${total_cost}/1" | bc)
+  local total_cost=$(awk '{print $2}' ${tmp_cost_file} | tr '\n' '+' | sed 's#$#0#' | bc)
+  local total_cost=$(echo "scale=2;${total_cost}/1" | bc)
 
-	local tmpf2=$(makeTemp)
-	echo -e "TASK\tCOST" > ${tmpf2}
-	while read line ; do
-		local task=$(echo $line | awk '{print $1}')
-		local task_cost=$(echo $line | awk '{print $2}')
-		task_cost=$(echo "scale=2;if ( ${task_cost} >= 0.01 ) { ${task_cost}/1; } else { 0.01 }" | bc)
-		printf "${task}\t$%02.2f\n" ${task_cost}
-	done < ${tmp_cost_file} >> ${tmpf2}
+  local tmpf2=$(makeTemp)
+  echo -e "TASK\tCOST" > ${tmpf2}
+  while read line ; do
+    local task=$(echo $line | awk '{print $1}')
+    local task_cost=$(echo $line | awk '{print $2}')
+    task_cost=$(echo "scale=2;if ( ${task_cost} >= 0.01 ) { ${task_cost}/1; } else { 0.01 }" | bc)
+    printf "${task}\t$%02.2f\n" ${task_cost}
+  done < ${tmp_cost_file} >> ${tmpf2}
 
-	column -t ${tmpf2} | head -n1
-	local bar_width=$( column -t ${tmpf2} | head -n1 | wc -c )	
-	python -c "print('=' * ${bar_width})"
-	column -t ${tmpf2} | tail -n+2
-	python -c "print('=' * ${bar_width})"
-	echo "Total Cost: \$${total_cost}"
+  column -t ${tmpf2} | head -n1
+  local bar_width=$( column -t ${tmpf2} | head -n1 | wc -c )  
+  python -c "print('=' * ${bar_width})"
+  column -t ${tmpf2} | tail -n+2
+  python -c "print('=' * ${bar_width})"
+  echo "Total Cost: \$${total_cost}"
 
-	error ""
-	error "Costs rounded to nearest cent (approximately)."
-	error ""
-	error "WARNING: Costs here DO NOT include any call cached tasks."
+  error ""
+  error "Costs rounded to nearest cent (approximately)."
+  error ""
+  error "WARNING: Costs here DO NOT include any call cached tasks."
 
   return $r
 }
