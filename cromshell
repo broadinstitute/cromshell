@@ -1124,10 +1124,14 @@ function timing()
   local server_url_for_browser=${2}
   turtle
   echo "Opening timing information in your default web browser for job ID: ${id}"
-  if [[ ${server_url_for_browser} != "http*" ]]; then
+  echo "${server_url_for_browser}" | grep -q "^http"
+  r=$?
+  if [ $r -ne 0 ]; then
     server_url_for_browser="http://${server_url_for_browser}"
   fi
-  open ${server_url_for_browser}/api/workflows/v1/${id}/timing
+  server_url_for_browser=${server_url_for_browser}/api/workflows/v1/${id}/timing
+  open ${server_url_for_browser}
+  echo "URL is: ${server_url_for_browser}"
   return $?
 }
 
