@@ -100,7 +100,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
 
     # Everything checks out, display success to terminal
     log.display_logo(io_utils.turtle)
-    io_utils.pretty_print_json(request_out.text)
+    io_utils.pretty_print_json(request_out.json())
 
     # TODO: Refactor these file manipulations into its own "cleanup" function?
     # If we get here, we successfully submitted the job and should track it locally:
