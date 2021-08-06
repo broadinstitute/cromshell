@@ -6,6 +6,8 @@ import click
 from cromshell.utilities import cromshellconfig
 
 from .abort import command as abort
+from .metadata import command as metadata
+from .slim_metadata import command as slim_metadata
 from .status import command as status
 from .submit import command as submit
 
@@ -44,11 +46,6 @@ LOGGER = logging.getLogger(__name__)
     help="Hide turtle logo",
 )
 @click.option(
-    "--slim_metadata_parameters",
-    type=str,
-    help="Get a subset of the metadata for a workflow",
-)
-@click.option(
     "--cromwell_url",
     type=str,
     help="Specify Cromwell URL used",
@@ -71,7 +68,6 @@ LOGGER = logging.getLogger(__name__)
 def main_entry(
     cromshell_config,
     verbosity,
-    slim_metadata_parameters,
     hide_logo,
     cromwell_url,
     requests_timeout,
@@ -89,7 +85,6 @@ def main_entry(
 
     # Create an object to hold all cromwell configurations
     cromshell_config.obj = cromshellconfig
-    cromshellconfig.override_slim_metadata_parameters(slim_metadata_parameters)
     cromshellconfig.resolve_cromwell_config_server_address(server_user=cromwell_url)
     cromshellconfig.override_requests_cert_parameters(skip_certs=requests_skip_certs)
     cromshellconfig.resolve_requests_connect_timeout(timeout_cli=requests_timeout)
@@ -105,6 +100,8 @@ def version():
 main_entry.add_command(abort.main)
 main_entry.add_command(status.main)
 main_entry.add_command(submit.main)
+main_entry.add_command(slim_metadata.main)
+main_entry.add_command(metadata.main)
 
 
 if __name__ == "__main__":
