@@ -43,7 +43,7 @@ def check_cromwell_server(config, workflow_id):
     # command line argument if the workflow id is found in the submission file.
     cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
 
-    config.cromwell_api_workflow_id = f"{config.cromwell_api}/{workflow_id}"
+    config.cromwell_api_workflow_id = f"{config.get_cromwell_api()}/{workflow_id}"
 
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
