@@ -4,7 +4,8 @@ import os
 import re
 import shutil
 from pathlib import Path
-from pygments import highlight, lexers, formatters
+
+from pygments import formatters, highlight, lexers
 from termcolor import colored
 
 LOGGER = logging.getLogger(__name__)
@@ -122,7 +123,7 @@ def pretty_print_json(format_json: str or dict, add_color: bool = False):
 
 
 def create_directory(
-        dir_path: str or Path, parents: bool = True, exist_ok: bool = False
+    dir_path: str or Path, parents: bool = True, exist_ok: bool = False
 ):
     """Creates a Directory
     - dir_path: full path to directory being created

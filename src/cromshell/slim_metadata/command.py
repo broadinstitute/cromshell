@@ -39,7 +39,7 @@ def main(
     dont_expand_subworkflows: bool,
     exclude_keys: bool,
 ):
-    """Get a subset of the workflow metadata using default keys."""
+    """Get a subset of the workflow metadata."""
 
     LOGGER.info("slim-metadata")
 
