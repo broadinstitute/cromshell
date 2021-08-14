@@ -7,6 +7,7 @@ import click
 import requests
 
 from cromshell import log
+from cromshell.metadata import command as metadata_command
 from cromshell.utilities import cromshellconfig, http_utils, io_utils
 
 LOGGER = logging.getLogger(__name__)
@@ -57,11 +58,18 @@ def main(config, workflow_id):
     elif workflow_status == "Running":
         # Status claims this workflow is running fine, but we need to check to see
         # if there are any failed sub-processes.
-        # To do this, we use the `execution-status-count` logic with some filtering:
-        # TODO : Use this as a template for the Metadata subcommand
-        # Get execution status count and filter the metadata down:
+        # To do this, we get the workflow metadata and search for any failures
+        formatted_metadata_parameter = metadata_command.format_metadata_params(
+            list_of_keys=config.SLIM_METADATA_DEFAULT_KEYS,
+            exclude_keys=False,
+            expand_subworkflows=True,
+        )
+
         request_meta_out = requests.get(
-            f"{config.cromwell_api_workflow_id}/metadata?{config.slim_metadata_parameters}"
+            f"{config.cromwell_api_workflow_id}/metadata",
+            params=formatted_metadata_parameter,
+            timeout=config.requests_connect_timeout,
+            verify=config.requests_verify_certs,
         )
 
         # metadata holds the workflow metadata as a dictionary
