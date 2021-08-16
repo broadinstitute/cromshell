@@ -102,6 +102,7 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
    #### Get cost of a workflow
    Costs are only available for workflows that completed more than 8 hours ago on a `GCS` backend.  
    Requires the `~/.cromshell/gcp_bq_cost_table.config` configuration file to exist and contain the name of the BigQuery cost table for your organization.
+   Also ensure that the default project has been set using `bq init`.
    * `cost [workflow-id] [[workflow-id]...]`
      * Get the cost for a workflow.
    * `cost-detailed [workflow-id] [[workflow-id]...]`
