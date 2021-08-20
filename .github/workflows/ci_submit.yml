@@ -25,18 +25,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev-requirements.txt
 
-      - name: Pull cromwell and mysql dockers
+      - name: Pull and setup mysql dockers
         run: |
-          docker pull broadinstitute/cromwell
-          docker pull mysql
+          docker run -p 3306:3306 --ip=172.17.0.2 --name NameOfTheContainer -e MYSQL_ROOT_PASSWORD=YourPassword -e MYSQL_DATABASE=DatabaseName -e MYSQL_USER=ChooseAName -e MYSQL_PASSWORD=YourOtherPassword -d mysql/mysql-server:5.5
+
+      - name: Pull and setup cromwell docker
+        run: |
+          docker run -p 8000:8000 -v /cromshell/tests/resources/cromwell_application.conf:/cromwell_application.conf -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf” -d broadinstitute/cromwell:66 server
 
       - name: Install Tox
         run: pip install tox
 
-      - name: Run Tox lint commands
+      - name: Run Tox integration tests
         # Run tox using the version of Python in `PATH`
-        run: tox -e lint
-
-      - name: Run Pytest through Tox
-        # Run tox using the version of Python in `PATH`
-        run: tox -e unit
+        run: tox -e integration
