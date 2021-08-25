@@ -1,4 +1,4 @@
-ame: CI
+Name: Integration Tests
 
 # Controls when the action will run.
 # Triggers the workflow on push or pull request events
