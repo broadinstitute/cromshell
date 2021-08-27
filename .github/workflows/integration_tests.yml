@@ -39,7 +39,8 @@ jobs:
           export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$')
           ls
           pwd
-          docker run -p 8000:8000 -v ${PWD}/tests/resources/cromwell_application.conf:/cromwell_application.conf -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" -d broadinstitute/cromwell:${CROMWELL_TAG} server
+          docker run -p 8000:8000 -v ${PWD}/tests/resources/cromwell_application.conf:/cromwell_application.conf --name CromwellContainer -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" -d broadinstitute/cromwell:${CROMWELL_TAG} server
+          docker log CromwellContainer
 
       - name: Install Tox
         run: pip install tox
