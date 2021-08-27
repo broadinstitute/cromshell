@@ -37,12 +37,9 @@ jobs:
         # git release tag 54.1. update regex when possible . ${CROMWELL_TAG}
         run: |
           export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$')
-          ls
-          pwd
           docker run -p 8000:8000 -v ${PWD}/tests/resources/cromwell_application.conf:/cromwell_application.conf --name CromwellContainer -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" -d broadinstitute/cromwell:${CROMWELL_TAG} server
+          # Give cromwell server time to setup
           sleep 1m
-          docker logs CromwellContainer
-          docker ps
 
       - name: Install Tox
         run: pip install tox

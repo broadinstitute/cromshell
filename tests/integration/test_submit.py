@@ -17,8 +17,12 @@ class TestSubmit:
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=True,
         )
+
+        print(result.stdout.decode("utf-8"))
+
+        if result.stderr is not None:
+            print(result.stderr.decode("utf-8"))
 
         assert result.returncode == 0
 
