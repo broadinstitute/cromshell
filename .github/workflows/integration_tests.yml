@@ -36,8 +36,10 @@ jobs:
         # respective git bug fix tag. For example there isn't a 54.1 docker tag for
         # git release tag 54.1. update regex when possible . ${CROMWELL_TAG}
         run: |
-          #export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$')
-          docker run -p 8000:8000 -v /cromshell/tests/resources/cromwell_application.conf:/cromwell_application.conf -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" -d broadinstitute/cromwell:66 server
+          export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$')
+          ls
+          pwd
+          docker run -p 8000:8000 -v /cromshell/tests/resources/cromwell_application.conf:/cromwell_application.conf -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" -d broadinstitute/cromwell:67 server
 
       - name: Install Tox
         run: pip install tox
