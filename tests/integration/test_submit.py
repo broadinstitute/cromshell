@@ -15,7 +15,9 @@ class TestSubmit:
                 "tests/workflows/helloWorld.wdl",
                 "tests/workflows/helloWorld.json",
             ],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
         )
 
         assert result.returncode == 0
