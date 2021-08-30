@@ -1,30 +1,22 @@
-import subprocess
-
 import pytest
+from click.testing import CliRunner
+
+from cromshell.__main__ import main_entry as cromshell
 
 
 class TestSubmit:
     def test_submit(self, local_cromwell_url: str):
 
-        result = subprocess.run(
-            [
-                "cromshell",
-                "--cromwell_url",
-                local_cromwell_url,
-                "submit",
-                "tests/workflows/helloWorld.wdl",
-                "tests/workflows/helloWorld.json",
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        print(result.stdout.decode("utf-8"))
-
-        if result.stderr is not None:
-            print(result.stderr.decode("utf-8"))
-
-        assert result.returncode == 0
+        runner = CliRunner()
+        result = runner.invoke(cromshell,
+                               [
+                                   "--cromwell_url",
+                                   local_cromwell_url,
+                                   "submit",
+                                   "tests/workflows/helloWorld.wdl",
+                                   "tests/workflows/helloWorld.json",
+                               ])
+        assert result.exit_code == 0, f"{result.stdout} \n {result.exception}"
 
     @pytest.fixture
     def local_cromwell_url(self):
