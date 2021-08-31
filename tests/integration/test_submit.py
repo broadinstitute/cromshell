@@ -6,7 +6,7 @@ from cromshell.__main__ import main_entry as cromshell
 
 class TestSubmit:
     @pytest.mark.parametrize(
-        "wdl", "json", "exit_code",
+        "wdl, json, exit_code",
         [
             ("tests/workflows/helloWorld.wdl", "tests/workflows/helloWorld.json", 0),
             ("tests/workflows/helloWorld.wdl", "tests/workflows/not_valid.json", 1),
