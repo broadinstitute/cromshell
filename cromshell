@@ -78,7 +78,12 @@ CROMWELL_SLIM_METADATA_PARAMETERS+="&includeKey=subWorkflowMetadata&includeKey=s
 CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
 
-alias curl='curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
+# CROMSHELL_HEADER can be set externally and can be use to pass things like oauth tokens to curl...
+if [[ -z "${CROMSHELL_HEADER}" ]]; then
+  alias curl='curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
+else
+  alias curl='curl -H "${CROMSHELL_HEADER}" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
+fi
 
 ################################################################################
 
@@ -153,6 +158,9 @@ function usage()
   echo -e "      cromshell status"
   echo -e "      cromshell -t 50 status"
   echo -e "      cromshell logs -2"
+  echo -e ""
+  echo -e "Environment Variables:"
+  echo -e "  CROMSHELL_HEADER       Can be use to pass things like oauth tokens to the request header"
   echo -e ""
   echo -e "Supported Flags:"
   echo -e "  -t TIMEOUT             Set the curl connect timeout to TIMEOUT seconds."
