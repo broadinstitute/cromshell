@@ -25,10 +25,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r dev-requirements.txt
 
-      - name: Install Womtool
-        run: |
-          $CONDA/bin/conda install -y -c bioconda womtool
-          echo "$CONDA/bin" >> $GITHUB_PATH
+#      - name: Install Womtool
+#        run: |
+#          $CONDA/bin/conda install -y -c bioconda womtool
+#          echo "$CONDA/bin" >> $GITHUB_PATH
 
       - name: Pull and setup mysql dockers
         # Parameters set in the command below must be reused in the cromwell
