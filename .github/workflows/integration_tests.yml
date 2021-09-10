@@ -14,7 +14,9 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
+      # Using Conda to install womtool causes the default system python version
+      # to be set to a later version. Placing the Install Womtool step before
+      # Setup Python allows the tox test to run on py version specified in git matrix.
       - name: Install Womtool
         run: |
           $CONDA/bin/conda install -y -c bioconda womtool
