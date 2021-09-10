@@ -11,7 +11,7 @@ class TestSubmit:
             ("tests/workflows/helloWorld.wdl", "tests/workflows/helloWorld.json", 0),
             ("tests/workflows/helloWorld.wdl", "tests/workflows/not_valid.json", 1),
             ("tests/workflows/not_valid.wdl", "tests/workflows/helloWorld.json", 1),
-        ]
+        ],
     )
     def test_submit(self, local_cromwell_url: str, wdl: str, json: str, exit_code: int):
         runner = CliRunner(mix_stderr=False)
@@ -31,6 +31,10 @@ class TestSubmit:
             f"\nTraceback:\n{result.exc_info}"
             f"\nExceptions:\n{result.exception}"
         )
+
+        # Create a directory to hold function input files, using server name
+        # Copy input to run directory
+        # Update config.submission_file_path:
 
     @pytest.fixture
     def local_cromwell_url(self):

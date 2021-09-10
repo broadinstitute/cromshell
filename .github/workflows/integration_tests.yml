@@ -46,13 +46,11 @@ jobs:
           mysql/mysql-server:5.5
 
       - name: Pull and setup cromwell docker
-        # The export line below gets the latest git tag number , which will
-        # later be used to pull the cromwell docker. This can be a failure point if the
-        # latest tag is a bug fix release. Normally a docker image isn't created for the
-        # respective git bug fix tag. For example there isn't a 54.1 docker tag for
-        # git release tag 54.1. update regex when possible . ${CROMWELL_TAG}
         run: |
-          export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$')
+          export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | \
+          grep -o '"tag_name": "[^"]*' | \
+          grep -o '[^"]*$' | \
+          grep -Eo "^[0-9]+")
 
           docker run \
           -p 8000:8000 \
