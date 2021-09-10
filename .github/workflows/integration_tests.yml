@@ -31,8 +31,19 @@ jobs:
           echo "$CONDA/bin" >> $GITHUB_PATH
 
       - name: Pull and setup mysql dockers
+        # Parameters set in the command below must be reused in the cromwell
+        # config file: tests/resources/cromwell_application.conf
         run: |
-          docker run -p 3306:3306 --ip=172.17.0.2 --name NameOfTheContainer -e MYSQL_ROOT_PASSWORD=YourPassword -e MYSQL_DATABASE=DatabaseName -e MYSQL_USER=ChooseAName -e MYSQL_PASSWORD=YourOtherPassword -d mysql/mysql-server:5.5
+          docker run \
+          -p 3306:3306 \
+          --ip=172.17.0.2 \
+          --name NameOfTheContainer \
+          -e MYSQL_ROOT_PASSWORD=YourPassword \
+          -e MYSQL_DATABASE=DatabaseName \
+          -e MYSQL_USER=ChooseAName \
+          -e MYSQL_PASSWORD=YourOtherPassword \
+          -d \
+          mysql/mysql-server:5.5
 
       - name: Pull and setup cromwell docker
         # The export line below gets the latest git tag number , which will
@@ -42,7 +53,14 @@ jobs:
         # git release tag 54.1. update regex when possible . ${CROMWELL_TAG}
         run: |
           export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$')
-          docker run -p 8000:8000 -v ${PWD}/tests/resources/cromwell_application.conf:/cromwell_application.conf --name CromwellContainer -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" -d broadinstitute/cromwell:${CROMWELL_TAG} server
+
+          docker run \
+          -p 8000:8000 \
+          -v ${PWD}/tests/resources/cromwell_application.conf:/cromwell_application.conf \
+          --name CromwellContainer \
+          -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" \
+          -d broadinstitute/cromwell:${CROMWELL_TAG} server
+
           # Give cromwell server time to setup
           sleep 1m
 
