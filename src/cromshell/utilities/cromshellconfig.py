@@ -32,7 +32,6 @@ CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
-local_folder_name = None
 # Request defaults
 requests_connect_timeout = 5
 requests_verify_certs = True
@@ -181,6 +180,11 @@ def get_cromwell_api():
     return f"{cromwell_server}{API_STRING}"
 
 
+def get_local_folder_name():
+    """Return a string combining the cromwell server without http/https"""
+    return cromwell_server.replace("https://", "").replace("http://", "")
+
+
 def resolve_requests_connect_timeout(timeout_cli: int):
     """Override the default request timeout duration.
 
@@ -220,4 +224,3 @@ cromshell_config_options = __load_cromshell_config_file(
     config_dir, CROMSHELL_CONFIG_FILE_NAME, CROMSHELL_CONFIG_OPTIONS_TEMPLATE
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
-local_folder_name = cromwell_server.replace("https://", "").replace("http://", "")
