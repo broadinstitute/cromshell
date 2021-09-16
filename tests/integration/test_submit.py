@@ -2,6 +2,7 @@ import pytest
 from click.testing import CliRunner
 
 from cromshell.__main__ import main_entry as cromshell
+from traceback import print_exception
 
 
 class TestSubmit:
@@ -28,8 +29,8 @@ class TestSubmit:
         assert result.exit_code == exit_code, (
             f"\nSTDOUT:\n{result.stdout}"
             f"\nSTDERR:\n{result.stderr}"
-            f"\nTraceback:\n{result.exc_info}"
             f"\nExceptions:\n{result.exception}"
+            f"\n{print_exception(*result.exc_info)}"
         )
 
         # Create a directory to hold function input files, using server name
