@@ -27,7 +27,7 @@ cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
-SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
+SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\n"
 CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
@@ -123,8 +123,13 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
 
 def __get_config_dir():
     """Get Path To Cromshell Hidden Directory"""
-
-    config_path = os.path.join(Path.home(), ".cromshell")
+    if os.environ.get("TOX_WORK_DIR"):
+        LOGGER.info(
+            "Detected Tox environment, using TMPDIR as configuration directory."
+        )
+        config_path = os.path.join(os.environ.get("TMPDIR"), ".cromshell")
+    else:
+        config_path = os.path.join(Path.home(), ".cromshell")
     Path.mkdir(Path(config_path), exist_ok=True)
     return config_path
 
