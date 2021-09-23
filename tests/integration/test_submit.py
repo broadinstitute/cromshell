@@ -1,4 +1,5 @@
 import os
+import re
 
 import pytest
 from click.testing import CliRunner
@@ -10,6 +11,7 @@ from pathlib import Path
 
 
 class TestSubmit:
+    workflow_id = None  # Anyway to avoid using global variables?
     @pytest.mark.parametrize(
         "wdl, json_file, exit_code",
         [
@@ -45,9 +47,43 @@ class TestSubmit:
             )
 
             # Check if workflow id added to local database file
-            # if exit_code == 0:
-            #     stdout_dict = json.loads(str(result.stdout).strip())
-            #     assert stdout_dict == "lawl"
+            if exit_code == 0:
+                pattern = "{.*}"
+                try:
+                    result_stdout_substring = re.search(
+                            pattern, result.stdout, re.DOTALL  # Dotall to match '\n'
+                        ).group(0)
+                except AttributeError:
+                    print("Trouble extracting json in stdout")
+                    print(repr(result.stdout))
+                    print(result_stdout_substring)
+
+                stdout_substring_formatted = json.loads(result_stdout_substring)
+                global workflow_id
+                workflow_id = stdout_substring_formatted['id']
+
+    def test_workflow_id_in_db(self, local_hidden_cromshell_folder):
+        global workflow_id
+        string1 = workflow_id
+
+        # opening a text file
+        local_db_file = str(local_hidden_cromshell_folder)+"/all.workflow.database.tsv"
+        file1 = open(local_db_file, "r")
+
+        # read file content
+        readfile = file1.read()
+
+        # checking condition for string found or not
+        if string1 in readfile:
+            print('String', string1, 'Found In File')
+            found=True
+        else:
+            print('String', string1, 'Not Found')
+            found=False
+
+            # closing a file
+        file1.close()
+        assert found
 
     def test_submit_cromshell_folders_created(
             self, local_server_folder, local_hidden_cromshell_folder
