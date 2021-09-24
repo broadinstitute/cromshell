@@ -68,5 +68,7 @@ jobs:
         run: pip install tox
 
       - name: Run Tox integration tests
+        env:
+          TMPDIR: /tmp/ # Used to create cromshell config dir in cromshellconfig.py
         # Run tox using the version of Python in `PATH`
         run: tox -e integration

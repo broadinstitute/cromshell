@@ -132,10 +132,9 @@ def __get_config_dir():
             )
             config_path = os.path.join(os.environ.get("TMPDIR"), ".cromshell")
         else:
-            LOGGER.info(
-                "Detected Tox environment, using /tmp/ as configuration directory."
+            LOGGER.error(
+                "Detected Tox environment but no env TMPDIR was set."
             )
-            config_path = os.path.join("/tmp/", ".cromshell")
     else:
         config_path = os.path.join(Path.home(), ".cromshell")
     Path.mkdir(Path(config_path), exist_ok=True)
