@@ -123,11 +123,19 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
 
 def __get_config_dir():
     """Get Path To Cromshell Hidden Directory"""
+
+    # Tox env detected then use TMPDIR, TMPDIR does not exist then use /tmp/
     if os.environ.get("TOX_WORK_DIR"):
-        LOGGER.info(
-            "Detected Tox environment, using TMPDIR as configuration directory."
-        )
-        config_path = os.path.join(os.environ.get("TMPDIR"), ".cromshell")
+        if os.environ.get("TMPDIR"):
+            LOGGER.info(
+                "Detected Tox environment, using TMPDIR as configuration directory."
+            )
+            config_path = os.path.join(os.environ.get("TMPDIR"), ".cromshell")
+        else:
+            LOGGER.info(
+                "Detected Tox environment, using /tmp/ as configuration directory."
+            )
+            config_path = os.path.join("/tmp/", ".cromshell")
     else:
         config_path = os.path.join(Path.home(), ".cromshell")
     Path.mkdir(Path(config_path), exist_ok=True)
