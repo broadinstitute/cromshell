@@ -97,9 +97,14 @@ class TestCromshellConfig:
         reload(cromshellconfig)
         assert cromshellconfig.config_dir is not None, "Config variable should be set"
 
-        assert cromshellconfig.config_dir == os.path.join(
-            Path.home(), ".cromshell"
-        ), "Config file variable path should be in .cromshell"
+        path_to_home_folder = os.path.join(Path.home(), ".cromshell")
+        path_to_tmp_folder = os.path.join(os.environ.get("TMPDIR"), ".cromshell")
+        assert (
+            cromshellconfig.config_dir == path_to_home_folder or path_to_tmp_folder
+        ), (
+            f"Config file variable path should be {path_to_home_folder} "
+            f"or {path_to_tmp_folder}"
+        )
 
         assert Path(
             cromshellconfig.config_dir
@@ -111,12 +116,19 @@ class TestCromshellConfig:
             cromshellconfig.submission_file_path is not None
         ), "Submission file variable should be set "
 
-        path_to_submission = os.path.join(
+        path_to_home_submission = os.path.join(
             Path.home(), ".cromshell", cromshellconfig.SUBMISSION_FILE_NAME
         )
+        path_to_tmp_submission = os.path.join(
+            os.environ.get("TMPDIR"), ".cromshell", cromshellconfig.SUBMISSION_FILE_NAME
+        )
         assert (
-            cromshellconfig.submission_file_path == path_to_submission
-        ), f"Submission file path should be {path_to_submission} "
+            cromshellconfig.submission_file_path == path_to_home_submission
+            or path_to_tmp_submission
+        ), (
+            f"Submission file path should be {path_to_home_submission} or "
+            f"{path_to_tmp_submission}"
+        )
 
         assert Path(
             cromshellconfig.submission_file_path
