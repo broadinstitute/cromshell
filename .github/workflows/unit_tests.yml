@@ -43,5 +43,7 @@ jobs:
         run: tox -e lint
 
       - name: Run Pytest through Tox
+        env:
+          TMPDIR: /tmp/  # Used to create cromshell config dir in cromshellconfig.py
         # Run tox using the version of Python in `PATH`
         run: tox -e unit
