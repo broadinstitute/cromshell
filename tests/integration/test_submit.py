@@ -1,6 +1,5 @@
 import json
 import os
-import re
 from pathlib import Path
 from traceback import print_exception
 
@@ -35,6 +34,7 @@ class TestSubmit:
                 [
                     "--cromwell_url",
                     local_cromwell_url,
+                    "--hide_logo",
                     "submit",
                     absolute_wdl,
                     absolute_json,
@@ -49,18 +49,7 @@ class TestSubmit:
 
             # If submission passed get workflow id and set workflow id global variable
             if exit_code == 0:
-                # Using regex to match json output from stdout
-                pattern = "{.*}"
-                try:
-                    result_stdout_substring = re.search(
-                        pattern, result.stdout, re.DOTALL  # Dotall to match '\n'
-                    ).group(0)
-                except AttributeError:
-                    print("Trouble extracting json in stdout")
-                    print(repr(result.stdout))
-                    print(result_stdout_substring)
-
-                stdout_substring_formatted = json.loads(result_stdout_substring)
+                stdout_substring_formatted = json.loads(result.stdout)
                 TestSubmit.workflow_id = stdout_substring_formatted["id"]
 
     def test_workflow_id_in_db(
