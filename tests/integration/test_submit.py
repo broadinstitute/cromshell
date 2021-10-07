@@ -106,7 +106,7 @@ class TestSubmit:
 
     @pytest.fixture
     def local_hidden_cromshell_folder(self):
-        return Path(os.environ.get("TMPDIR")).joinpath(".cromshell")
+        return Path(os.environ.get("CROMSHELL_DIR")).joinpath(".cromshell")
 
     @pytest.fixture
     def local_workflow_database_tsv(self, local_hidden_cromshell_folder):
