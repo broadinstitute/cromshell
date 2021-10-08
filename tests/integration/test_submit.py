@@ -61,6 +61,7 @@ def workflow_id_in_txt_db(result, local_workflow_database_tsv: Path):
 
 
 class TestSubmit:
+    @pytest.mark.dependency(name="test_submit")
     @pytest.mark.parametrize(
         "wdl, json_file, exit_code",
         [
@@ -92,6 +93,7 @@ class TestSubmit:
                 result=result, local_workflow_database_tsv=local_workflow_database_tsv
             )
 
+    @pytest.mark.dependency(depends=["test_submit"])
     def test_submit_cromshell_folders_created(
         self, local_server_folder, local_hidden_cromshell_folder
     ):
