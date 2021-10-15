@@ -52,12 +52,9 @@ def workflow_id_in_txt_db(result, local_workflow_database_tsv: Path):
         # read file content
         readfile = file1.read()
         # checking condition for string found or not
-        if test_workflow_id in readfile:
-            found = True
-        else:
-            found = False
-
-        assert found, "Workflow ID was not found in /all.workflow.database.tsv"
+        assert (
+            test_workflow_id in readfile
+        ), "Workflow ID was not found in /all.workflow.database.tsv"
 
 
 class TestSubmit:

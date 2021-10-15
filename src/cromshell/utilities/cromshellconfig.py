@@ -124,19 +124,19 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
 def __get_config_dir():
     """Get Path To Cromshell Hidden Directory"""
 
-    # If env CROMSHELL_DIR set then use for cromshell hidden dir else use home dir.
-    if os.environ.get("CROMSHELL_DIR"):
+    # If env CROMSHELL_CONFIG set then use for cromshell hidden dir else use home dir.
+    if os.environ.get("CROMSHELL_CONFIG"):
         LOGGER.info(
-            "Detected 'CROMSHELL_DIR' in environment, using {config_path} as "
+            "Detected 'CROMSHELL_CONFIG' in environment, using {config_path} as "
             "cromshell hidden directory."
         )
-        config_path = os.path.join(os.environ.get("CROMSHELL_DIR"), ".cromshell")
+        config_path = os.path.join(os.environ.get("CROMSHELL_CONFIG"), ".cromshell")
 
     else:
         config_path = os.path.join(Path.home(), ".cromshell")
 
     Path.mkdir(Path(config_path), exist_ok=True, parents=True)
-    LOGGER.info(f"Cromshell hidden directory set to {config_path}.")
+    LOGGER.info(f"Cromshell config directory set to {config_path}.")
 
     return config_path
 
