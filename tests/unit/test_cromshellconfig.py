@@ -97,9 +97,9 @@ class TestCromshellConfig:
         reload(cromshellconfig)
         assert cromshellconfig.config_dir is not None, "Config variable should be set"
 
-        if os.environ.get("CROMSHELL_DIR"):
+        if os.environ.get("CROMSHELL_CONFIG"):
             path_to_hidden_folder = os.path.join(
-                os.environ.get("CROMSHELL_DIR"), ".cromshell"
+                os.environ.get("CROMSHELL_CONFIG"), ".cromshell"
             )
         else:
             path_to_hidden_folder = os.path.join(Path.home(), ".cromshell")
@@ -118,9 +118,9 @@ class TestCromshellConfig:
             cromshellconfig.submission_file_path is not None
         ), "Submission file variable should be set "
 
-        if os.environ.get("CROMSHELL_DIR"):
+        if os.environ.get("CROMSHELL_CONFIG"):
             path_to_hidden_submission = os.path.join(
-                os.environ.get("CROMSHELL_DIR"),
+                os.environ.get("CROMSHELL_CONFIG"),
                 ".cromshell",
                 cromshellconfig.SUBMISSION_FILE_NAME,
             )
