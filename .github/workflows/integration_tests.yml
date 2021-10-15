@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install Dev Requirments
+      - name: Install Dev Requirements
         run: |
           python -m pip install --upgrade pip
           pip install -r dev-requirements.txt
