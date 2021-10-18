@@ -17,14 +17,14 @@ setup(
     install_requires="""
     dataclasses
     termcolor
-    click
+    click>=8.0.0
     requests
     pygments
     """.split(
         "\n"
     ),
     tests_require=["coverage", "pytest"],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     packages=find_packages("src"),
     package_dir={"": "src"},
     classifiers=[
@@ -33,9 +33,9 @@ setup(
         "License :: OSI Approved :: BSD 3-Clause",
         "Natural Language :: English",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
     entry_points={"console_scripts": ["cromshell=cromshell.__main__:main_entry"]},

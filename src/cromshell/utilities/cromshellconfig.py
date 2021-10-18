@@ -27,12 +27,11 @@ cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
-SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS"
+SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\n"
 CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
 cromwell_server = None
-local_folder_name = None
 # Request defaults
 requests_connect_timeout = 5
 requests_verify_certs = True
@@ -125,8 +124,20 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
 def __get_config_dir():
     """Get Path To Cromshell Hidden Directory"""
 
-    config_path = os.path.join(Path.home(), ".cromshell")
-    Path.mkdir(Path(config_path), exist_ok=True)
+    # If env CROMSHELL_CONFIG set then use for cromshell hidden dir else use home dir.
+    if os.environ.get("CROMSHELL_CONFIG"):
+        LOGGER.info(
+            "Detected 'CROMSHELL_CONFIG' in environment, using {config_path} as "
+            "cromshell hidden directory."
+        )
+        config_path = os.path.join(os.environ.get("CROMSHELL_CONFIG"), ".cromshell")
+
+    else:
+        config_path = os.path.join(Path.home(), ".cromshell")
+
+    Path.mkdir(Path(config_path), exist_ok=True, parents=True)
+    LOGGER.info(f"Cromshell config directory set to {config_path}.")
+
     return config_path
 
 
@@ -181,6 +192,11 @@ def get_cromwell_api():
     return f"{cromwell_server}{API_STRING}"
 
 
+def get_local_folder_name():
+    """Return a string combining the cromwell server without http/https"""
+    return cromwell_server.replace("https://", "").replace("http://", "")
+
+
 def resolve_requests_connect_timeout(timeout_cli: int):
     """Override the default request timeout duration.
 
@@ -220,4 +236,3 @@ cromshell_config_options = __load_cromshell_config_file(
     config_dir, CROMSHELL_CONFIG_FILE_NAME, CROMSHELL_CONFIG_OPTIONS_TEMPLATE
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
-local_folder_name = cromwell_server.replace("https://", "").replace("http://", "")

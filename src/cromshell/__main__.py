@@ -73,6 +73,14 @@ def main_entry(
     requests_timeout,
     requests_skip_certs,
 ):
+    """
+    Cromshell is a script for submitting workflows to a
+    cromwell server and monitoring / querying their results.\n
+    Notes:\n
+        - A hidden folder will be created on initial run. The hidden folder
+    (.../.cromshell) will be placed in users home directory but can be overridden
+    by setting environment variable 'CROMSHELL_CONFIG'.
+    """
     # Set up our log verbosity
     from . import log  # pylint: disable=C0415
 

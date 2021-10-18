@@ -33,7 +33,7 @@ def configure_logging(verbosity):
     # Set logging level:
     log_level = logging.INFO
     if verbosity:
-        log_level = verbosity
+        log_level = int(verbosity)
 
     # Create our basic config:
     logging.basicConfig(level=log_level, format=format_string)

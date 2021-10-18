@@ -105,8 +105,9 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
     # TODO: Refactor these file manipulations into its own "cleanup" function?
     # If we get here, we successfully submitted the job and should track it locally:
     # 1. Create a directory to hold function input files, using server name
+    server_folder_name = config.get_local_folder_name()
     run_directory = Path(config.config_dir).joinpath(
-        config.local_folder_name, workflow_status["id"]
+        server_folder_name, workflow_status["id"]
     )
     io_utils.create_directory(run_directory)
 

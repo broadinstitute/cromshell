@@ -1,0 +1,72 @@
+name: Integration Tests
+
+# Controls when the action will run.
+# Triggers the workflow on push or pull request events
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [ 3.7, 3.8, 3.9 ]
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      # Using Conda to install womtool causes the default system python version
+      # to be set to a later version. Placing the Install Womtool step before
+      # Setup Python allows the tox test to run on py version specified in git matrix.
+      - name: Install Womtool
+        run: |
+          $CONDA/bin/conda install -y -c bioconda womtool
+          echo "$CONDA/bin" >> $GITHUB_PATH
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install Dev Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r dev-requirements.txt
+
+      - name: Pull and setup mysql dockers
+        # Parameters set in the command below must be reused in the cromwell
+        # config file: tests/resources/cromwell_application.conf
+        run: |
+          docker run \
+          -p 3306:3306 \
+          --ip=172.17.0.2 \
+          --name NameOfTheContainer \
+          -e MYSQL_ROOT_PASSWORD=YourPassword \
+          -e MYSQL_DATABASE=DatabaseName \
+          -e MYSQL_USER=ChooseAName \
+          -e MYSQL_PASSWORD=YourOtherPassword \
+          -d \
+          mysql/mysql-server:5.5
+
+      - name: Pull and setup cromwell docker
+        run: |
+          export CROMWELL_TAG=$(curl -s https://api.github.com/repos/broadinstitute/cromwell/releases/latest | \
+          grep -o '"tag_name": "[^"]*' | \
+          grep -o '[^"]*$' | \
+          grep -Eo "^[0-9]+")
+
+          docker run \
+          -p 8000:8000 \
+          -v ${PWD}/tests/resources/cromwell_application.conf:/cromwell_application.conf \
+          --name CromwellContainer \
+          -e JAVA_OPTS="-Dconfig.file=/cromwell_application.conf" \
+          -d broadinstitute/cromwell:${CROMWELL_TAG} server
+
+          # Give cromwell server time to setup
+          sleep 1m
+
+      - name: Install Tox
+        run: pip install tox
+
+      - name: Run Tox integration tests
+        # Run tox using the version of Python in `PATH`
+        run: tox -e integration

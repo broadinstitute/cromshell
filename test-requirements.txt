@@ -1,3 +1,9 @@
 pytest
 pytest-cov
+pytest-dependency
 coverage >= 4.5
+click>=8.0.0
+requests
+termcolor
+requests
+pygments
