@@ -3,7 +3,7 @@
 ################################################################################
 
 # Setup variables for the script:
-UNALIASED_SCRIPT_NAME=$( python -c "import os;print (os.path.realpath(\"${BASH_SOURCE[0]}\"))" )
+UNALIASED_SCRIPT_NAME=$( realpath ${0##*/} )
 SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
@@ -129,6 +129,13 @@ function turtleDead()
   error "${COLOR_FAILED}     / (\\‾\\‾|‾/‾/‾/‾     ${COLOR_NORM}"
   error "${COLOR_FAILED}    \\‾x/ ˙'-;-;-'˙       ${COLOR_NORM}"
   error "${COLOR_FAILED}     ‾‾                  ${COLOR_NORM}"
+}
+
+function echoBar()
+{
+    length=$1
+    bar="$(for (( i=1; i<=$length; i++ )); do echo -n '='; done)"
+    echo $bar
 }
 
 ################################################################################
@@ -1647,9 +1654,9 @@ function cost-detailed()
 
   column -t ${tmpf2} | head -n1
   local bar_width=$( column -t ${tmpf2} | head -n1 | wc -c )  
-  python -c "print('=' * ${bar_width})"
+  echoBar ${bar_width}
   column -t ${tmpf2} | tail -n+2
-  python -c "print('=' * ${bar_width})"
+  echoBar ${bar_width}
   echo "Total Cost: \$${total_cost}"
 
   error ""
