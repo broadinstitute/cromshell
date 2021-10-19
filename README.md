@@ -116,6 +116,7 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
  You may omit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs, e.g. "-1" will track the last job, "-2" will track the one before that, and so on.
  * You can override the default cromwell server by setting the environmental variable `CROMWELL_URL` to the appropriate URL.
  * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromwell status -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
+ * You can supply additional headers to Cromshell REST calls by setting the environmental variable `CROMSHELL_HEADER`. This is useful if your Cromwell server is fronted by an auth server that authenticates access using bearer tokens before forwarding requests onto the Cromwell API. For example: `CROMSHELL_HEADER="Authorization: Bearer 3e2f34f2e..."`
 
  ### Code Conventions:
  Please try to follow these conventions when editing cromshell.
