@@ -99,7 +99,16 @@ Current version: 2.0.0
 
 ## Installation
 
+    git clone git@github.com:broadinstitute/cromshell.git
+    cd cromshell
+    git checkout cromshell_2.0
     pip install .
+
+    cromshell-alpha --help
+
+## Uninstallation
+
+    pip uninstall cromshell-alpha
 
 ## Development
 

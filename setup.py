@@ -38,6 +38,6 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    entry_points={"console_scripts": ["cromshell=cromshell.__main__:main_entry"]},
+    entry_points={"console_scripts": ["cromshell-alpha=cromshell.__main__:main_entry"]},
     include_package_data=True,
 )
