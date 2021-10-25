@@ -17,10 +17,10 @@ Current version: 2.0.0
 ## Examples:
 
 ```
-         cromshell submit workflow.wdl inputs.json options.json dependencies.zip
-         cromshell status
-         cromshell -t 20 metadata
-         cromshell logs -2
+         cromshell-alpha submit workflow.wdl inputs.json options.json dependencies.zip
+         cromshell-alpha status
+         cromshell-alpha -t 20 metadata
+         cromshell-alpha logs -2
 ```
 
 ## Supported Flags:
@@ -127,7 +127,7 @@ the following commands:
 
 After following the above development environment setup steps, simply type
 ```
-cromshell
+cromshell-alpha
 ```
 Note that there is no leading `./` in this command.  This is due to the 
 development setup adding the cromshell python script to your path.
