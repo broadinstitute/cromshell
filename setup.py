@@ -15,7 +15,6 @@ setup(
     license="BSD 3-Clause",
     long_description=open("README.md").read(),
     install_requires="""
-    dataclasses
     termcolor
     click>=8.0.0
     requests
