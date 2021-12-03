@@ -45,7 +45,9 @@ def main(config, workflow_id: str or int, alias: str):
     return 0
 
 
-def run_alias_pre_checks(alias_name: str, workflow_id: str, submission_file_path: str):
+def run_alias_pre_checks(
+    alias_name: str, workflow_id: str, submission_file_path: str
+) -> None:
     """Do several checks with input confirm it fine to create the alias"""
 
     # check if provided alias contains white spaces or start with a dash
@@ -94,7 +96,7 @@ def alias_exists(alias_name: str, submission_file) -> bool:
 
 def set_alias_for_workflow_id(
     alias_name: str, workflow_id: str, submission_file_path: str
-):
+) -> None:
     """Set the alias name of a workflow id in the submission file"""
 
     LOGGER.info("Setting workflow %s alias to '%s'", workflow_id, alias_name)
