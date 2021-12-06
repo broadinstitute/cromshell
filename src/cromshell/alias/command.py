@@ -48,7 +48,13 @@ def main(config, workflow_id: str or int, alias: str):
 def run_alias_pre_checks(
     alias_name: str, workflow_id: str, submission_file_path: str
 ) -> None:
-    """Do several checks with input confirm it fine to create the alias"""
+    """
+    Do several checks with input confirm it fine to create the alias
+    :param alias_name: Alternate string identifier for workflow submission
+    :param workflow_id: Hexadecimal identifier of workflow
+    :param submission_file_path: Path to cromshell submission file
+    :return:
+    """
 
     # check if provided alias contains white spaces or start with a dash
     if not alias_is_valid(alias_name):
@@ -75,17 +81,31 @@ def run_alias_pre_checks(
             f"Could not find workflow id {workflow_id} in submission file."
         )
 
+    # check if workflow id already has alias, if so print a warning message
+    check_workflow_has_alias(
+        workflow_id=workflow_id, submission_file=submission_file_path
+    )
+
 
 def alias_is_valid(alias_name: str) -> bool:
-    """Check if alias name starts with '-' or has a whitespace char"""
-    if alias_name.startswith("-") or " " in alias_name:
+    """
+    Check if alias name starts with '-' or has a whitespace char
+    :param alias_name: Alternate string identifier for workflow submission
+    :return:
+    """
+    if alias_name.startswith("-") or " " in alias_name or alias_name.isdigit():
         return False
     else:
         return True
 
 
 def alias_exists(alias_name: str, submission_file) -> bool:
-    """Check if alias name already exists in submission file"""
+    """
+    Check if alias name already exists in submission file
+    :param alias_name: Alternate string identifier for workflow submission
+    :param submission_file: Path to cromshell submission file
+    :return:
+    """
     with open(submission_file, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
@@ -94,10 +114,36 @@ def alias_exists(alias_name: str, submission_file) -> bool:
         return False
 
 
+def check_workflow_has_alias(workflow_id: str, submission_file: str) -> None:
+    """
+    Checks if workflow id has alias listed in submission file, print warning if so.
+    :param workflow_id: Hexadecimal identifier of workflow
+    :param submission_file: Path to cromshell submission file
+    :return:
+    """
+
+    with open(submission_file, "r") as csv_file:
+        reader = csv.DictReader(csv_file, delimiter="\t")
+        for row in reader:
+            if row["RUN_ID"] == workflow_id:
+                if row["ALIAS"] is not None:
+                    LOGGER.warning(
+                        "Workflow already has alias, its current "
+                        "alias '%s' will be replaced",
+                        row["ALIAS"],
+                    )
+
+
 def set_alias_for_workflow_id(
     alias_name: str, workflow_id: str, submission_file_path: str
 ) -> None:
-    """Set the alias name of a workflow id in the submission file"""
+    """
+    Set the alias name of a workflow id in the submission file
+    :param alias_name: Alternate string identifier for workflow submission
+    :param workflow_id: Hexadecimal identifier of workflow
+    :param submission_file_path: Path to cromshell submission file
+    :return:
+    """
 
     LOGGER.info("Setting workflow %s alias to '%s'", workflow_id, alias_name)
 
