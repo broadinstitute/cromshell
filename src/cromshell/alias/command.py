@@ -69,7 +69,9 @@ def run_alias_pre_checks(
 
     # check if alias already exists
     if alias_exists(alias_name=alias_name, submission_file=submission_file_path):
-        LOGGER.error("Can't use %s as alias, as it is already being used.", alias_name)
+        LOGGER.error(
+            "Can't use '%s' as alias, as it is already being used.", alias_name
+        )
         raise ValueError(f"Alias already exists: {alias_name} ")
 
     # check if workflow id exists
@@ -109,7 +111,7 @@ def alias_exists(alias_name: str, submission_file) -> bool:
     with open(submission_file, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
-            if row["ALIAS"] == alias_name:
+            if (row["ALIAS"] == alias_name) and (row["ALIAS"] != ""):
                 return True
         return False
 
