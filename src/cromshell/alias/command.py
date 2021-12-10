@@ -25,7 +25,8 @@ def main(config, workflow_id: str or int, alias: str):
     LOGGER.info("alias")
 
     resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
-        cromshell_input=workflow_id
+        cromshell_input=workflow_id,
+        submission_file_path=config.submission_file_path,
     )
 
     # Perform Checks

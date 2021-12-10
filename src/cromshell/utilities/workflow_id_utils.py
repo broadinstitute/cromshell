@@ -6,30 +6,38 @@ from cromshell.utilities import cromshellconfig, io_utils
 LOGGER = logging.getLogger(__name__)
 
 
-def resolve_workflow_id(cromshell_input: str) -> str:
+def resolve_workflow_id(cromshell_input: str, submission_file_path: str) -> str:
     """
     Uses input provided by user when running cromshell to identify and return the
     workflow id from cromshell's submission file
     :param cromshell_input: User's provided input (digit or alias) in cromshell command
+    :param submission_file_path: path to all.workflow.database.tsv
     :return: workflow id
     """
     if io_utils.is_workflow_id_valid(cromshell_input):
         return cromshell_input
     elif cromshell_input.strip("-").isdigit():
-        return obtain_workflow_id_using_digit(int(cromshell_input))
+        return obtain_workflow_id_using_digit(
+            relative_id=int(cromshell_input),
+            submission_file_path=submission_file_path,
+        )
     else:
-        return obtain_workflow_id_using_alias(cromshell_input)
+        return obtain_workflow_id_using_alias(
+            alias_name=cromshell_input,
+            submission_file_path=submission_file_path,
+        )
 
 
-def obtain_workflow_id_using_digit(relative_id: int) -> str:
+def obtain_workflow_id_using_digit(relative_id: int, submission_file_path: str) -> str:
     """
     Get workflow id from submission file using relative_id.
     :param relative_id: digit representative of the row of the desired
     row from submission file.
+    :param submission_file_path: path to all.workflow.database.tsv
     :return: workflow id
     """
     LOGGER.info("Get workflow id from submission file using relative_id.")
-    with open(cromshellconfig.submission_file_path, "r") as csv_file:
+    with open(submission_file_path, "r") as csv_file:
 
         reader = csv.DictReader(csv_file, delimiter="\t")
         total_rows = len(list(reader))
@@ -61,14 +69,15 @@ def obtain_workflow_id_using_digit(relative_id: int) -> str:
         )
 
 
-def obtain_workflow_id_using_alias(alias_name: str) -> str:
+def obtain_workflow_id_using_alias(alias_name: str, submission_file_path: str) -> str:
     """
     Get workflow id from submission file using alias
     :param alias_name: alias to search in submission file
+    :param submission_file_path: path to all.workflow.database.tsv
     :return: workflow id
     """
     LOGGER.info("Get workflow id from submission file using alias.")
-    with open(cromshellconfig.submission_file_path, "r") as csv_file:
+    with open(submission_file_path, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
             if row["ALIAS"] == alias_name:
