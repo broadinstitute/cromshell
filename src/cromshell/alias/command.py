@@ -1,5 +1,4 @@
 import csv
-import fileinput
 import logging
 
 import click
@@ -136,29 +135,3 @@ def check_workflow_has_alias(workflow_id: str, submission_file: str) -> None:
                         "alias '%s' will be replaced",
                         row["ALIAS"],
                     )
-
-
-def set_alias_for_workflow_id(
-    alias_name: str, workflow_id: str, submission_file_path: str
-) -> None:
-    """
-    Set the alias name of a workflow id in the submission file
-    :param alias_name: Alternate string identifier for workflow submission
-    :param workflow_id: Hexadecimal identifier of workflow submission
-    :param submission_file_path: Path to cromshell submission file
-    :return:
-    """
-
-    LOGGER.info("Setting workflow %s alias to '%s'", workflow_id, alias_name)
-
-    with fileinput.FileInput(
-        submission_file_path, inplace=True, backup=".bak"
-    ) as csv_file:
-        reader = csv.DictReader(csv_file, delimiter="\t")
-        print("\t".join(reader.fieldnames))
-        for row in reader:
-            if row["RUN_ID"] == workflow_id:
-                row["ALIAS"] = alias_name
-                print("\t".join(x for x in row.values() if x))
-            else:
-                print("\t".join(x for x in row.values() if x))

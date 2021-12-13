@@ -177,7 +177,7 @@ def update_all_workflow_database_tsv(
     :return:
     """
 
-    available_columns = ["RUN_ID", "STATUS", "ALIAS", "WDL_NAME", "CROMWELL_SERVER"]
+    available_columns = ["STATUS", "ALIAS", "WDL_NAME", "CROMWELL_SERVER"]
     if column_to_update not in available_columns:
         raise ValueError(
             f"Invalid column_to_update: '{column_to_update}'. "
