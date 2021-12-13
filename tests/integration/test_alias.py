@@ -11,7 +11,7 @@ from cromshell.__main__ import main_entry as cromshell
 
 
 def run_cromshell_alias(workflow_id: str, alias_name: str, exit_code: int):
-    """Run cromshell submit using CliRunner and assert job is successful"""
+    """Run cromshell alias using CliRunner and assert job is successful"""
 
     runner = CliRunner(mix_stderr=False)
     # The absolute path will be passed to the invoke command because
