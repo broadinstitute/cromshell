@@ -1,5 +1,3 @@
-import csv
-import shutil
 from pathlib import Path
 
 import pytest
@@ -73,30 +71,3 @@ class TestAlias:
             assert record.levelname == "WARNING"
             if alias_existence:
                 assert "Workflow already has alias, its current alias" in caplog.text
-
-    # 'tmp_path' is a default pytest fixture
-    def test_set_alias_for_workflow_id(
-        self, mock_data_path, submission_file, tmp_path
-    ) -> None:
-
-        alias_name = "wonderwoman"
-        workflow_id = "b3b197b3-fdca-4647-9fd8-bf16d2cb734d"
-        temp_submission_file = str(tmp_path) + "/submission_file.text"
-
-        # Copy submission file template to temp dir
-        shutil.copyfile(submission_file, temp_submission_file)
-
-        # Run function to change alias using the temp submission file
-        alias_command.set_alias_for_workflow_id(
-            alias_name=alias_name,
-            workflow_id=workflow_id,
-            submission_file_path=temp_submission_file,
-        )
-
-        # Open the temp submission file that was recently updated and compare the last
-        # the alias name of the workflow id
-        with open(temp_submission_file, "r") as csv_file:
-            reader = csv.DictReader(csv_file, delimiter="\t")
-            for row in reader:
-                if row["RUN_ID"] == workflow_id:
-                    assert row["ALIAS"] == alias_name

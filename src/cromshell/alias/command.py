@@ -4,7 +4,7 @@ import logging
 
 import click
 
-from cromshell.utilities import workflow_id_utils
+from cromshell.utilities import io_utils, workflow_id_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,10 +37,11 @@ def main(config, workflow_id: str or int, alias: str):
     )
 
     # Set workflow id with given alias
-    set_alias_for_workflow_id(
-        alias_name=alias,
+    io_utils.update_all_workflow_database_tsv(
+        workflow_database_path=config.submission_file_path,
         workflow_id=resolved_workflow_id,
-        submission_file_path=config.submission_file_path,
+        column_to_update="ALIAS",
+        update_value=alias,
     )
 
     return 0
@@ -52,7 +53,7 @@ def run_alias_pre_checks(
     """
     Do several checks with input confirm it fine to create the alias
     :param alias_name: Alternate string identifier for workflow submission
-    :param workflow_id: Hexadecimal identifier of workflow
+    :param workflow_id: Hexadecimal identifier of workflow submission
     :param submission_file_path: Path to cromshell submission file
     :return:
     """
@@ -120,7 +121,7 @@ def alias_exists(alias_name: str, submission_file) -> bool:
 def check_workflow_has_alias(workflow_id: str, submission_file: str) -> None:
     """
     Checks if workflow id has alias listed in submission file, print warning if so.
-    :param workflow_id: Hexadecimal identifier of workflow
+    :param workflow_id: Hexadecimal identifier of workflow submission
     :param submission_file: Path to cromshell submission file
     :return:
     """
@@ -143,7 +144,7 @@ def set_alias_for_workflow_id(
     """
     Set the alias name of a workflow id in the submission file
     :param alias_name: Alternate string identifier for workflow submission
-    :param workflow_id: Hexadecimal identifier of workflow
+    :param workflow_id: Hexadecimal identifier of workflow submission
     :param submission_file_path: Path to cromshell submission file
     :return:
     """

@@ -1,3 +1,5 @@
+import csv
+import fileinput
 import json
 import logging
 import os
@@ -158,3 +160,39 @@ def copy_files_to_directory(directory: str or Path, input_files: list or str):
         if not Path(input_files).exists():
             raise FileNotFoundError(f"Directory '{input_files}' does not exist")
         shutil.copy(input_files, directory)
+
+
+def update_all_workflow_database_tsv(
+    workflow_database_path: str,
+    workflow_id: str,
+    column_to_update: str,
+    update_value: str,
+) -> None:
+    """
+    Updates the all_workflow_database_tsv for a given workflow_id and column
+    :param workflow_database_path: Path to all_workflow_database tsv file
+    :param workflow_id: Hexadecimal identifier of workflow submission
+    :param column_to_update:["RUN_ID", "STATUS", "ALIAS", "WDL_NAME", "CROMWELL_SERVER"]
+    :param update_value: Value of the cell to update
+    :return:
+    """
+
+    available_columns = ["RUN_ID", "STATUS", "ALIAS", "WDL_NAME", "CROMWELL_SERVER"]
+    if column_to_update not in available_columns:
+        raise ValueError(
+            f"Invalid column_to_update: '{column_to_update}'. "
+            f"Expected one of: '{available_columns}'"
+        )
+
+    # Update config.submission_file:
+    with fileinput.FileInput(
+        workflow_database_path, inplace=True, backup=".bak"
+    ) as csv_file:
+        reader = csv.DictReader(csv_file, delimiter="\t")
+        print("\t".join(reader.fieldnames))
+        for row in reader:
+            if row["RUN_ID"] == workflow_id:
+                row[column_to_update] = update_value
+                print("\t".join(x for x in row.values() if x))
+            else:
+                print("\t".join(x for x in row.values() if x))

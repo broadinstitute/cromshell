@@ -41,7 +41,6 @@ def obtain_workflow_id_using_digit(relative_id: int, submission_file_path: str) 
 
         reader = csv.DictReader(csv_file, delimiter="\t")
         total_rows = len(list(reader))
-        print(total_rows)
         csv_file.seek(0)  # reset file handler after obtaining total lines
 
         # If relative id is 0 then use last row

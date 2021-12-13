@@ -1,5 +1,3 @@
-import csv
-import fileinput
 import json
 import logging
 
@@ -99,20 +97,12 @@ def main(config, workflow_id):
     print(line_string.replace(",", ",\n"))
 
     # Update config.submission_file:
-    with fileinput.FileInput(
-        config.submission_file_path, inplace=True, backup=".bak"
-    ) as csv_file:
-        reader = csv.DictReader(csv_file, delimiter="\t")
-        print("\t".join(reader.fieldnames))
-        for row in reader:
-            if (
-                row["CROMWELL_SERVER"] == config.cromwell_server
-                and row["RUN_ID"] == workflow_id
-            ):
-                row["STATUS"] = workflow_status
-                print("\t".join(x for x in row.values() if x))
-            else:
-                print("\t".join(x for x in row.values() if x))
+    io_utils.update_all_workflow_database_tsv(
+        workflow_database_path=config.submission_file_path,
+        workflow_id=workflow_id,
+        column_to_update="STATUS",
+        update_value=workflow_status,
+    )
 
     return ret_val
 

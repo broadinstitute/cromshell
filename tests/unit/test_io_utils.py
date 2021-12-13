@@ -1,5 +1,7 @@
+import csv
 import io
 import os
+import shutil
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -173,6 +175,61 @@ class TestIOUtilities:
         print(copied_file)
         assert copied_file.exists(), "Temp folder should have been created"
 
+        # 'tmp_path' is a default pytest fixture
+
+    @pytest.mark.parametrize(
+        "workflow_id, column_to_update, update_value, should_fail",
+        [
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "WONK", "wonderwoman", True],
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "ALIAS", "wonderwoman", False],
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "STATUS", "Failed", False],
+            ["682f3e72-0285-40ec-8128-1feb877706ce", "WDL_NAME", "Calm.wdl", False],
+        ],
+    )
+    def test_set_alias_for_workflow_id(
+        self,
+        workflow_id: str,
+        column_to_update: str,
+        update_value: str,
+        submission_file: str,
+        should_fail: bool,
+        tmp_path,
+    ) -> None:
+
+        temp_submission_file = str(tmp_path) + "/submission_file.text"
+
+        # Copy submission file template to temp dir
+        shutil.copyfile(submission_file, temp_submission_file)
+
+        if should_fail:
+            with pytest.raises(ValueError):
+                io_utils.update_all_workflow_database_tsv(
+                    workflow_database_path=temp_submission_file,
+                    workflow_id=workflow_id,
+                    column_to_update=column_to_update,
+                    update_value=update_value,
+                )
+        else:
+            # Run function to change alias using the temp submission file
+            io_utils.update_all_workflow_database_tsv(
+                workflow_database_path=temp_submission_file,
+                workflow_id=workflow_id,
+                column_to_update=column_to_update,
+                update_value=update_value,
+            )
+
+            # Open the temp submission file that was recently updated and compare the
+            # last the alias name of the workflow id
+            with open(temp_submission_file, "r") as csv_file:
+                reader = csv.DictReader(csv_file, delimiter="\t")
+                for row in reader:
+                    if row["RUN_ID"] == workflow_id:
+                        assert row[column_to_update] == update_value
+
     @pytest.fixture
     def mock_data_path(self):
         return Path(__file__).parent.joinpath("mock_data/")
+
+    @pytest.fixture
+    def submission_file(self, mock_data_path):
+        return mock_data_path.joinpath("all.workflow.database.tsv")
