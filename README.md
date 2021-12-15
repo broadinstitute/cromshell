@@ -98,6 +98,13 @@ Current version: 2.0.0
  * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromwell status -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
 
 ## Installation
+From brew
+
+    brew tap broadinstitute/dsp
+    brew install cromshell@2.0.0.alpha.1
+
+
+From source
 
     git clone git@github.com:broadinstitute/cromshell.git
     cd cromshell
@@ -107,6 +114,11 @@ Current version: 2.0.0
     cromshell-alpha --help
 
 ## Uninstallation
+From brew
+
+    brew uninstall cromshell-alpha
+
+From source
 
     pip uninstall cromshell-alpha
 
