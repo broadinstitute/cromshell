@@ -46,6 +46,7 @@ Current version: 2.0.0
    #### Workflow information:
    * `alias` *`<workflow-id>` `<alias_name>`* 
      * Label the given workflow ID with the given alias_name.  Aliases can be used in place of workflow IDs to reference jobs.
+     * Remove alias by passing empty double quotes as `alias_name` (e.g. `alias <workflow-id> ""`)
    #### Query workflow status:
    * `status` *`[workflow-id] [[workflow-id]...]`*                   
      * Check the status of a workflow.
