@@ -1,5 +1,4 @@
 import shutil
-from pathlib import Path
 
 import pytest
 
@@ -7,22 +6,12 @@ from cromshell.utilities import workflow_id_utils
 
 
 @pytest.fixture
-def mock_data_path():
-    return Path(__file__).parent.joinpath("mock_data/")
-
-
-@pytest.fixture
-def mock_submission_file(mock_data_path):
-    return mock_data_path.joinpath("all.workflow.database.tsv")
-
-
-@pytest.fixture
-def tmp_submission_file(mock_submission_file, tmp_path):
+def tmp_submission_file(mock_workflow_database_tsv, tmp_path):
     # Create temporary submission file path
     tmp_submission_file = str(tmp_path) + "/submission_file.text"
 
     # Copy mock submission file template to temp submission file
-    shutil.copyfile(mock_submission_file, tmp_submission_file)
+    shutil.copyfile(mock_workflow_database_tsv, tmp_submission_file)
 
     return tmp_submission_file
 

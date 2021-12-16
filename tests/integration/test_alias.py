@@ -1,7 +1,5 @@
 import csv
-import os
 import shutil
-from pathlib import Path
 from traceback import print_exception
 
 import pytest
@@ -93,23 +91,3 @@ class TestAlias:
                 alias_name=alias_name,
                 local_workflow_database_tsv=local_workflow_database_tsv,
             )
-
-    @pytest.fixture
-    def local_cromwell_url(self):
-        return "http://localhost:8000"
-
-    @pytest.fixture  # Env variable set in tox.ini
-    def local_hidden_cromshell_folder(self):
-        return Path(os.environ.get("CROMSHELL_CONFIG")).joinpath(".cromshell")
-
-    @pytest.fixture
-    def local_workflow_database_tsv(self, local_hidden_cromshell_folder):
-        return Path(local_hidden_cromshell_folder).joinpath("all.workflow.database.tsv")
-
-    @pytest.fixture
-    def mock_data_path(self):
-        return Path(__file__).parent.joinpath("mock_data/")
-
-    @pytest.fixture
-    def mock_workflow_database_tsv(self, mock_data_path):
-        return mock_data_path.joinpath("all.workflow.database.tsv")
