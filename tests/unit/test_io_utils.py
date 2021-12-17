@@ -183,7 +183,7 @@ class TestIOUtilities:
             ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "WONK", "wonderwoman", True],
             ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "ALIAS", "wonderwoman", False],
             ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "STATUS", "Failed", False],
-            ["682f3e72-0285-40ec-8128-1feb877706ce", "WDL_NAME", "Calm.wdl", False],
+            ["682f3e72-0285-40ec-8128-1feb877706ce", "WDL_NAME", "Calm.wdl", True],
         ],
     )
     def test_set_alias_for_workflow_id(

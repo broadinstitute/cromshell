@@ -27,7 +27,6 @@ cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
-SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\n"
 CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
@@ -66,6 +65,14 @@ class WorkflowStatuses(Enum):
     Running = ["Running"]
     Succeeded = ["Succeeded"]
     DOOMED = ["DOOMED"]
+
+
+class AllWorkflowDatabaseColumns(Enum):
+    """Enum to hold all mutable and none-mutable all_workflow_database.tsv columns"""
+
+    Mutable = ["STATUS", "ALIAS"]
+    NoneMutable = ["DATE", "CROMWELL_SERVER", "RUN_ID", "WDL_NAME"]
+    SubmissionFileHeader = NoneMutable + Mutable
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
@@ -148,7 +155,12 @@ def __get_submission_file(config_directory, sub_file_name):
     if not Path(sub_file_path).exists():
         Path(sub_file_path).touch()
         with Path(sub_file_path).open("w") as sub_file:
-            sub_file.write(SUBMISSION_FILE_HEADER)
+            dw = csv.DictWriter(
+                sub_file,
+                delimiter="\t",
+                fieldnames=AllWorkflowDatabaseColumns.SubmissionFileHeader.value,
+            )
+            dw.writeheader()
     return sub_file_path
 
 

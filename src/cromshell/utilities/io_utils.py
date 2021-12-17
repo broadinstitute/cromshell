@@ -10,6 +10,8 @@ from pathlib import Path
 from pygments import formatters, highlight, lexers
 from termcolor import colored
 
+from cromshell.utilities.cromshellconfig import AllWorkflowDatabaseColumns
+
 LOGGER = logging.getLogger(__name__)
 
 workflow_id_pattern = re.compile(
@@ -177,7 +179,7 @@ def update_all_workflow_database_tsv(
     :return:
     """
 
-    available_columns = ["STATUS", "ALIAS", "WDL_NAME", "CROMWELL_SERVER"]
+    available_columns = AllWorkflowDatabaseColumns.Mutable.value
     if column_to_update not in available_columns:
         raise ValueError(
             f"Invalid column_to_update: '{column_to_update}'. "
