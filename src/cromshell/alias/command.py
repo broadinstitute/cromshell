@@ -1,5 +1,6 @@
 import csv
 import logging
+import re
 
 import click
 
@@ -92,11 +93,15 @@ def run_alias_pre_checks(
 
 def alias_is_valid(alias_name: str) -> bool:
     """
-    Check if alias name starts with '-' or has a whitespace char
+    Check if alias name starts with '-' or has a whitespace char or is a digit
     :param alias_name: Alternate string identifier for workflow submission
     :return:
     """
-    if alias_name.startswith("-") or " " in alias_name or alias_name.isdigit():
+    if (
+        alias_name.startswith("-")
+        or bool(re.search(r"\s+", alias_name))
+        or alias_name.isdigit()
+    ):
         return False
     else:
         return True

@@ -1,6 +1,7 @@
-import pytest
-from pathlib import Path
 import os
+from pathlib import Path
+
+import pytest
 
 # "The conftest.py file serves as a means of providing fixtures for an entire directory.
 # Fixtures defined in a conftest.py can be used by any test in that package without
