@@ -174,7 +174,7 @@ def update_all_workflow_database_tsv(
     Updates the all_workflow_database_tsv for a given workflow_id and column
     :param workflow_database_path: Path to all_workflow_database tsv file
     :param workflow_id: Hexadecimal identifier of workflow submission
-    :param column_to_update:["RUN_ID", "STATUS", "ALIAS", "WDL_NAME", "CROMWELL_SERVER"]
+    :param column_to_update:["STATUS", "ALIAS"]
     :param update_value: Value of the cell to update
     :return:
     """
