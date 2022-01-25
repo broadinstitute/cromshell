@@ -191,10 +191,10 @@ def update_all_workflow_database_tsv(
         workflow_database_path, inplace=True, backup=".bak"
     ) as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
-        print("\t".join(reader.fieldnames))
+        print("\t".join(reader.fieldnames))  # print statement rewrites file header
         for row in reader:
             if row["RUN_ID"] == workflow_id:
                 row[column_to_update] = update_value
-                print("\t".join(x for x in row.values() if x))
+                print("\t".join(x for x in row.values() if x))  # writes row with update
             else:
-                print("\t".join(x for x in row.values() if x))
+                print("\t".join(x for x in row.values() if x))  # rewrites row
