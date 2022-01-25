@@ -4,7 +4,7 @@ import re
 
 import click
 
-from cromshell.utilities import io_utils, workflow_id_utils
+from cromshell.utilities import io_utils, workflow_id_utils, cromshellconfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,11 +15,14 @@ LOGGER = logging.getLogger(__name__)
 @click.pass_obj
 def main(config, workflow_id: str or int, alias: str):
     """
-    Label the given workflow ID with the given alias.
+    Label the given workflow ID or relative id with the given alias.
     Aliases can be used in place of workflow IDs to reference jobs.
+
+    Alias must NOT starts with '-', have a whitespace char, or be a digit.
 
     Remove alias by passing empty double quotes as an alias.
     (e.g. cromshell alias [workflow_id] "")
+
     """
 
     LOGGER.info("alias")
@@ -29,18 +32,16 @@ def main(config, workflow_id: str or int, alias: str):
         submission_file_path=config.submission_file_path,
     )
 
-    # Perform Checks
     run_alias_pre_checks(
         alias_name=alias,
         workflow_id=resolved_workflow_id,
         submission_file_path=config.submission_file_path,
     )
 
-    # Set workflow id with given alias
     io_utils.update_all_workflow_database_tsv(
         workflow_database_path=config.submission_file_path,
         workflow_id=resolved_workflow_id,
-        column_to_update="ALIAS",
+        column_to_update=cromshellconfig.AllWorkflowDatabaseColumns.Alias.value,
         update_value=alias,
     )
 
@@ -97,14 +98,11 @@ def alias_is_valid(alias_name: str) -> bool:
     :param alias_name: Alternate string identifier for workflow submission
     :return:
     """
-    if (
+    return False if (
         alias_name.startswith("-")
         or bool(re.search(r"\s+", alias_name))
         or alias_name.isdigit()
-    ):
-        return False
-    else:
-        return True
+    ) else True
 
 
 def alias_exists(alias_name: str, submission_file) -> bool:
