@@ -68,11 +68,20 @@ class WorkflowStatuses(Enum):
 
 
 class AllWorkflowDatabaseColumns(Enum):
-    """Enum to hold all mutable and none-mutable all_workflow_database.tsv columns"""
+    """Enum holding mutable and immutable all_workflow_database.tsv column headers"""
 
-    Mutable = ["STATUS", "ALIAS"]
-    NoneMutable = ["DATE", "CROMWELL_SERVER", "RUN_ID", "WDL_NAME"]
-    SubmissionFileHeader = NoneMutable + Mutable
+    # constants
+    Status = "STATUS"
+    Alias = "ALIAS"
+    Date = "DATE"
+    Cromwell_Server = "CROMWELL_SERVER"
+    Run_ID = "RUN_ID"
+    WDL_Name = "WDL_NAME"
+
+    # catagory
+    Mutable = Status + Alias
+    Immutable = Date + Cromwell_Server + Run_ID + WDL_Name
+    SubmissionFileHeader = Date + Cromwell_Server + Run_ID + WDL_Name + Status + Alias
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
