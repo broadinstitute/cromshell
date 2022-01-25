@@ -37,20 +37,31 @@ def obtain_workflow_id_using_digit(relative_id: int, submission_file_path: str) 
     :return: workflow id
     """
     LOGGER.info("Get workflow id from submission file using relative_id.")
+    # If relative id is 0 then use last row
+    if relative_id == 0:
+        LOGGER.error("Relative workflow id must be a non zero integer")
+        raise ValueError("Relative workflow id must be a non zero integer")
+
     with open(submission_file_path, "r") as csv_file:
 
         reader = csv.DictReader(csv_file, delimiter="\t")
         total_rows = len(list(reader))
         csv_file.seek(0)  # reset file handler after obtaining total lines
 
-        # If relative id is 0 then use last row
-        if relative_id == 0:
-            LOGGER.error("Relative workflow id must be a non zero integer")
-            raise ValueError("Relative workflow id must be a non zero integer")
-        else:
-            row_index = (
-                relative_id if relative_id > 0 else (total_rows - abs(relative_id) + 1)
-            )  # Adding 1 to account for row shift
+        row_index = (
+            relative_id if relative_id > 0 else (total_rows - abs(relative_id) + 1)
+        )  # Adding 1 to account for row shift
+
+        if relative_id > total_rows:
+            LOGGER.error(
+                "The relative id value '%i' is greater than the total rows in "
+                "submission file is : %i",
+                relative_id,
+                total_rows,
+            )
+            raise ValueError(
+                f"Unable to use relative id value '{relative_id}' to obtain workflow id"
+            )
 
         for i, row in enumerate(reader):
             if i == row_index:
@@ -59,7 +70,7 @@ def obtain_workflow_id_using_digit(relative_id: int, submission_file_path: str) 
         # If workflow id wasn't found in previous line then send error
         LOGGER.error(
             "Unable to use relative id value '%i' to obtain workflow id. The total rows"
-            " in submission file is : %i, relative id is most likely out of bounds,",
+            " in submission file is : %i",
             relative_id,
             total_rows,
         )
