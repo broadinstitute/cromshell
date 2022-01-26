@@ -2,6 +2,7 @@ import csv
 import logging
 
 from cromshell.utilities import cromshellconfig, io_utils
+from cromshell.utilities.cromshellconfig import AllWorkflowDatabaseColumns
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,20 +64,8 @@ def obtain_workflow_id_using_digit(relative_id: int, submission_file_path: str) 
                 f"Unable to use relative id value '{relative_id}' to obtain workflow id"
             )
 
-        for i, row in enumerate(reader):
-            if i == row_index:
-                return row["RUN_ID"]
-
-        # If workflow id wasn't found in previous line then send error
-        LOGGER.error(
-            "Unable to use relative id value '%i' to obtain workflow id. The total rows"
-            " in submission file is : %i",
-            relative_id,
-            total_rows,
-        )
-        raise ValueError(
-            f"Unable to use relative id value '{relative_id}' to obtain workflow id"
-        )
+        mycsv = list(reader)
+        return mycsv[row_index][AllWorkflowDatabaseColumns.Run_ID.value]
 
 
 def obtain_workflow_id_using_alias(alias_name: str, submission_file_path: str) -> str:
@@ -90,8 +79,8 @@ def obtain_workflow_id_using_alias(alias_name: str, submission_file_path: str) -
     with open(submission_file_path, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
-            if row["ALIAS"] == alias_name:
-                return row["RUN_ID"]
+            if row[AllWorkflowDatabaseColumns.Alias.value] == alias_name:
+                return row[AllWorkflowDatabaseColumns.Run_ID.value]
 
         LOGGER.error(
             "Unable to find alias '%s' in submission file '%s'",
@@ -111,6 +100,6 @@ def workflow_id_exists(workflow_id: str, submission_file) -> bool:
     with open(submission_file, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
-            if row["RUN_ID"] == workflow_id:
+            if row[AllWorkflowDatabaseColumns.Run_ID.value] == workflow_id:
                 return True
         return False
