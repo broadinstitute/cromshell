@@ -1,38 +1,11 @@
 import csv
+import hashlib
 import shutil
-from traceback import print_exception
 
 import pytest
-from click.testing import CliRunner
-import hashlib
 
-from cromshell.__main__ import main_entry as cromshell
 from cromshell.utilities.cromshellconfig import AllWorkflowDatabaseColumns
-
-
-def run_cromshell_alias(workflow_id: str, alias_name: str, exit_code: int):
-    """Run cromshell alias using CliRunner and assert job is successful"""
-
-    runner = CliRunner(mix_stderr=False)
-    # The absolute path will be passed to the invoke command because
-    # the test is being run in temp directory created by CliRunner.
-    with runner.isolated_filesystem():
-        result = runner.invoke(
-            cromshell,
-            [
-                "alias",
-                "--",
-                workflow_id,
-                alias_name,
-            ],
-        )
-        assert result.exit_code == exit_code, (
-            f"\nSTDOUT:\n{result.stdout}"
-            f"\nSTDERR:\n{result.stderr}"
-            f"\nExceptions:\n{result.exception}"
-            f"\n{print_exception(*result.exc_info)}"
-        )
-        return result
+from tests.integration import utility_test_functions
 
 
 def assert_workflow_id_matches_alias(
@@ -82,10 +55,14 @@ class TestAlias:
         shutil.copyfile(mock_workflow_database_tsv, local_workflow_database_tsv)
 
         # Run cromshell alias
-        run_cromshell_alias(
-            workflow_id=workflow_id,
-            alias_name=alias_name,
-            exit_code=exit_code,
+        utility_test_functions.run_cromshell_command(
+            command=[
+                "alias",
+                "--",
+                workflow_id,
+                alias_name,
+            ],
+            exit_code=exit_code
         )
 
         # If command passed, check the alias of the workflow id in database tsv
