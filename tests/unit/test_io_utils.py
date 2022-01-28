@@ -186,7 +186,7 @@ class TestIOUtilities:
             ["682f3e72-0285-40ec-8128-1feb877706ce", "WDL_NAME", "Calm.wdl", True],
         ],
     )
-    def test_set_alias_for_workflow_id(
+    def test_update_all_workflow_database_tsv(
         self,
         workflow_id: str,
         column_to_update: str,

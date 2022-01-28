@@ -1,3 +1,5 @@
+import shutil
+
 from pathlib import Path
 
 import pytest
@@ -16,3 +18,14 @@ def mock_data_path():
 @pytest.fixture
 def mock_workflow_database_tsv(mock_data_path):
     return mock_data_path.joinpath("all.workflow.database.tsv")
+
+
+@pytest.fixture
+def tmp_submission_file(mock_workflow_database_tsv, tmp_path):
+    # Create temporary submission file path
+    tmp_submission_file = str(tmp_path) + "/submission_file.text"
+
+    # Copy mock submission file template to temp submission file
+    shutil.copyfile(mock_workflow_database_tsv, tmp_submission_file)
+
+    return tmp_submission_file

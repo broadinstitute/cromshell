@@ -1,19 +1,6 @@
-import shutil
-
 import pytest
 
 from cromshell.utilities import workflow_id_utils
-
-
-@pytest.fixture
-def tmp_submission_file(mock_workflow_database_tsv, tmp_path):
-    # Create temporary submission file path
-    tmp_submission_file = str(tmp_path) + "/submission_file.text"
-
-    # Copy mock submission file template to temp submission file
-    shutil.copyfile(mock_workflow_database_tsv, tmp_submission_file)
-
-    return tmp_submission_file
 
 
 class TestWorkflowIdUtils:
