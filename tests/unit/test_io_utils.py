@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from cromshell.utilities import io_utils
+from cromshell.utilities.cromshellconfig import AllWorkflowDatabaseColumns
 
 
 class TestIOUtilities:
@@ -180,10 +181,13 @@ class TestIOUtilities:
     @pytest.mark.parametrize(
         "workflow_id, column_to_update, update_value, should_fail",
         [
-            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "WONK", "wonderwoman", True],
-            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "ALIAS", "wonderwoman", False],
-            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "STATUS", "Failed", False],
-            ["682f3e72-0285-40ec-8128-1feb877706ce", "WDL_NAME", "Calm.wdl", True],
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", AllWorkflowDatabaseColumns.Alias, "wonderwoman", False],
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", AllWorkflowDatabaseColumns.Status, "Failed", False],
+            ["682f3e72-0285-40ec-8128-1feb877706ce", AllWorkflowDatabaseColumns.WDL_Name, "Calm.wdl", True],
+            ["682f3e72-0285-40ec-8128-1feb877706ce", AllWorkflowDatabaseColumns.Date, "10date20", True],
+            ["682f3e72-0285-40ec-8128-1feb877706ce", AllWorkflowDatabaseColumns.Cromwell_Server, "testserver", True],
+            ["682f3e72-0285-40ec-8128-1feb877706ce", AllWorkflowDatabaseColumns.Run_ID, "testid", True],
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", "FakeColumn", "wonderwoman", True],
         ],
     )
     def test_update_all_workflow_database_tsv(
@@ -219,11 +223,11 @@ class TestIOUtilities:
             )
 
             # Open the temp submission file that was recently updated and compare the
-            # last the alias name of the workflow id
+            # alias name of the workflow id
             with open(temp_submission_file, "r") as csv_file:
                 reader = csv.DictReader(csv_file, delimiter="\t")
                 for row in reader:
-                    if row["RUN_ID"] == workflow_id:
+                    if row[AllWorkflowDatabaseColumns.Run_ID] == workflow_id:
                         assert row[column_to_update] == update_value
 
     @pytest.fixture
