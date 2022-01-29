@@ -9,15 +9,15 @@ class TestAlias:
     @pytest.mark.parametrize(
         "alias_name, alias_validity",
         [
-            ["goodalias", True],
-            ["-badalias", False],
-            ["good-alias", True],
-            ["goodalias-", True],
-            ["bad alias", False],
-            ["321", False],
+            ["goodalias", False],
+            ["-badalias", True],
+            ["good-alias", False],
+            ["goodalias-", False],
+            ["bad alias", True],
+            ["321", True],
         ],
     )
-    def test_alias_is_valid(self, alias_name: str, alias_validity: bool) -> None:
+    def test_alias_is_invalid(self, alias_name: str, alias_validity: bool) -> None:
         assert alias_command.alias_is_invalid(alias_name=alias_name) is alias_validity
 
     @pytest.mark.parametrize(

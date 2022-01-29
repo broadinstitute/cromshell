@@ -60,7 +60,7 @@ def run_alias_pre_checks(
     """
 
     # check if provided alias contains white spaces or start with a dash
-    if not alias_is_invalid(alias_name):
+    if alias_is_invalid(alias_name):
         LOGGER.error(
             "Alias %s is invalid, it may not start with a dash or contain whitespace.",
             alias_name,
