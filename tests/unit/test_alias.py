@@ -18,7 +18,7 @@ class TestAlias:
         ],
     )
     def test_alias_is_valid(self, alias_name: str, alias_validity: bool) -> None:
-        assert alias_command.alias_is_valid(alias_name=alias_name) is alias_validity
+        assert alias_command.alias_is_invalid(alias_name=alias_name) is alias_validity
 
     @pytest.mark.parametrize(
         "alias_name, alias_existence",

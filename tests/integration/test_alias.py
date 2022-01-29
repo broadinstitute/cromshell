@@ -62,7 +62,7 @@ class TestAlias:
                 workflow_id,
                 alias_name,
             ],
-            exit_code=exit_code
+            exit_code=exit_code,
         )
 
         # If command passed, check the alias of the workflow id in database tsv
@@ -73,5 +73,9 @@ class TestAlias:
                 local_workflow_database_tsv=local_workflow_database_tsv,
             )
         else:  # because command failed md5sum of mock and local should be the same
-            assert hashlib.md5(open(local_workflow_database_tsv, 'rb').read()).hexdigest() == \
-                   hashlib.md5(open(mock_workflow_database_tsv, 'rb').read()).hexdigest()
+            assert (
+                hashlib.md5(open(local_workflow_database_tsv, "rb").read()).hexdigest()
+                == hashlib.md5(
+                    open(mock_workflow_database_tsv, "rb").read()
+                ).hexdigest()
+            )

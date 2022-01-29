@@ -4,7 +4,7 @@ import re
 
 import click
 
-from cromshell.utilities import io_utils, workflow_id_utils, cromshellconfig
+from cromshell.utilities import cromshellconfig, io_utils, workflow_id_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def run_alias_pre_checks(
     """
 
     # check if provided alias contains white spaces or start with a dash
-    if not alias_is_valid(alias_name):
+    if not alias_is_invalid(alias_name):
         LOGGER.error(
             "Alias %s is invalid, it may not start with a dash or contain whitespace.",
             alias_name,
@@ -92,17 +92,21 @@ def run_alias_pre_checks(
     )
 
 
-def alias_is_valid(alias_name: str) -> bool:
+def alias_is_invalid(alias_name: str) -> bool:
     """
     Check if alias name starts with '-' or has a whitespace char or is a digit
     :param alias_name: Alternate string identifier for workflow submission
     :return:
     """
-    return False if (
-        alias_name.startswith("-")
-        or bool(re.search(r"\s+", alias_name))
-        or alias_name.isdigit()
-    ) else True
+    return (
+        True
+        if (
+            alias_name.startswith("-")
+            or bool(re.search(r"\s+", alias_name))
+            or alias_name.isdigit()
+        )
+        else False
+    )
 
 
 def alias_exists(alias_name: str, submission_file) -> bool:

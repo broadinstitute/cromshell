@@ -24,9 +24,7 @@ def run_cromshell_command(command: list, exit_code: int):
     # The absolute path will be passed to the invoke command because
     # the test is being run in temp directory created by CliRunner.
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            cromshell, command,
-        )
+        result = runner.invoke(cromshell, command)
         assert result.exit_code == exit_code, (
             f"\nSTDOUT:\n{result.stdout}"
             f"\nSTDERR:\n{result.stderr}"
