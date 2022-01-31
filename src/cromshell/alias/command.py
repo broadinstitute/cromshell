@@ -18,7 +18,7 @@ def main(config, workflow_id: str or int, alias: str):
     Label the given workflow ID or relative id with the given alias.
     Aliases can be used in place of workflow IDs to reference jobs.
 
-    Alias must NOT starts with '-', have a whitespace char, or be a digit.
+    Alias must NOT start with '-', have a whitespace char, or be a digit.
 
     Remove alias by passing empty double quotes as an alias.
     (e.g. cromshell alias [workflow_id] "")
