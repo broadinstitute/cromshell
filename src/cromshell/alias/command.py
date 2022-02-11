@@ -27,13 +27,17 @@ def main(config, workflow_id: str or int, alias: str):
 
     LOGGER.info("alias")
 
+    run_alias_pre_checks(
+        alias_name=alias,
+        submission_file_path=config.submission_file_path,
+    )
+
     resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
         cromshell_input=workflow_id,
         submission_file_path=config.submission_file_path,
     )
 
-    run_alias_pre_checks(
-        alias_name=alias,
+    run_workflow_checks(
         workflow_id=resolved_workflow_id,
         submission_file_path=config.submission_file_path,
     )
@@ -48,27 +52,22 @@ def main(config, workflow_id: str or int, alias: str):
     return 0
 
 
-def run_alias_pre_checks(
-    alias_name: str, workflow_id: str, submission_file_path: str
-) -> None:
+def run_alias_pre_checks(alias_name: str, submission_file_path: str) -> None:
     """
     Do several checks with input confirm it fine to create the alias
     :param alias_name: Alternate string identifier for workflow submission
-    :param workflow_id: Hexadecimal identifier of workflow submission
     :param submission_file_path: Path to cromshell submission file
     :return:
     """
 
     # check if provided alias contains white spaces or start with a dash
     if alias_is_invalid(alias_name):
-        LOGGER.error(
-            "Alias %s is invalid, it may not start with a dash or contain whitespace.",
-            alias_name,
+        message = (
+            f"Alias {alias_name} is invalid, it may not start with a dash, "
+            f"contain whitespace, or be a digit. "
         )
-        raise ValueError(
-            f"Alias {alias_name} is invalid, it may not start with a dash or contain "
-            f"whitespace. "
-        )
+        LOGGER.error(message)
+        raise ValueError(message)
 
     # check if alias already exists
     if alias_exists(alias_name=alias_name, submission_file=submission_file_path):
@@ -77,6 +76,14 @@ def run_alias_pre_checks(
         )
         raise ValueError(f"Alias already exists: {alias_name} ")
 
+
+def run_workflow_checks(workflow_id: str, submission_file_path: str) -> None:
+    """
+    Run checks on workflow id to confirm it exists and whether it already has an alias
+    :param workflow_id: Hexadecimal identifier of workflow submission
+    :param submission_file_path: Path to cromshell submission file
+    :return:
+    """
     # check if workflow id exists
     if not workflow_id_utils.workflow_id_exists(
         workflow_id=workflow_id, submission_file=submission_file_path
