@@ -96,7 +96,8 @@ Current version: 2.0.0
  You may omit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs, e.g. "-1" will track the last job, "-2" will track the one before that, and so on.
  * You can override the default cromwell server by setting the argument `--cromwell_url` to the appropriate URL.
  * You can override the default cromshell configuration folder by setting the environmental variable `CROMSHELL_DIR` to the appropriate directory.
- * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromwell status -- -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
+ * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromshell status -- -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
+ * Once the Alias command is used to attach an alias to a workflow id, the alias name can be used instead of the id (i.e. `./cromshell status myAliasName`).
 
 ## Installation
 From brew
