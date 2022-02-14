@@ -902,7 +902,7 @@ function status()
     jq '.. | .calls? | values | map_values(group_by(.executionStatus) | map({(.[0].executionStatus): . | length}) | add)' ${tmpMetadata} > ${tmpExecutionStatusCount} 
 
     # Check for failure states:
-    cat ${tmpExecutionStatusCount} | grep -q 'Failed'
+    cat ${tmpExecutionStatusCount} | grep -q '"Failed"'
     r=$?
 
     # Check for failures:
