@@ -2,7 +2,10 @@ import csv
 import logging
 
 from cromshell.utilities import cromshellconfig, io_utils
-from cromshell.utilities.cromshellconfig import AllWorkflowDatabaseColumns
+from cromshell.utilities.cromshellconfig import (
+    ImmutableSubmissionFileHeader,
+    MutableSubmissionFileHeader,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +66,7 @@ def obtain_workflow_id_using_digit(relative_id: int, submission_file_path: str) 
         relative_id if relative_id < 0 else relative_id - 1
     )  # Subtracting 1 to account for row shift when dealing with list index
 
-    return mycsv[row_index][AllWorkflowDatabaseColumns.Run_ID.value]
+    return mycsv[row_index][ImmutableSubmissionFileHeader.Run_ID.value]
 
 
 def obtain_workflow_id_using_alias(alias_name: str, submission_file_path: str) -> str:
@@ -77,8 +80,8 @@ def obtain_workflow_id_using_alias(alias_name: str, submission_file_path: str) -
     with open(submission_file_path, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
-            if row[AllWorkflowDatabaseColumns.Alias.value] == alias_name:
-                return row[AllWorkflowDatabaseColumns.Run_ID.value]
+            if row[MutableSubmissionFileHeader.Alias.value] == alias_name:
+                return row[ImmutableSubmissionFileHeader.Run_ID.value]
 
         LOGGER.error(
             "Unable to find alias '%s' in submission file '%s'",
@@ -98,6 +101,6 @@ def workflow_id_exists(workflow_id: str, submission_file) -> bool:
     with open(submission_file, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
-            if row[AllWorkflowDatabaseColumns.Run_ID.value] == workflow_id:
+            if row[ImmutableSubmissionFileHeader.Run_ID.value] == workflow_id:
                 return True
         return False

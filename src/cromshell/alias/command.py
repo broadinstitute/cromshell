@@ -45,7 +45,7 @@ def main(config, workflow_id: str or int, alias: str):
     io_utils.update_all_workflow_database_tsv(
         workflow_database_path=config.submission_file_path,
         workflow_id=resolved_workflow_id,
-        column_to_update=cromshellconfig.AllWorkflowDatabaseColumns.Alias.value,
+        column_to_update=cromshellconfig.MutableSubmissionFileHeader.Alias.value,
         update_value=alias,
     )
 

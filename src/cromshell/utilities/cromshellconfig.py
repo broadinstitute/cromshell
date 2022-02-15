@@ -67,21 +67,21 @@ class WorkflowStatuses(Enum):
     DOOMED = ["DOOMED"]
 
 
-class AllWorkflowDatabaseColumns(Enum):
+class WorkflowDatabaseColumns(Enum):
     """Enum holding mutable and immutable all_workflow_database.tsv column headers"""
 
-    # constants
-    Status = "STATUS"
-    Alias = "ALIAS"
+
+# Immutable class needs to be placed
+class ImmutableSubmissionFileHeader(WorkflowDatabaseColumns):
     Date = "DATE"
     Cromwell_Server = "CROMWELL_SERVER"
     Run_ID = "RUN_ID"
     WDL_Name = "WDL_NAME"
 
-    # catagory
-    Mutable = Status + Alias
-    Immutable = Date + Cromwell_Server + Run_ID + WDL_Name
-    SubmissionFileHeader = Date + Cromwell_Server + Run_ID + WDL_Name + Status + Alias
+
+class MutableSubmissionFileHeader(WorkflowDatabaseColumns):
+    Status = "STATUS"
+    Alias = "ALIAS"
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
@@ -157,17 +157,43 @@ def __get_config_dir():
     return config_path
 
 
-def __get_submission_file(config_directory, sub_file_name):
-    """Get File Path To Cromshell Submission File"""
+def get_submission_file_headers(
+    workflow_database_columns=WorkflowDatabaseColumns,
+) -> list:
+    """
+    Retrieves the subclass values from WorkflowDatabaseColumns
+    :return: List of submission file headers
+    """
+    # For loop gets the subclasses in WorkflowDatabaseColumns enum
+    # (MutableSubmissionFileHeader and IMMutableSubmissionFileHeader), then another for
+    # loop is used to get the values for each subclass. Resulting in a list of lists.
+    return sum(  # Sum flattens list of lists in to list
+        [
+            [key.value for key in sub_cls]
+            for sub_cls in workflow_database_columns.__subclasses__()
+        ],
+        [],
+    )
+
+
+def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
+    """
+    Get File Path To Cromshell Submission File path. Creates new submission file
+    if one does not already exists.
+    :param config_directory: Path to cromshell config directory
+    :param sub_file_name: Name of cromshell submission file
+    :return: Path to cromshell submission file
+    """
 
     sub_file_path = os.path.join(config_directory, sub_file_name)
+
     if not Path(sub_file_path).exists():
         Path(sub_file_path).touch()
         with Path(sub_file_path).open("w") as sub_file:
             dw = csv.DictWriter(
                 sub_file,
                 delimiter="\t",
-                fieldnames=AllWorkflowDatabaseColumns.SubmissionFileHeader.value,
+                fieldnames=get_submission_file_headers(),
             )
             dw.writeheader()
     return sub_file_path

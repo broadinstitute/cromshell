@@ -10,7 +10,7 @@ from pathlib import Path
 from pygments import formatters, highlight, lexers
 from termcolor import colored
 
-from cromshell.utilities.cromshellconfig import AllWorkflowDatabaseColumns
+from cromshell.utilities.cromshellconfig import MutableSubmissionFileHeader
 
 LOGGER = logging.getLogger(__name__)
 
@@ -179,7 +179,7 @@ def update_all_workflow_database_tsv(
     :return:
     """
 
-    available_columns = AllWorkflowDatabaseColumns.Mutable.value
+    available_columns = [column.value for column in MutableSubmissionFileHeader]
     if column_to_update not in available_columns:
         raise ValueError(
             f"Invalid column_to_update: '{column_to_update}'. "

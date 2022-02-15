@@ -8,7 +8,10 @@ from pathlib import Path
 import pytest
 
 from cromshell.utilities import io_utils
-from cromshell.utilities.cromshellconfig import AllWorkflowDatabaseColumns
+from cromshell.utilities.cromshellconfig import (
+    ImmutableSubmissionFileHeader,
+    MutableSubmissionFileHeader,
+)
 
 
 class TestIOUtilities:
@@ -183,37 +186,37 @@ class TestIOUtilities:
         [
             [
                 "b3b197b3-fdca-4647-9fd8-bf16d2cb734d",
-                AllWorkflowDatabaseColumns.Alias.value,
+                MutableSubmissionFileHeader.Alias.value,
                 "wonderwoman",
                 False,
             ],
             [
                 "b3b197b3-fdca-4647-9fd8-bf16d2cb734d",
-                AllWorkflowDatabaseColumns.Status.value,
+                MutableSubmissionFileHeader.Status.value,
                 "Failed",
                 False,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                AllWorkflowDatabaseColumns.WDL_Name.value,
+                ImmutableSubmissionFileHeader.WDL_Name.value,
                 "Calm.wdl",
                 True,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                AllWorkflowDatabaseColumns.Date.value,
+                ImmutableSubmissionFileHeader.Date.value,
                 "10date20",
                 True,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                AllWorkflowDatabaseColumns.Cromwell_Server.value,
+                ImmutableSubmissionFileHeader.Cromwell_Server.value,
                 "testserver",
                 True,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                AllWorkflowDatabaseColumns.Run_ID.value,
+                ImmutableSubmissionFileHeader.Run_ID.value,
                 "testid",
                 True,
             ],
@@ -257,7 +260,7 @@ class TestIOUtilities:
             with open(temp_submission_file, "r") as csv_file:
                 reader = csv.DictReader(csv_file, delimiter="\t")
                 for row in reader:
-                    if row[AllWorkflowDatabaseColumns.Run_ID.value] == workflow_id:
+                    if row[ImmutableSubmissionFileHeader.Run_ID.value] == workflow_id:
                         assert row[column_to_update] == update_value
 
     @pytest.fixture
