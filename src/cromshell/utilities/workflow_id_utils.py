@@ -2,10 +2,8 @@ import csv
 import logging
 
 from cromshell.utilities import cromshellconfig, io_utils
-from cromshell.utilities.cromshellconfig import (
-    ImmutableSubmissionFileHeader,
-    MutableSubmissionFileHeader,
-)
+from cromshell.utilities.cromshellconfig import (ImmutableSubmissionFileHeader,
+                                                 MutableSubmissionFileHeader)
 
 LOGGER = logging.getLogger(__name__)
 
