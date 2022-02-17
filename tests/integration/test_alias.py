@@ -5,7 +5,6 @@ import shutil
 import pytest
 
 from cromshell.utilities import cromshellconfig
-
 from tests.integration import utility_test_functions
 
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from cromshell.utilities import io_utils, cromshellconfig
+from cromshell.utilities import cromshellconfig, io_utils
 
 
 class TestIOUtilities:
