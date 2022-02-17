@@ -4,8 +4,10 @@ import shutil
 
 import pytest
 
-from cromshell.utilities.cromshellconfig import (ImmutableSubmissionFileHeader,
-                                                 MutableSubmissionFileHeader)
+from cromshell.utilities.cromshellconfig import (
+    ImmutableSubmissionFileHeader,
+    MutableSubmissionFileHeader,
+)
 from tests.integration import utility_test_functions
 
 
