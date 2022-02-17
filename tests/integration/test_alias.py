@@ -4,10 +4,8 @@ import shutil
 
 import pytest
 
-from cromshell.utilities.cromshellconfig import (
-    ImmutableSubmissionFileHeader,
-    MutableSubmissionFileHeader,
-)
+from cromshell.utilities import cromshellconfig
+
 from tests.integration import utility_test_functions
 
 
@@ -20,15 +18,24 @@ def assert_workflow_id_matches_alias(
     with open(local_workflow_database_tsv, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
-            if row[ImmutableSubmissionFileHeader.Run_ID.value] == workflow_id:
+            if (
+                row[cromshellconfig.ImmutableSubmissionFileHeader.Run_ID.value]
+                == workflow_id
+            ):
                 #  If alias_name is "" (which is when we want to remove an alias) assert
                 #  that the alias for the workflow id returns None. Else (when adding
                 #  and alias) assert that the alias for the workflow id returns
                 #  the matching alias name.
                 if alias_name == "":
-                    assert row[MutableSubmissionFileHeader.Alias.value] is None
+                    assert (
+                        row[cromshellconfig.MutableSubmissionFileHeader.Alias.value]
+                        is None
+                    )
                 else:
-                    assert row[MutableSubmissionFileHeader.Alias.value] == alias_name
+                    assert (
+                        row[cromshellconfig.MutableSubmissionFileHeader.Alias.value]
+                        == alias_name
+                    )
 
 
 class TestAlias:
