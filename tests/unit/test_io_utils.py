@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from cromshell.utilities import io_utils
-from cromshell.utilities.cromshellconfig import ImmutableSubmissionFileHeader
-from cromshell.utilities.cromshellconfig import MutableSubmissionFileHeader
+from cromshell.utilities.cromshellconfig import (ImmutableSubmissionFileHeader,
+                                                 MutableSubmissionFileHeader)
 
 
 class TestIOUtilities:
