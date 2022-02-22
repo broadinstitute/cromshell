@@ -97,6 +97,7 @@ Current version: 2.0.0
  * You can override the default cromwell server by setting the argument `--cromwell_url` to the appropriate URL.
  * You can override the default cromshell configuration folder by setting the environmental variable `CROMSHELL_DIR` to the appropriate directory.
  * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromshell status -- -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
+ * Assign aliases to workflow ids using the alias command (i.e. `./cromshell alias -- -1 myAliasName`).
  * Once the Alias command is used to attach an alias to a workflow id, the alias name can be used instead of the id (i.e. `./cromshell status myAliasName`).
 
 ## Installation
