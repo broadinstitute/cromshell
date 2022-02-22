@@ -112,17 +112,6 @@ class TestCromshellConfig:
             cromshellconfig.config_dir
         ).exists(), "Config directory should exist "
 
-    def test_get_submission_file_headers(self):
-
-        mutable_headers = [
-            column.value for column in cromshellconfig.MutableSubmissionFileHeader
-        ]
-        immutable_headers = [
-            column.value for column in cromshellconfig.ImmutableSubmissionFileHeader
-        ]
-        all_headers = immutable_headers + mutable_headers
-        assert cromshellconfig.get_submission_file_headers() == all_headers
-
     def test_submission_file(self):
         reload(cromshellconfig)
         assert (

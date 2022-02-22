@@ -5,6 +5,7 @@ import os
 import warnings
 from enum import Enum
 from pathlib import Path
+from cromshell.utilities.submissions_file_utils import get_submission_file_headers
 
 LOGGER = logging.getLogger(__name__)
 
@@ -65,23 +66,6 @@ class WorkflowStatuses(Enum):
     Running = ["Running"]
     Succeeded = ["Succeeded"]
     DOOMED = ["DOOMED"]
-
-
-class WorkflowDatabaseColumns(Enum):
-    """Enum holding mutable and immutable all_workflow_database.tsv column headers"""
-
-
-# Immutable class needs to be placed
-class ImmutableSubmissionFileHeader(WorkflowDatabaseColumns):
-    Date = "DATE"
-    Cromwell_Server = "CROMWELL_SERVER"
-    Run_ID = "RUN_ID"
-    WDL_Name = "WDL_NAME"
-
-
-class MutableSubmissionFileHeader(WorkflowDatabaseColumns):
-    Status = "STATUS"
-    Alias = "ALIAS"
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
@@ -155,25 +139,6 @@ def __get_config_dir():
     LOGGER.info(f"Cromshell config directory set to {config_path}.")
 
     return config_path
-
-
-def get_submission_file_headers(
-    workflow_database_columns=WorkflowDatabaseColumns,
-) -> list:
-    """
-    Retrieves the subclass values from WorkflowDatabaseColumns
-    :return: List of submission file headers
-    """
-    # For loop gets the subclasses in WorkflowDatabaseColumns enum
-    # (MutableSubmissionFileHeader and IMMutableSubmissionFileHeader), then another for
-    # loop is used to get the values for each subclass. Resulting in a list of lists.
-    return sum(  # Sum flattens list of lists in to list
-        [
-            [key.value for key in sub_cls]
-            for sub_cls in workflow_database_columns.__subclasses__()
-        ],
-        [],
-    )
 
 
 def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:

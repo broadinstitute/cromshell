@@ -4,7 +4,7 @@ import re
 
 import click
 
-from cromshell.utilities import cromshellconfig, io_utils, workflow_id_utils
+from cromshell.utilities import io_utils, submissions_file_utils, workflow_id_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def main(config, workflow_id: str or int, alias: str):
     io_utils.update_all_workflow_database_tsv(
         workflow_database_path=config.submission_file_path,
         workflow_id=resolved_workflow_id,
-        column_to_update=cromshellconfig.MutableSubmissionFileHeader.Alias.value,
+        column_to_update=submissions_file_utils.MutableSubmissionFileHeader.Alias.value,
         update_value=alias,
     )
 

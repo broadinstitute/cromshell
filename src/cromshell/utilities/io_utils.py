@@ -10,7 +10,7 @@ from pathlib import Path
 from pygments import formatters, highlight, lexers
 from termcolor import colored
 
-from cromshell.utilities.cromshellconfig import MutableSubmissionFileHeader
+from cromshell.utilities.submissions_file_utils import MutableSubmissionFileHeader
 
 LOGGER = logging.getLogger(__name__)
 

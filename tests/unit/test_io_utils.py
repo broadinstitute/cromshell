@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from cromshell.utilities import cromshellconfig, io_utils
+from cromshell.utilities import io_utils, submissions_file_utils
 
 
 class TestIOUtilities:
@@ -182,37 +182,37 @@ class TestIOUtilities:
         [
             [
                 "b3b197b3-fdca-4647-9fd8-bf16d2cb734d",
-                cromshellconfig.MutableSubmissionFileHeader.Alias.value,
+                submissions_file_utils.MutableSubmissionFileHeader.Alias.value,
                 "wonderwoman",
                 False,
             ],
             [
                 "b3b197b3-fdca-4647-9fd8-bf16d2cb734d",
-                cromshellconfig.MutableSubmissionFileHeader.Status.value,
+                submissions_file_utils.MutableSubmissionFileHeader.Status.value,
                 "Failed",
                 False,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                cromshellconfig.ImmutableSubmissionFileHeader.WDL_Name.value,
+                submissions_file_utils.ImmutableSubmissionFileHeader.WDL_Name.value,
                 "Calm.wdl",
                 True,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                cromshellconfig.ImmutableSubmissionFileHeader.Date.value,
+                submissions_file_utils.ImmutableSubmissionFileHeader.Date.value,
                 "10date20",
                 True,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                cromshellconfig.ImmutableSubmissionFileHeader.Cromwell_Server.value,
+                submissions_file_utils.ImmutableSubmissionFileHeader.Cromwell_Server.value,
                 "testserver",
                 True,
             ],
             [
                 "682f3e72-0285-40ec-8128-1feb877706ce",
-                cromshellconfig.ImmutableSubmissionFileHeader.Run_ID.value,
+                submissions_file_utils.ImmutableSubmissionFileHeader.Run_ID.value,
                 "testid",
                 True,
             ],
@@ -257,7 +257,9 @@ class TestIOUtilities:
                 reader = csv.DictReader(csv_file, delimiter="\t")
                 for row in reader:
                     if (
-                        row[cromshellconfig.ImmutableSubmissionFileHeader.Run_ID.value]
+                        row[
+                            submissions_file_utils.ImmutableSubmissionFileHeader.Run_ID.value
+                        ]
                         == workflow_id
                     ):
                         assert row[column_to_update] == update_value
