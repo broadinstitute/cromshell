@@ -1,4 +1,5 @@
-from cromshell.utilities import cromshellconfig, submissions_file_utils as sfu
+from cromshell.utilities import cromshellconfig
+from cromshell.utilities import submissions_file_utils as sfu
 
 
 class TestSubmissionsFileUtils:

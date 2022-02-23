@@ -5,7 +5,8 @@ import os
 import warnings
 from enum import Enum
 from pathlib import Path
-from cromshell.utilities.submissions_file_utils import get_submission_file_headers
+
+import cromshell.utilities.submissions_file_utils as submissions_file_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -158,7 +159,7 @@ def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
             dw = csv.DictWriter(
                 sub_file,
                 delimiter="\t",
-                fieldnames=get_submission_file_headers(),
+                fieldnames=submissions_file_utils.get_submission_file_headers(),
             )
             dw.writeheader()
     return sub_file_path

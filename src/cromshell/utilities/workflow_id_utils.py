@@ -1,7 +1,9 @@
 import csv
 import logging
 
-from cromshell.utilities import cromshellconfig, io_utils, submissions_file_utils
+import cromshellconfig
+import io_utils
+import submissions_file_utils
 
 LOGGER = logging.getLogger(__name__)
 

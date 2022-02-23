@@ -8,9 +8,8 @@ import shutil
 from pathlib import Path
 
 from pygments import formatters, highlight, lexers
+from submissions_file_utils import MutableSubmissionFileHeader
 from termcolor import colored
-
-from cromshell.utilities.submissions_file_utils import MutableSubmissionFileHeader
 
 LOGGER = logging.getLogger(__name__)
 

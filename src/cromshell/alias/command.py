@@ -4,7 +4,9 @@ import re
 
 import click
 
-from cromshell.utilities import io_utils, submissions_file_utils, workflow_id_utils
+import cromshell.utilities.io_utils as io_utils
+import cromshell.utilities.submissions_file_utils as submissions_file_utils
+import cromshell.utilities.workflow_id_utils as workflow_id_utils
 
 LOGGER = logging.getLogger(__name__)
 
