@@ -1,4 +1,3 @@
-from cromshell.utilities import cromshellconfig
 from cromshell.utilities import submissions_file_utils as sfu
 
 
@@ -11,4 +10,4 @@ class TestSubmissionsFileUtils:
             column.value for column in sfu.ImmutableSubmissionFileHeader
         ]
         all_headers = immutable_headers + mutable_headers
-        assert cromshellconfig.get_submission_file_headers() == all_headers
+        assert sfu.get_submission_file_headers() == all_headers
