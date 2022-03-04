@@ -6,6 +6,8 @@ import warnings
 from enum import Enum
 from pathlib import Path
 
+import cromshell.utilities.submissions_file_utils as submissions_file_utils
+
 LOGGER = logging.getLogger(__name__)
 
 """Setup Cromshell config details. Intended to be used as a singleton"""
@@ -27,7 +29,6 @@ cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined
 config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
-SUBMISSION_FILE_HEADER = "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\n"
 CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
 cromshell_config_options = None
@@ -141,14 +142,26 @@ def __get_config_dir():
     return config_path
 
 
-def __get_submission_file(config_directory, sub_file_name):
-    """Get File Path To Cromshell Submission File"""
+def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
+    """
+    Get File Path To Cromshell Submission File path. Creates new submission file
+    if one does not already exists.
+    :param config_directory: Path to cromshell config directory
+    :param sub_file_name: Name of cromshell submission file
+    :return: Path to cromshell submission file
+    """
 
     sub_file_path = os.path.join(config_directory, sub_file_name)
+
     if not Path(sub_file_path).exists():
         Path(sub_file_path).touch()
         with Path(sub_file_path).open("w") as sub_file:
-            sub_file.write(SUBMISSION_FILE_HEADER)
+            dw = csv.DictWriter(
+                sub_file,
+                delimiter="\t",
+                fieldnames=submissions_file_utils.WorkflowDatabaseColumns.get_submission_file_headers(),
+            )
+            dw.writeheader()
     return sub_file_path
 
 
