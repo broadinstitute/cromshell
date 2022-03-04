@@ -159,7 +159,7 @@ def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
             dw = csv.DictWriter(
                 sub_file,
                 delimiter="\t",
-                fieldnames=submissions_file_utils.get_submission_file_headers(),
+                fieldnames=submissions_file_utils.WorkflowDatabaseColumns.get_submission_file_headers(),
             )
             dw.writeheader()
     return sub_file_path
