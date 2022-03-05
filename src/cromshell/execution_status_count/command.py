@@ -1,0 +1,184 @@
+import json
+import logging
+from itertools import groupby
+
+import click
+import jq
+from termcolor import colored
+
+from cromshell.metadata import command as metadata_command
+from cromshell.utilities import io_utils, workflow_id_utils
+
+LOGGER = logging.getLogger(__name__)
+
+
+@click.command(name="execution-status-count")
+@click.argument("workflow_id")
+@click.option(
+    "-p",
+    "--pretty-print",
+    is_flag=True,
+    default=False,
+    help="Enable pretty-printing",
+)
+@click.option(
+    "-x",
+    "--expand-subworkflows",
+    is_flag=True,
+    default=False,
+    help="Expand sub-workflow information",
+)
+@click.pass_obj
+def main(config, workflow_id, pretty_print, expand_subworkflows):
+    """
+    Get the summarized status of all jobs in the workflow.
+    """
+
+    LOGGER.info("execution-status-count")
+
+    # resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
+    #     cromshell_input=workflow_id,
+    #     submission_file_path=config.submission_file_path,
+    # )
+    #
+    # # Todo: the function below also sets the config.cromwell_api_workflow_id but should
+    # #  probably not be in the same function or atleast rename to make it more clear
+    # metadata_command.check_cromwell_server(config=config, workflow_id=resolved_workflow_id)
+
+    # # Get metadata
+    # formatted_metadata_parameter = metadata_command.format_metadata_params(
+    #     list_of_keys=config.METADATA_KEYS_TO_OMIT,
+    #     exclude_keys=True,
+    #     expand_subworkflows=True,
+    # )
+    #
+    # workflow_meta_data = metadata_command.get_workflow_metadata(
+    #     meta_params=formatted_metadata_parameter,
+    #     api_workflow_id=config.cromwell_api_workflow_id,
+    #     timeout=config.requests_connect_timeout,
+    #     verify_certs=config.requests_verify_certs,
+    # )
+
+    # workflow_metadata = {'workflowName': 'HelloWorld', 'workflowProcessingEvents': [{'cromwellId': 'cromid-f6be9e3', 'description': 'Finished', 'timestamp': '2022-01-07T21:44:13.768Z', 'cromwellVersion': '67-a4567f6'}, {'cromwellId': 'cromid-f6be9e3', 'description': 'PickedUp', 'timestamp': '2022-01-07T21:43:58.194Z', 'cromwellVersion': '67-a4567f6'}], 'actualWorkflowLanguageVersion': 'draft-2', 'calls': {'HelloWorld.HelloWorldTask': [{'retryableFailure': False, 'executionStatus': 'Failed', 'stdout': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b/call-HelloWorldTask/execution/stdout', 'backendStatus': 'Done', 'compressedDockerSize': 4980136, 'commandLine': "    set -e\necho 'Hello World!'", 'shardIndex': -1, 'runtimeAttributes': {'maxRetries': '0', 'continueOnReturnCode': '0', 'docker': 'frolvlad/alpine-bash', 'failOnStderr': 'false'}, 'callCaching': {'allowResultReuse': False, 'effectiveCallCachingMode': 'CallCachingOff'}, 'inputs': {'default_ram_mb': 3072, 'disk_space_gb': None, 'machine_mem': 3072, 'default_disk_space_gb': 100, 'preemptible_attempts': None, 'use_ssd': False, 'docker': 'frolvlad/alpine-bash', 'command_mem': 2048, 'boot_disk_size_gb': None, 'mem': None, 'cpu': None, 'default_boot_disk_size_gb': 15}, 'returnCode': -1, 'failures': [{'message': "Job HelloWorld.HelloWorldTask:NA:1 exited with return code -1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details.", 'causedBy': []}], 'jobId': '243', 'backend': 'Local', 'end': '2022-01-07T21:44:13.312Z', 'stderr': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b/call-HelloWorldTask/execution/stderr', 'callRoot': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b/call-HelloWorldTask', 'attempt': 1, 'executionEvents': [{'startTime': '2022-01-07T21:44:12.331Z', 'description': 'UpdatingJobStore', 'endTime': '2022-01-07T21:44:13.314Z'}, {'startTime': '2022-01-07T21:44:09.078Z', 'description': 'RunningJob', 'endTime': '2022-01-07T21:44:12.331Z'}, {'startTime': '2022-01-07T21:44:07.457Z', 'description': 'WaitingForValueStore', 'endTime': '2022-01-07T21:44:07.473Z'}, {'endTime': '2022-01-07T21:44:09.078Z', 'startTime': '2022-01-07T21:44:07.473Z', 'description': 'PreparingJob'}, {'startTime': '2022-01-07T21:44:01.538Z', 'description': 'Pending', 'endTime': '2022-01-07T21:44:01.554Z'}, {'startTime': '2022-01-07T21:44:01.554Z', 'description': 'RequestingExecutionToken', 'endTime': '2022-01-07T21:44:07.457Z'}], 'start': '2022-01-07T21:44:01.519Z'}]}, 'outputs': {}, 'workflowRoot': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b', 'actualWorkflowLanguage': 'WDL', 'id': 'c1b16617-4bd5-40b0-b899-426bbc68656b', 'inputs': {'HelloWorld.mem': None, 'HelloWorld.HelloWorldTask.default_disk_space_gb': 100, 'HelloWorld.disk_space_gb': None, 'HelloWorld.docker': 'frolvlad/alpine-bash', 'HelloWorld.HelloWorldTask.default_ram_mb': 3072, 'HelloWorld.cpu': None, 'HelloWorld.HelloWorldTask.default_boot_disk_size_gb': 15, 'HelloWorld.boot_disk_size_gb': None, 'HelloWorld.HelloWorldTask.use_ssd': False, 'HelloWorld.preemptible_attempts': None}, 'labels': {'cromwell-workflow-id': 'cromwell-c1b16617-4bd5-40b0-b899-426bbc68656b'}, 'submission': '2022-01-07T21:43:56.107Z', 'status': 'Failed', 'failures': [{'causedBy': [{'message': "Job HelloWorld.HelloWorldTask:NA:1 exited with return code -1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details.", 'causedBy': []}], 'message': 'Workflow failed'}], 'end': '2022-01-07T21:44:13.767Z', 'start': '2022-01-07T21:43:58.228Z'}
+    with open("/Users/bshifaw/Downloads/metadata-big.json", "r") as ff:
+        workflow_metadata = json.load(ff)
+
+    if pretty_print:
+        pretty_execution_status(
+            workflow_id=workflow_id,  #resolved_workflow_id,
+            workflow_metadata=workflow_metadata,
+            do_expand_sub_workflows=False,
+        )
+    else:
+        # Print {tasks:{status: count}}
+        tmp_json = json.loads(
+            jq.compile(
+                ".calls? | values | map_values(group_by(.executionStatus)| map({(.[0].executionStatus): . | length}) | add)"
+            )
+            .input(workflow_metadata)
+            .text()
+        )
+        io_utils.pretty_print_json(format_json=tmp_json)
+
+    return 0
+
+
+def pretty_execution_status(workflow_id, workflow_metadata, do_expand_sub_workflows):
+    workflow_status = workflow_metadata.get("status")
+    print(
+        colored(
+            workflow_id + "\t" + workflow_status,
+            color=io_utils.TextStatusesColor.COLOR_UNDERLINED["color"],
+            attrs=io_utils.TextStatusesColor.COLOR_UNDERLINED["attrs"],
+        )
+    )
+    print_workflow_status(
+        workflow_metadata=workflow_metadata,
+        indent="\t",
+        expand_sub_workflows=do_expand_sub_workflows,
+    )
+
+
+def print_workflow_status(workflow_metadata, indent, expand_sub_workflows):
+    tasks = list(workflow_metadata["calls"].keys())
+
+    for task in tasks:  # for each task in given metadata
+        if (
+            "subWorkflowMetadata" in workflow_metadata["calls"][task][0]
+            and expand_sub_workflows
+        ):  # If task has a key called subworkflowMetadata in its first (zero) element dictionary
+            sub_workflow_name = task
+            print(f"{indent}SubWorkflow {sub_workflow_name}")
+
+            for i in range(
+                len(workflow_metadata["calls"][sub_workflow_name]) - 1
+            ):  # For each element in total number of elements in subworkflow list
+                sub_workflow_metadata = workflow_metadata["calls"][sub_workflow_name][
+                    i
+                ]["subWorkflowMetadata"]
+                # checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
+
+                print_workflow_status(
+                    workflow_metadata=sub_workflow_metadata,
+                    indent=indent + "\t",
+                    expand_sub_workflows=expand_sub_workflows,
+                )  # Look for additional subworkflows within this subworkflow
+        else:
+            print_task_status(task, indent, workflow_metadata)
+
+
+def print_task_status(task, indent, workflow_metadata):
+
+    shards = workflow_metadata["calls"][task]
+    sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
+    shard_status_summary = []
+
+    for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
+        shard_status_summary.append({"status": status, "count": len(list(group))})
+
+    shards_done = 0
+    for i in shard_status_summary:
+        shards_done = i["count"] if i["status"] == "Done" else shards_done
+    shards_running = 0
+    for i in shard_status_summary:
+        shards_running = i["count"] if i["status"] == "Running" else shards_running
+    shards_failed = 0
+    for i in shard_status_summary:
+        shards_failed = i["count"] if i["status"] == "Failed" else shards_failed
+    shards_retried = 0
+    for i in shard_status_summary:
+        shards_retried = (
+            i["count"] if i["status"] == "RetryableFailure" else shards_retried
+        )
+
+    if shards_failed == 0 and shards_running == 0:
+        task_status_font = io_utils.TextStatusesColor.TASK_COLOR_SUCCEEDED
+    elif shards_failed > 0 and shards_running > 0:
+        task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILING  # Running but will fail
+    elif shards_running > 0:
+        task_status_font = io_utils.TextStatusesColor.TASK_COLOR_RUNNING
+    else:
+        task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILED
+
+    print(
+        colored(
+            f"{indent}{task}\t{shards_running} Running, {shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed",
+            color=task_status_font,
+        )
+    )
+
+    if shards_failed:
+        failed_shards = []
+        failed_shards_index = []
+        for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
+            if status == "Failed":
+                failed_shards = list(group)
+
+        for shard in failed_shards:
+            failed_shards_index.append(shard["shardIndex"])
+        print(
+            colored(
+                f"{indent}Failed shards: {failed_shards_index}", color=task_status_font
+            )  # Maybe place contents of if statment in function and add indentation to printout
+        )
+
