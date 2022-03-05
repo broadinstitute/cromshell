@@ -3,7 +3,6 @@ import logging
 from itertools import groupby
 
 import click
-import jq
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
@@ -67,23 +66,25 @@ def main(config, workflow_id, pretty_print, expand_subworkflows):
         pretty_execution_status(
             workflow_id=workflow_id,  #resolved_workflow_id,
             workflow_metadata=workflow_metadata,
-            do_expand_sub_workflows=False,
+            do_expand_sub_workflows=expand_subworkflows,
         )
     else:
-        # Print {tasks:{status: count}}
-        tmp_json = json.loads(
-            jq.compile(
-                ".calls? | values | map_values(group_by(.executionStatus)| map({(.[0].executionStatus): . | length}) | add)"
-            )
-            .input(workflow_metadata)
-            .text()
-        )
-        io_utils.pretty_print_json(format_json=tmp_json)
+        print_task_status_summary(workflow_metadata=workflow_metadata)
 
     return 0
 
 
-def pretty_execution_status(workflow_id, workflow_metadata, do_expand_sub_workflows):
+def pretty_execution_status(
+        workflow_id: str, workflow_metadata: dict, do_expand_sub_workflows: bool
+):
+    """
+    Prints the workflow summary and calls the task to print formatted workflow status
+
+    :param workflow_id:
+    :param workflow_metadata:
+    :param do_expand_sub_workflows:
+    :return:
+    """
     workflow_status = workflow_metadata.get("status")
     print(
         colored(
@@ -99,14 +100,26 @@ def pretty_execution_status(workflow_id, workflow_metadata, do_expand_sub_workfl
     )
 
 
-def print_workflow_status(workflow_metadata, indent, expand_sub_workflows):
+def print_workflow_status(
+        workflow_metadata: dict, indent: str, expand_sub_workflows: bool
+):
+    """
+    Recursively runs through each task of a workflow metadata and calls task to
+    print task status counts
+    :param workflow_metadata:
+    :param indent:
+    :param expand_sub_workflows:
+    :return:
+    """
     tasks = list(workflow_metadata["calls"].keys())
 
     for task in tasks:  # for each task in given metadata
+        # If task has a key called subworkflowMetadata in its first (zero)
+        # element dictionary
         if (
             "subWorkflowMetadata" in workflow_metadata["calls"][task][0]
             and expand_sub_workflows
-        ):  # If task has a key called subworkflowMetadata in its first (zero) element dictionary
+        ):
             sub_workflow_name = task
             print(f"{indent}SubWorkflow {sub_workflow_name}")
 
@@ -116,7 +129,6 @@ def print_workflow_status(workflow_metadata, indent, expand_sub_workflows):
                 sub_workflow_metadata = workflow_metadata["calls"][sub_workflow_name][
                     i
                 ]["subWorkflowMetadata"]
-                # checkPipeStatus "Could not read tmp file JSON data." "Could not parse JSON output from cromwell server."
 
                 print_workflow_status(
                     workflow_metadata=sub_workflow_metadata,
@@ -127,7 +139,14 @@ def print_workflow_status(workflow_metadata, indent, expand_sub_workflows):
             print_task_status(task, indent, workflow_metadata)
 
 
-def print_task_status(task, indent, workflow_metadata):
+def print_task_status(task: str, indent: str, workflow_metadata: dict):
+    """
+
+    :param task:
+    :param indent:
+    :param workflow_metadata:
+    :return:
+    """
 
     shards = workflow_metadata["calls"][task]
     sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
@@ -182,3 +201,30 @@ def print_task_status(task, indent, workflow_metadata):
             )  # Maybe place contents of if statment in function and add indentation to printout
         )
 
+
+def print_task_status_summary(workflow_metadata: dict):
+    """
+    Prints the status count for each task in a workflow.
+    Does NOT run expose subworkflows
+
+    :param workflow_metadata:
+    :return:
+    """
+
+    workflow_status_summary = {}
+    for task in workflow_metadata["calls"]:
+        # Method to sort task shards by status (executionStatus)
+        shards = workflow_metadata["calls"][task]
+        sorted_shards = sorted(shards, key=lambda y: y['executionStatus'])
+
+        # Count the number of shards for each status group and add this to
+        # a dictionary.
+        statuses_count = {}
+        for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
+            statuses_count[status] = len(list(group))
+
+        # Add the status counts for this task to dictionary holding other
+        # task status counts
+        workflow_status_summary[task] = statuses_count
+
+    io_utils.pretty_print_json(format_json=workflow_status_summary)
