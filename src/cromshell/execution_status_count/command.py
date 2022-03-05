@@ -150,12 +150,12 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict):
 
     shards = workflow_metadata["calls"][task]
 
-    shard_status_summary = get_shard_status_count(shards)
+    shard_status_count = get_shard_status_count(shards)
 
-    shards_done = shard_status_summary["Done"] if "Done" in shard_status_summary else 0
-    shards_running = shard_status_summary["Running"] if "Running" in shard_status_summary else 0
-    shards_failed = shard_status_summary["Failed"] if "Failed" in shard_status_summary else 0
-    shards_retried = shard_status_summary["RetryableFailure"] if "RetryableFailure" in shard_status_summary else 0
+    shards_done = shard_status_count["Done"] if "Done" in shard_status_count else 0
+    shards_running = shard_status_count["Running"] if "Running" in shard_status_count else 0
+    shards_failed = shard_status_count["Failed"] if "Failed" in shard_status_count else 0
+    shards_retried = shard_status_count["RetryableFailure"] if "RetryableFailure" in shard_status_count else 0
 
     # Determine what color to print task print out
     if shards_failed == 0 and shards_running == 0:
