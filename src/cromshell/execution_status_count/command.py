@@ -149,27 +149,15 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict):
     """
 
     shards = workflow_metadata["calls"][task]
-    sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
-    shard_status_summary = []
 
-    for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
-        shard_status_summary.append({"status": status, "count": len(list(group))})
+    shard_status_summary = get_shard_status_count(shards)
 
-    shards_done = 0
-    for i in shard_status_summary:
-        shards_done = i["count"] if i["status"] == "Done" else shards_done
-    shards_running = 0
-    for i in shard_status_summary:
-        shards_running = i["count"] if i["status"] == "Running" else shards_running
-    shards_failed = 0
-    for i in shard_status_summary:
-        shards_failed = i["count"] if i["status"] == "Failed" else shards_failed
-    shards_retried = 0
-    for i in shard_status_summary:
-        shards_retried = (
-            i["count"] if i["status"] == "RetryableFailure" else shards_retried
-        )
+    shards_done = shard_status_summary["Done"] if "Done" in shard_status_summary else 0
+    shards_running = shard_status_summary["Running"] if "Running" in shard_status_summary else 0
+    shards_failed = shard_status_summary["Failed"] if "Failed" in shard_status_summary else 0
+    shards_retried = shard_status_summary["RetryableFailure"] if "RetryableFailure" in shard_status_summary else 0
 
+    # Determine what color to print task print out
     if shards_failed == 0 and shards_running == 0:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif shards_failed > 0 and shards_running > 0:
@@ -189,6 +177,7 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict):
     if shards_failed:
         failed_shards = []
         failed_shards_index = []
+        sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
         for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
             if status == "Failed":
                 failed_shards = list(group)
@@ -215,16 +204,24 @@ def print_task_status_summary(workflow_metadata: dict):
     for task in workflow_metadata["calls"]:
         # Method to sort task shards by status (executionStatus)
         shards = workflow_metadata["calls"][task]
-        sorted_shards = sorted(shards, key=lambda y: y['executionStatus'])
-
-        # Count the number of shards for each status group and add this to
-        # a dictionary.
-        statuses_count = {}
-        for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
-            statuses_count[status] = len(list(group))
 
         # Add the status counts for this task to dictionary holding other
         # task status counts
-        workflow_status_summary[task] = statuses_count
+        workflow_status_summary[task] = get_shard_status_count(shards)
 
     io_utils.pretty_print_json(format_json=workflow_status_summary)
+
+
+def get_shard_status_count(shards: dict) -> dict:
+    """
+    Count the number of shards for each status type and return as dictionary.
+    :param shards: Task shards
+    :return:
+    """
+
+    sorted_shards = sorted(shards, key=lambda y: y['executionStatus'])
+    statuses_count = {}
+    for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
+        statuses_count[status] = len(list(group))
+
+    return statuses_count
