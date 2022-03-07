@@ -104,7 +104,7 @@ def print_workflow_status(
         workflow_metadata: dict, indent: str, expand_sub_workflows: bool
 ):
     """
-    Recursively runs through each task of a workflow metadata and calls task to
+    Recursively runs through each task of a workflow metadata and calls function to
     print task status counts
     :param workflow_metadata:
     :param indent:
@@ -113,36 +113,39 @@ def print_workflow_status(
     """
     tasks = list(workflow_metadata["calls"].keys())
 
-    for task in tasks:  # for each task in given metadata
-        # If task has a key called subworkflowMetadata in its first (zero)
-        # element dictionary
+    for task in tasks:  # For each task in given metadata
+        # If task has a key called 'subworkflowMetadata' in its first (zero) element
+        # (shard) and expand_sub_workflow parameter is set to true then rerun this
+        # function on that subworkflow
         if (
             "subWorkflowMetadata" in workflow_metadata["calls"][task][0]
             and expand_sub_workflows
         ):
             sub_workflow_name = task
+            task_shards = workflow_metadata["calls"][sub_workflow_name]
             print(f"{indent}SubWorkflow {sub_workflow_name}")
 
-            for i in range(
-                len(workflow_metadata["calls"][sub_workflow_name]) - 1
-            ):  # For each element in total number of elements in subworkflow list
-                sub_workflow_metadata = workflow_metadata["calls"][sub_workflow_name][
-                    i
-                ]["subWorkflowMetadata"]
+            # For each element in total number of subworkflow calls get the subworkflow
+            # metadata. This loop will go through each shard if task is scattered
+            for i in range(len(task_shards) - 1):
+                sub_workflow_metadata = task_shards[i]["subWorkflowMetadata"]
 
                 print_workflow_status(
                     workflow_metadata=sub_workflow_metadata,
                     indent=indent + "\t",
                     expand_sub_workflows=expand_sub_workflows,
-                )  # Look for additional subworkflows within this subworkflow
+                )
+
+        # If no subworkflow is found then print status summary for task
         else:
             print_task_status(task, indent, workflow_metadata)
 
 
 def print_task_status(task: str, indent: str, workflow_metadata: dict):
     """
+    Prints the task name and status count
 
-    :param task:
+    :param task: Name of the task
     :param indent:
     :param workflow_metadata:
     :return:
