@@ -4,7 +4,7 @@ from subprocess import check_output
 import requests
 
 from cromshell import log
-from cromshell.utilities import io_utils
+from cromshell.utilities import cromshellconfig, io_utils
 
 LOGGER = logging.getLogger(__name__)
 

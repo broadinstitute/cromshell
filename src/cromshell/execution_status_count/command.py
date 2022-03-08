@@ -1,4 +1,3 @@
-import json
 import logging
 from itertools import groupby
 
@@ -6,7 +5,7 @@ import click
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import io_utils, workflow_id_utils
+from cromshell.utilities import http_utils, io_utils, workflow_id_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,8 +31,9 @@ def main(config, workflow_ids, pretty_print, expand_subworkflows):
     """
     Get the summarized status of all jobs in the workflow.
 
-    WORKFLOW_ID can be one or more workflow ids belonging to a running workflow
-    separated by a space (e.g. abort [workflow_id1] [[workflow_id2]...]).
+    WORKFLOW_ID can be one or more workflow ids belonging to a
+    running workflow separated by a space.
+    (e.g. execution-status-count [workflow_id1] [[workflow_id2]...])
 
     """
 
@@ -45,10 +45,9 @@ def main(config, workflow_ids, pretty_print, expand_subworkflows):
             submission_file_path=config.submission_file_path,
         )
 
-        # Todo: the function below also sets the config.cromwell_api_workflow_id but should
-        #  probably not be in the same function or atleast rename to make it more clear
-        metadata_command.check_cromwell_server(config=config,
-                                               workflow_id=resolved_workflow_id)
+        http_utils.set_and_check_cromwell_server(
+            config=config, workflow_id=resolved_workflow_id
+        )
 
         # Get metadata
         formatted_metadata_parameter = metadata_command.format_metadata_params(
@@ -57,12 +56,12 @@ def main(config, workflow_ids, pretty_print, expand_subworkflows):
             expand_subworkflows=True,
         )
 
-        workflow_metadata = json.loads(metadata_command.get_workflow_metadata(
+        workflow_metadata = metadata_command.get_workflow_metadata(
             meta_params=formatted_metadata_parameter,
             api_workflow_id=config.cromwell_api_workflow_id,
             timeout=config.requests_connect_timeout,
             verify_certs=config.requests_verify_certs,
-        ))
+        )
 
         # # workflow_metadata = {'workflowName': 'HelloWorld', 'workflowProcessingEvents': [{'cromwellId': 'cromid-f6be9e3', 'description': 'Finished', 'timestamp': '2022-01-07T21:44:13.768Z', 'cromwellVersion': '67-a4567f6'}, {'cromwellId': 'cromid-f6be9e3', 'description': 'PickedUp', 'timestamp': '2022-01-07T21:43:58.194Z', 'cromwellVersion': '67-a4567f6'}], 'actualWorkflowLanguageVersion': 'draft-2', 'calls': {'HelloWorld.HelloWorldTask': [{'retryableFailure': False, 'executionStatus': 'Failed', 'stdout': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b/call-HelloWorldTask/execution/stdout', 'backendStatus': 'Done', 'compressedDockerSize': 4980136, 'commandLine': "    set -e\necho 'Hello World!'", 'shardIndex': -1, 'runtimeAttributes': {'maxRetries': '0', 'continueOnReturnCode': '0', 'docker': 'frolvlad/alpine-bash', 'failOnStderr': 'false'}, 'callCaching': {'allowResultReuse': False, 'effectiveCallCachingMode': 'CallCachingOff'}, 'inputs': {'default_ram_mb': 3072, 'disk_space_gb': None, 'machine_mem': 3072, 'default_disk_space_gb': 100, 'preemptible_attempts': None, 'use_ssd': False, 'docker': 'frolvlad/alpine-bash', 'command_mem': 2048, 'boot_disk_size_gb': None, 'mem': None, 'cpu': None, 'default_boot_disk_size_gb': 15}, 'returnCode': -1, 'failures': [{'message': "Job HelloWorld.HelloWorldTask:NA:1 exited with return code -1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details.", 'causedBy': []}], 'jobId': '243', 'backend': 'Local', 'end': '2022-01-07T21:44:13.312Z', 'stderr': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b/call-HelloWorldTask/execution/stderr', 'callRoot': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b/call-HelloWorldTask', 'attempt': 1, 'executionEvents': [{'startTime': '2022-01-07T21:44:12.331Z', 'description': 'UpdatingJobStore', 'endTime': '2022-01-07T21:44:13.314Z'}, {'startTime': '2022-01-07T21:44:09.078Z', 'description': 'RunningJob', 'endTime': '2022-01-07T21:44:12.331Z'}, {'startTime': '2022-01-07T21:44:07.457Z', 'description': 'WaitingForValueStore', 'endTime': '2022-01-07T21:44:07.473Z'}, {'endTime': '2022-01-07T21:44:09.078Z', 'startTime': '2022-01-07T21:44:07.473Z', 'description': 'PreparingJob'}, {'startTime': '2022-01-07T21:44:01.538Z', 'description': 'Pending', 'endTime': '2022-01-07T21:44:01.554Z'}, {'startTime': '2022-01-07T21:44:01.554Z', 'description': 'RequestingExecutionToken', 'endTime': '2022-01-07T21:44:07.457Z'}], 'start': '2022-01-07T21:44:01.519Z'}]}, 'outputs': {}, 'workflowRoot': '/cromwell-executions/HelloWorld/c1b16617-4bd5-40b0-b899-426bbc68656b', 'actualWorkflowLanguage': 'WDL', 'id': 'c1b16617-4bd5-40b0-b899-426bbc68656b', 'inputs': {'HelloWorld.mem': None, 'HelloWorld.HelloWorldTask.default_disk_space_gb': 100, 'HelloWorld.disk_space_gb': None, 'HelloWorld.docker': 'frolvlad/alpine-bash', 'HelloWorld.HelloWorldTask.default_ram_mb': 3072, 'HelloWorld.cpu': None, 'HelloWorld.HelloWorldTask.default_boot_disk_size_gb': 15, 'HelloWorld.boot_disk_size_gb': None, 'HelloWorld.HelloWorldTask.use_ssd': False, 'HelloWorld.preemptible_attempts': None}, 'labels': {'cromwell-workflow-id': 'cromwell-c1b16617-4bd5-40b0-b899-426bbc68656b'}, 'submission': '2022-01-07T21:43:56.107Z', 'status': 'Failed', 'failures': [{'causedBy': [{'message': "Job HelloWorld.HelloWorldTask:NA:1 exited with return code -1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details.", 'causedBy': []}], 'message': 'Workflow failed'}], 'end': '2022-01-07T21:44:13.767Z', 'start': '2022-01-07T21:43:58.228Z'}
         # with open("/Users/bshifaw/Downloads/metadata-big.json", "r") as ff:
