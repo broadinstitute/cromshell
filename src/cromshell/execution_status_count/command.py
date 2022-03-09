@@ -76,7 +76,7 @@ def main(config, workflow_ids, pretty_print, expand_subworkflows):
 
 
 def pretty_execution_status(
-        workflow_id: str, workflow_metadata: dict, do_expand_sub_workflows: bool
+    workflow_id: str, workflow_metadata: dict, do_expand_sub_workflows: bool
 ) -> None:
     """
     Prints the workflow summary and calls the task to print formatted workflow status
@@ -102,7 +102,7 @@ def pretty_execution_status(
 
 
 def print_workflow_status(
-        workflow_metadata: dict, indent: str, expand_sub_workflows: bool
+    workflow_metadata: dict, indent: str, expand_sub_workflows: bool
 ) -> None:
     """
     Recursively runs through each task of a workflow metadata and calls function to
@@ -119,8 +119,8 @@ def print_workflow_status(
         # (shard) and expand_sub_workflow parameter is set to true then rerun this
         # function on that subworkflow
         if (
-                "subWorkflowMetadata" in workflow_metadata["calls"][task][0]
-                and expand_sub_workflows
+            "subWorkflowMetadata" in workflow_metadata["calls"][task][0]
+            and expand_sub_workflows
         ):
             sub_workflow_name = task
             task_shards = workflow_metadata["calls"][sub_workflow_name]
@@ -157,29 +157,34 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
     shard_status_count = get_shard_status_count(shards)
 
     shards_done = shard_status_count["Done"] if "Done" in shard_status_count else 0
-    shards_running = shard_status_count[
-        "Running"] if "Running" in shard_status_count else 0
-    shards_failed = shard_status_count[
-        "Failed"] if "Failed" in shard_status_count else 0
-    shards_retried = shard_status_count[
-        "RetryableFailure"] if "RetryableFailure" in shard_status_count else 0
+    shards_running = (
+        shard_status_count["Running"] if "Running" in shard_status_count else 0
+    )
+    shards_failed = (
+        shard_status_count["Failed"] if "Failed" in shard_status_count else 0
+    )
+    shards_retried = (
+        shard_status_count["RetryableFailure"]
+        if "RetryableFailure" in shard_status_count
+        else 0
+    )
 
-    # Determine what color to print task print out
+    # Determine what color to print task summary
     if shards_failed == 0 and shards_running == 0:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_SUCCEEDED
-    elif shards_failed > 0 and shards_running > 0:
-        task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILING  # Running but will fail
+    elif shards_failed > 0 and shards_running > 0:  # Running but will fail
+        task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILING
     elif shards_running > 0:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_RUNNING
     else:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILED
 
-    print(
-        colored(
-            f"{indent}{task}\t{shards_running} Running, {shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed",
-            color=task_status_font,
-        )
+    # Format and print task summary
+    formatted_task_summary = (
+        f"{indent}{task}\t{shards_running} Running, "
+        f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed"
     )
+    print(colored(formatted_task_summary, color=task_status_font))
 
     # If the task has shards that failed list them
     # Maybe place contents of if statement in function and add indentation to printout??
@@ -217,7 +222,7 @@ def get_shard_status_count(shards: dict) -> dict:
     :return:
     """
 
-    sorted_shards = sorted(shards, key=lambda y: y['executionStatus'])
+    sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
     statuses_count = {}
     for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
         statuses_count[status] = len(list(group))
@@ -226,7 +231,7 @@ def get_shard_status_count(shards: dict) -> dict:
 
 
 def print_list_of_failed_shards(
-        shards: dict, indent: str, task_status_font: str
+    shards: dict, indent: str, task_status_font: str
 ) -> None:
     """
     Print a list of the failed shards
@@ -245,7 +250,5 @@ def print_list_of_failed_shards(
     for shard in failed_shards:
         failed_shards_index.append(shard["shardIndex"])
     print(
-        colored(
-            f"{indent}Failed shards: {failed_shards_index}", color=task_status_font
-        )
+        colored(f"{indent}Failed shards: {failed_shards_index}", color=task_status_font)
     )
