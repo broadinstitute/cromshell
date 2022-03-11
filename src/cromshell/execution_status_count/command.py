@@ -231,8 +231,8 @@ def get_shard_status_count(shards: dict) -> dict:
 
 
 def print_list_of_failed_shards(
-    shards: dict, indent: str, task_status_font: str
-) -> None:
+    shards: list, indent: str, task_status_font: str
+) -> str:
     """
     Print a list of the failed shards
     :param shards: The shared of a called task
@@ -249,6 +249,8 @@ def print_list_of_failed_shards(
 
     for shard in failed_shards:
         failed_shards_index.append(shard["shardIndex"])
-    print(
-        colored(f"{indent}Failed shards: {failed_shards_index}", color=task_status_font)
-    )
+
+    failed_shards_summary = f"{indent}Failed shards: {failed_shards_index}"
+    print(colored(failed_shards_summary, color=task_status_font))
+
+    return failed_shards_summary

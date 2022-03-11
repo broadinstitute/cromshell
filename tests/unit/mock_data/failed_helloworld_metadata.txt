@@ -1,0 +1,135 @@
+{
+    "actualWorkflowLanguage": "WDL",
+    "actualWorkflowLanguageVersion": "draft-2",
+    "calls": {
+        "HelloWorld.HelloWorldTask": [
+            {
+                "attempt": 1,
+                "backend": "Local",
+                "backendStatus": "Done",
+                "callCaching": {
+                    "allowResultReuse": false,
+                    "effectiveCallCachingMode": "CallCachingOff"
+                },
+                "callRoot": "/cromwell-executions/HelloWorld/f03ad715-9b3c-4f94-a53c-005abd048357/call-HelloWorldTask",
+                "commandLine": "    set -e\necho 'Hello World!'",
+                "compressedDockerSize": 4980136,
+                "end": "2022-03-10T13:25:09.894Z",
+                "executionEvents": [
+                    {
+                        "description": "RequestingExecutionToken",
+                        "endTime": "2022-03-10T13:25:03.970Z",
+                        "startTime": "2022-03-10T13:24:58.121Z"
+                    },
+                    {
+                        "description": "PreparingJob",
+                        "endTime": "2022-03-10T13:25:05.430Z",
+                        "startTime": "2022-03-10T13:25:03.980Z"
+                    },
+                    {
+                        "description": "RunningJob",
+                        "endTime": "2022-03-10T13:25:08.880Z",
+                        "startTime": "2022-03-10T13:25:05.430Z"
+                    },
+                    {
+                        "description": "UpdatingJobStore",
+                        "endTime": "2022-03-10T13:25:09.894Z",
+                        "startTime": "2022-03-10T13:25:08.880Z"
+                    },
+                    {
+                        "description": "WaitingForValueStore",
+                        "endTime": "2022-03-10T13:25:03.980Z",
+                        "startTime": "2022-03-10T13:25:03.970Z"
+                    },
+                    {
+                        "description": "Pending",
+                        "endTime": "2022-03-10T13:24:58.121Z",
+                        "startTime": "2022-03-10T13:24:58.106Z"
+                    }
+                ],
+                "executionStatus": "Failed",
+                "failures": [
+                    {
+                        "causedBy": [],
+                        "message": "Job HelloWorld.HelloWorldTask:NA:1 exited with return code -1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details."
+                    }
+                ],
+                "inputs": {
+                    "boot_disk_size_gb": null,
+                    "command_mem": 2048,
+                    "cpu": null,
+                    "default_boot_disk_size_gb": 15,
+                    "default_disk_space_gb": 100,
+                    "default_ram_mb": 3072,
+                    "disk_space_gb": null,
+                    "docker": "frolvlad/alpine-bash",
+                    "machine_mem": 3072,
+                    "mem": null,
+                    "preemptible_attempts": null,
+                    "use_ssd": false
+                },
+                "jobId": "219",
+                "retryableFailure": false,
+                "returnCode": -1,
+                "runtimeAttributes": {
+                    "continueOnReturnCode": "0",
+                    "docker": "frolvlad/alpine-bash",
+                    "failOnStderr": "false",
+                    "maxRetries": "0"
+                },
+                "shardIndex": -1,
+                "start": "2022-03-10T13:24:58.089Z",
+                "stderr": "/cromwell-executions/HelloWorld/f03ad715-9b3c-4f94-a53c-005abd048357/call-HelloWorldTask/execution/stderr",
+                "stdout": "/cromwell-executions/HelloWorld/f03ad715-9b3c-4f94-a53c-005abd048357/call-HelloWorldTask/execution/stdout"
+            }
+        ]
+    },
+    "end": "2022-03-10T13:25:10.366Z",
+    "failures": [
+        {
+            "causedBy": [
+                {
+                    "causedBy": [],
+                    "message": "Job HelloWorld.HelloWorldTask:NA:1 exited with return code -1 which has not been declared as a valid return code. See 'continueOnReturnCode' runtime attribute for more details."
+                }
+            ],
+            "message": "Workflow failed"
+        }
+    ],
+    "id": "f03ad715-9b3c-4f94-a53c-005abd048357",
+    "inputs": {
+        "HelloWorld.HelloWorldTask.default_boot_disk_size_gb": 15,
+        "HelloWorld.HelloWorldTask.default_disk_space_gb": 100,
+        "HelloWorld.HelloWorldTask.default_ram_mb": 3072,
+        "HelloWorld.HelloWorldTask.use_ssd": false,
+        "HelloWorld.boot_disk_size_gb": null,
+        "HelloWorld.cpu": null,
+        "HelloWorld.disk_space_gb": null,
+        "HelloWorld.docker": "frolvlad/alpine-bash",
+        "HelloWorld.mem": null,
+        "HelloWorld.preemptible_attempts": null
+    },
+    "labels": {
+        "cromwell-workflow-id": "cromwell-f03ad715-9b3c-4f94-a53c-005abd048357"
+    },
+    "outputs": {},
+    "start": "2022-03-10T13:24:54.464Z",
+    "status": "Failed",
+    "submission": "2022-03-10T13:24:47.825Z",
+    "workflowName": "HelloWorld",
+    "workflowProcessingEvents": [
+        {
+            "cromwellId": "cromid-f2e6490",
+            "cromwellVersion": "67-a4567f6",
+            "description": "PickedUp",
+            "timestamp": "2022-03-10T13:24:54.410Z"
+        },
+        {
+            "cromwellId": "cromid-f2e6490",
+            "cromwellVersion": "67-a4567f6",
+            "description": "Finished",
+            "timestamp": "2022-03-10T13:25:10.367Z"
+        }
+    ],
+    "workflowRoot": "/cromwell-executions/HelloWorld/f03ad715-9b3c-4f94-a53c-005abd048357"
+}
