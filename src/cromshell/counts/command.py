@@ -5,12 +5,12 @@ import click
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import http_utils, io_utils, workflow_id_utils
+from cromshell.utilities import http_utils, io_utils, workflow_id_utils, cromshellconfig
 
 LOGGER = logging.getLogger(__name__)
 
 
-@click.command(name="execution-status-count")
+@click.command(name="counts")
 @click.argument("workflow_ids", required=True, nargs=-1)
 @click.option(
     "-p",
@@ -21,23 +21,23 @@ LOGGER = logging.getLogger(__name__)
 )
 @click.option(
     "-x",
-    "--expand-subworkflows",
+    "--compress-subworkflows",
     is_flag=True,
     default=False,
-    help="Expand sub-workflow information",
+    help="Compress sub-workflow metadata information",
 )
 @click.pass_obj
-def main(config, workflow_ids, pretty_print, expand_subworkflows):
+def main(config, workflow_ids, pretty_print, compress_subworkflows):
     """
     Get the summarized status of all jobs in the workflow.
 
     WORKFLOW_ID can be one or more workflow ids belonging to a
     running workflow separated by a space.
-    (e.g. execution-status-count [workflow_id1] [[workflow_id2]...])
+    (e.g. counts [workflow_id1] [[workflow_id2]...])
 
     """
 
-    LOGGER.info("execution-status-count")
+    LOGGER.info("counts")
 
     for workflow_id in workflow_ids:
         resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
@@ -53,7 +53,7 @@ def main(config, workflow_ids, pretty_print, expand_subworkflows):
         formatted_metadata_parameter = metadata_command.format_metadata_params(
             list_of_keys=config.METADATA_KEYS_TO_OMIT,
             exclude_keys=True,
-            expand_subworkflows=True,
+            expand_subworkflows=not compress_subworkflows,
         )
 
         workflow_metadata = metadata_command.get_workflow_metadata(
@@ -64,10 +64,10 @@ def main(config, workflow_ids, pretty_print, expand_subworkflows):
         )
 
         if pretty_print:
-            pretty_execution_status(
+            pretty_status_counts(
                 workflow_id=resolved_workflow_id,
                 workflow_metadata=workflow_metadata,
-                do_expand_sub_workflows=expand_subworkflows,
+                expand_subworkflows=not compress_subworkflows,
             )
         else:
             print_task_status_summary(workflow_metadata=workflow_metadata)
@@ -75,15 +75,15 @@ def main(config, workflow_ids, pretty_print, expand_subworkflows):
     return 0
 
 
-def pretty_execution_status(
-    workflow_id: str, workflow_metadata: dict, do_expand_sub_workflows: bool
+def pretty_status_counts(
+    workflow_id: str, workflow_metadata: dict, expand_subworkflows: bool
 ) -> None:
     """
     Prints the workflow summary and calls the task to print formatted workflow status
 
     :param workflow_id: Hexadecimal identifier of workflow submission
     :param workflow_metadata: Metadata of the workflow to process
-    :param do_expand_sub_workflows: Boolean, whether or not to print subworkflows
+    :param expand_subworkflows: Boolean, whether or not to print subworkflows
     :return:
     """
     workflow_status = workflow_metadata.get("status")
@@ -97,7 +97,7 @@ def pretty_execution_status(
     print_workflow_status(
         workflow_metadata=workflow_metadata,
         indent="\t",
-        expand_sub_workflows=do_expand_sub_workflows,
+        expand_sub_workflows=expand_subworkflows,
     )
 
 
@@ -168,6 +168,10 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
         if "RetryableFailure" in shard_status_count
         else 0
     )
+    for status in shard_status_count.keys():
+        shards_unknown = (
+            shard_status_count[status] if status not in shard_status_count else 0
+        )
 
     # Determine what color to print task summary
     if shards_failed == 0 and shards_running == 0:
@@ -176,13 +180,20 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILING
     elif shards_running > 0:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_RUNNING
-    else:
+    elif shards_failed > 0:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILED
+    else:  # catch all
+        task_status_font = "yellow"
+
+    if shards_unknown > 0:  # catch all
+        unknown_status = f", {shards_unknown} Unknown"
+    else:
+        unknown_status = ""
 
     # Format and print task summary
     formatted_task_summary = (
         f"{indent}{task}\t{shards_running} Running, "
-        f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed"
+        f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed{unknown_status}"
     )
     print(colored(formatted_task_summary, color=task_status_font))
 
@@ -229,20 +240,6 @@ def get_shard_status_count(shards: dict) -> dict:
 
     return statuses_count
 
-
-# def group_shards_by_status(shards: dict) -> dict:
-#     """
-#     Count the number of shards for each status type and return as dictionary.
-#     :param shards: Task shards
-#     :return:
-#     """
-#
-#     sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
-#     grouped_statuses = {}
-#     for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
-#         grouped_statuses[status] = len(list(group))
-#
-#     return statuses_count
 
 def print_list_of_failed_shards(
     shards: list, indent: str, task_status_font: str

@@ -89,3 +89,17 @@ def generate_headers(config):
         headers["Authorization"] = f"Bearer {token}"
 
     return headers
+
+
+def set_and_check_cromwell_server(config, workflow_id):
+    """Checks for an associated cromwell server for the workflow_id
+    and checks connection with the cromwell server"""
+
+    # Overrides the default cromwell url set in the cromshell config file or
+    # command line argument if the workflow id is found in the submission file.
+    cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
+
+    config.cromwell_api_workflow_id = f"{config.get_cromwell_api()}/{workflow_id}"
+
+    # Check if Cromwell Server Backend works
+    assert_can_communicate_with_server(config)
