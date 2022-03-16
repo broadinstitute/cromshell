@@ -230,6 +230,20 @@ def get_shard_status_count(shards: dict) -> dict:
     return statuses_count
 
 
+# def group_shards_by_status(shards: dict) -> dict:
+#     """
+#     Count the number of shards for each status type and return as dictionary.
+#     :param shards: Task shards
+#     :return:
+#     """
+#
+#     sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
+#     grouped_statuses = {}
+#     for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
+#         grouped_statuses[status] = len(list(group))
+#
+#     return statuses_count
+
 def print_list_of_failed_shards(
     shards: list, indent: str, task_status_font: str
 ) -> str:
@@ -249,7 +263,7 @@ def print_list_of_failed_shards(
 
     for shard in failed_shards:
         failed_shards_index.append(shard["shardIndex"])
-
+    # Todo: print only if task is sharded
     failed_shards_summary = f"{indent}Failed shards: {failed_shards_index}"
     print(colored(failed_shards_summary, color=task_status_font))
 

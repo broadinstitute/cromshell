@@ -72,6 +72,15 @@ class WorkflowStatuses(Enum):
     DOOMED = ["DOOMED"]
 
 
+class TaskStatuses(Enum):
+    """Enum to hold all possible status of workflow"""
+
+    Failed = ["Failed"]
+    Running = ["Running"]
+    Succeeded = ["Succeeded"]
+    RetryableFailure = ["RetryableFailure"]
+
+
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
     """
     Override Cromwell Server From Command Line or Environment or Submission file
