@@ -13,11 +13,11 @@ LOGGER = logging.getLogger(__name__)
 @click.command(name="counts")
 @click.argument("workflow_ids", required=True, nargs=-1)
 @click.option(
-    "-p",
-    "--pretty-print",
+    "-j",
+    "--json-summary",
     is_flag=True,
     default=False,
-    help="Enable pretty-printing",
+    help="Print a json summary of the task status counts",
 )
 @click.option(
     "-x",
@@ -27,7 +27,7 @@ LOGGER = logging.getLogger(__name__)
     help="Compress sub-workflow metadata information",
 )
 @click.pass_obj
-def main(config, workflow_ids, pretty_print, compress_subworkflows):
+def main(config, workflow_ids, json_summary, compress_subworkflows):
     """
     Get the summarized status of all jobs in the workflow.
 
@@ -63,14 +63,14 @@ def main(config, workflow_ids, pretty_print, compress_subworkflows):
             verify_certs=config.requests_verify_certs,
         )
 
-        if pretty_print:
+        if json_summary:
+            print_task_status_summary(workflow_metadata=workflow_metadata)
+        else:
             pretty_status_counts(
                 workflow_id=resolved_workflow_id,
                 workflow_metadata=workflow_metadata,
                 expand_subworkflows=not compress_subworkflows,
             )
-        else:
-            print_task_status_summary(workflow_metadata=workflow_metadata)
 
     return 0
 
@@ -185,24 +185,23 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
     else:  # catch all
         task_status_font = "yellow"
 
-    if shards_unknown > 0:  # catch all
-        unknown_status = f", {shards_unknown} Unknown"
-    else:
-        unknown_status = ""
-
     # Format and print task summary
     formatted_task_summary = (
         f"{indent}{task}\t{shards_running} Running, "
-        f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed{unknown_status}"
+        f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed"
     )
+    if shards_unknown > 0:  # if unknown status present append its count to print out.
+        formatted_task_summary += f", {shards_unknown} Unknown"
+
     print(colored(formatted_task_summary, color=task_status_font))
 
     # If the task has shards that failed list them
-    # Maybe place contents of if statement in function and add indentation to printout??
     if shards_failed:
-        print_list_of_failed_shards(
-            shards=shards, indent=indent, task_status_font=task_status_font
-        )
+        failed_shards_index = get_list_of_failed_shards(shards=shards)
+        if failed_shards_index != [-1]:  # Prints only if task was scattered
+            # Format and print task failed shards
+            failed_shards_summary = f"{indent}Failed shards: {failed_shards_index}"
+            print(colored(failed_shards_summary, color=task_status_font))
 
 
 def print_task_status_summary(workflow_metadata: dict) -> None:
@@ -241,9 +240,7 @@ def get_shard_status_count(shards: dict) -> dict:
     return statuses_count
 
 
-def print_list_of_failed_shards(
-    shards: list, indent: str, task_status_font: str
-) -> str:
+def get_list_of_failed_shards(shards: list) -> list:
     """
     Print a list of the failed shards
     :param shards: The shared of a called task
@@ -260,8 +257,5 @@ def print_list_of_failed_shards(
 
     for shard in failed_shards:
         failed_shards_index.append(shard["shardIndex"])
-    # Todo: print only if task is sharded
-    failed_shards_summary = f"{indent}Failed shards: {failed_shards_index}"
-    print(colored(failed_shards_summary, color=task_status_font))
 
-    return failed_shards_summary
+    return failed_shards_index
