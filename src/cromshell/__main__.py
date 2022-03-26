@@ -34,6 +34,12 @@ LOGGER = logging.getLogger(__name__)
     help="Suppress all logging",
 )
 @click.option(
+    "--info",
+    "verbosity",
+    flag_value=logging.INFO,
+    help="Show logging",
+)
+@click.option(
     "-v",
     "--verbose",
     "verbosity",

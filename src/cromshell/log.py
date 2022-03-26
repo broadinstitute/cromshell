@@ -31,7 +31,7 @@ def configure_logging(verbosity):
     format_string = get_logging_format_string(cromshell)
 
     # Set logging level:
-    log_level = logging.INFO
+    log_level = logging.WARNING
     if verbosity:
         log_level = int(verbosity)
 
