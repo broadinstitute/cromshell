@@ -5,7 +5,8 @@ import click
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import http_utils, io_utils, workflow_id_utils, cromshellconfig
+from cromshell.utilities import http_utils, io_utils, workflow_id_utils
+from cromshell.utilities.cromshellconfig import TaskStatuses
 
 LOGGER = logging.getLogger(__name__)
 
@@ -105,24 +106,24 @@ def print_workflow_status(
     workflow_metadata: dict, indent: str, expand_sub_workflows: bool
 ) -> None:
     """
-    Recursively runs through each task of a workflow metadata and calls function to
+    Runs through each task of a workflow and calls a function to
     print task status counts
     :param workflow_metadata: Metadata of the workflow to process
     :param indent: Indent string given as "\t", used to indent print out
     :param expand_sub_workflows:  Boolean, whether or not to print subworkflows
     :return:
     """
-    tasks = list(workflow_metadata["calls"].keys())
+    calls = list(workflow_metadata["calls"].keys())
 
-    for task in tasks:  # For each task in given metadata
+    for call in calls:  # For each task in given metadata
         # If task has a key called 'subworkflowMetadata' in its first (zero) element
         # (shard) and expand_sub_workflow parameter is set to true then rerun this
         # function on that subworkflow
         if (
-            "subWorkflowMetadata" in workflow_metadata["calls"][task][0]
+            "subWorkflowMetadata" in workflow_metadata["calls"][call][0]
             and expand_sub_workflows
         ):
-            sub_workflow_name = task
+            sub_workflow_name = call
             task_shards = workflow_metadata["calls"][sub_workflow_name]
             print(f"{indent}SubWorkflow {sub_workflow_name}")
 
@@ -139,7 +140,7 @@ def print_workflow_status(
 
         # If no subworkflow is found then print status summary for task
         else:
-            print_task_status(task, indent, workflow_metadata)
+            print_task_status(call, indent, workflow_metadata)
 
 
 def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
@@ -156,21 +157,13 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
 
     shard_status_count = get_shard_status_count(shards)
 
-    shards_done = shard_status_count["Done"] if "Done" in shard_status_count else 0
-    shards_running = (
-        shard_status_count["Running"] if "Running" in shard_status_count else 0
-    )
-    shards_failed = (
-        shard_status_count["Failed"] if "Failed" in shard_status_count else 0
-    )
-    shards_retried = (
-        shard_status_count["RetryableFailure"]
-        if "RetryableFailure" in shard_status_count
-        else 0
-    )
+    shards_done = shard_status_count.get(TaskStatuses.Done.value, 0)
+    shards_running = shard_status_count.get(TaskStatuses.Running.value, 0)
+    shards_failed = shard_status_count.get(TaskStatuses.Failed.value, 0)
+    shards_retried = shard_status_count.get(TaskStatuses.RetryableFailure.value, 0)
     for status in shard_status_count.keys():
         shards_unknown = (
-            shard_status_count[status] if status not in shard_status_count else 0
+            shard_status_count[status] if status not in TaskStatuses.list() else 0
         )
 
     # Determine what color to print task summary
@@ -191,7 +184,7 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
         f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed"
     )
     if shards_unknown > 0:  # if unknown status present append its count to print out.
-        formatted_task_summary += f", {shards_unknown} Unknown"
+        formatted_task_summary += f", {shards_unknown} Unknown" # Todo: add trigger for a low level log message to say what unknown means and to report to git repo
 
     print(colored(formatted_task_summary, color=task_status_font))
 
@@ -215,7 +208,6 @@ def print_task_status_summary(workflow_metadata: dict) -> None:
 
     workflow_status_summary = {}
     for task in workflow_metadata["calls"]:
-        # Method to sort task shards by status (executionStatus)
         shards = workflow_metadata["calls"][task]
 
         # Add the status counts for this task to dictionary holding other

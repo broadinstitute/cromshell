@@ -75,10 +75,14 @@ class WorkflowStatuses(Enum):
 class TaskStatuses(Enum):
     """Enum to hold all possible status of workflow"""
 
-    Failed = ["Failed"]
-    Running = ["Running"]
-    Succeeded = ["Succeeded"]
-    RetryableFailure = ["RetryableFailure"]
+    Failed = "Failed"
+    Running = "Running"
+    Done = "Done"
+    RetryableFailure = "RetryableFailure"
+
+    @classmethod
+    def list(cls):
+        return [key.value for key in cls]
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
