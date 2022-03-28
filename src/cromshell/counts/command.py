@@ -4,6 +4,7 @@ from itertools import groupby
 import click
 from termcolor import colored
 
+from cromshell.log import DelayedLogMessage
 from cromshell.metadata import command as metadata_command
 from cromshell.utilities import http_utils, io_utils, workflow_id_utils
 from cromshell.utilities.cromshellconfig import TaskStatuses
@@ -73,6 +74,7 @@ def main(config, workflow_ids, json_summary, compress_subworkflows):
                 expand_subworkflows=not compress_subworkflows,
             )
 
+        DelayedLogMessage.display_log_messages()
     return 0
 
 
@@ -161,10 +163,10 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
     shards_running = shard_status_count.get(TaskStatuses.Running.value, 0)
     shards_failed = shard_status_count.get(TaskStatuses.Failed.value, 0)
     shards_retried = shard_status_count.get(TaskStatuses.RetryableFailure.value, 0)
-    for status in shard_status_count.keys():
-        shards_unknown = (
-            shard_status_count[status] if status not in TaskStatuses.list() else 0
-        )
+    shards_unknown, unknown_shard_status = get_unknown_status(
+        shard_status_count=shard_status_count,
+        known_statuses=TaskStatuses.list()
+    )
 
     # Determine what color to print task summary
     if shards_failed == 0 and shards_running == 0:
@@ -184,7 +186,15 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
         f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed"
     )
     if shards_unknown > 0:  # if unknown status present append its count to print out.
-        formatted_task_summary += f", {shards_unknown} Unknown" # Todo: add trigger for a low level log message to say what unknown means and to report to git repo
+        formatted_task_summary += f", {shards_unknown} Unknown"
+        DelayedLogMessage.save_log_message(
+            log_type="warning",
+            log_message="Cromshell found the following unknown task status(es) "
+            f"{unknown_shard_status}, an unknown task status is a status that does "
+            f"not match the following known task statuses:  {TaskStatuses.list()} . "
+            "Please report all relevant info to Cromshell git repository so we can "
+            "improve our code. "
+        )
 
     print(colored(formatted_task_summary, color=task_status_font))
 
@@ -236,8 +246,6 @@ def get_list_of_failed_shards(shards: list) -> list:
     """
     Print a list of the failed shards
     :param shards: The shared of a called task
-    :param indent: Indent string given as "\t", used to indent print out
-    :param task_status_font: Color of the print out
     :return:
     """
     failed_shards = []
@@ -251,3 +259,20 @@ def get_list_of_failed_shards(shards: list) -> list:
         failed_shards_index.append(shard["shardIndex"])
 
     return failed_shards_index
+
+
+def get_unknown_status(shard_status_count: dict, known_statuses: list) -> (int, str):
+    """
+    Gets the total unknown shards count the and list of unknown status names
+    :param shard_status_count: Dictionary having key=status and value=status_count
+    :param known_statuses: List of statuses
+    :return: Total number of unknown shard counts and list of unknown status names
+    """
+    shards_unknown = 0
+    unknown_shard_status = []
+    for status in shard_status_count.keys():
+        if status not in known_statuses:
+            shards_unknown = shards_unknown + shard_status_count[status]
+            unknown_shard_status.append(status)
+
+    return shards_unknown, unknown_shard_status

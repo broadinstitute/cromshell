@@ -2,6 +2,8 @@ import logging
 import pkgutil
 from pathlib import Path
 
+LOGGER = logging.getLogger(__name__)
+
 # Default for boolean to display logo
 show_logo = True
 
@@ -76,3 +78,33 @@ def get_package_paths(paths):
             )
         else:
             yield child
+
+
+class DelayedLogMessage:
+    messages = []
+
+    @classmethod
+    def save_log_message(cls, log_type: str, log_message: str) -> None:
+        """
+        Saves log messages and type
+        :param log_type: Expecting either 'info' or 'warning'
+        :param log_message: Log message
+        :return:
+        """
+
+        if log_type != "warning" and log_type != "info":
+            LOGGER.error("Functions 'log_type' must either be 'warning' or 'info'")
+            raise ValueError(f"Functions 'log_type' must either be 'warning' or 'info'")
+
+        cls.messages.append([log_type, log_message])
+
+    @classmethod
+    def display_log_messages(cls) -> None:
+        """
+        Displays all saved log messages
+        :return:
+        """
+
+        if cls.messages:
+            for m in cls.messages:
+                LOGGER.info(f"{m[1]}") if m[0] == "info" else LOGGER.warning(f"{m[1]}")
