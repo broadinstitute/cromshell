@@ -31,7 +31,7 @@ LOGGER = logging.getLogger(__name__)
 @click.pass_obj
 def main(config, workflow_ids, json_summary, compress_subworkflows):
     """
-    Get the summarized status of all jobs in the workflow.
+    Get the summarized statuses of all tasks in the workflow.
 
     WORKFLOW_ID can be one or more workflow ids belonging to a
     running workflow separated by a space.
@@ -42,34 +42,38 @@ def main(config, workflow_ids, json_summary, compress_subworkflows):
     LOGGER.info("counts")
 
     for workflow_id in workflow_ids:
-        resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
-            cromshell_input=workflow_id,
-            submission_file_path=config.submission_file_path,
-        )
+        # resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
+        #     cromshell_input=workflow_id,
+        #     submission_file_path=config.submission_file_path,
+        # )
+        #
+        # http_utils.set_and_check_cromwell_server(
+        #     config=config, workflow_id=resolved_workflow_id
+        # )
+        #
+        # # Get metadata
+        # formatted_metadata_parameter = metadata_command.format_metadata_params(
+        #     list_of_keys=config.METADATA_KEYS_TO_OMIT,
+        #     exclude_keys=True,
+        #     expand_subworkflows=not compress_subworkflows,
+        # )
+        #
+        # workflow_metadata = metadata_command.get_workflow_metadata(
+        #     meta_params=formatted_metadata_parameter,
+        #     api_workflow_id=config.cromwell_api_workflow_id,
+        #     timeout=config.requests_connect_timeout,
+        #     verify_certs=config.requests_verify_certs,
+        # )
 
-        http_utils.set_and_check_cromwell_server(
-            config=config, workflow_id=resolved_workflow_id
-        )
-
-        # Get metadata
-        formatted_metadata_parameter = metadata_command.format_metadata_params(
-            list_of_keys=config.METADATA_KEYS_TO_OMIT,
-            exclude_keys=True,
-            expand_subworkflows=not compress_subworkflows,
-        )
-
-        workflow_metadata = metadata_command.get_workflow_metadata(
-            meta_params=formatted_metadata_parameter,
-            api_workflow_id=config.cromwell_api_workflow_id,
-            timeout=config.requests_connect_timeout,
-            verify_certs=config.requests_verify_certs,
-        )
+        import json
+        with open("/Users/bshifaw/Downloads/metadata-big.json", "r") as ff:
+            workflow_metadata = json.load(ff)
 
         if json_summary:
             print_task_status_summary(workflow_metadata=workflow_metadata)
         else:
             pretty_status_counts(
-                workflow_id=resolved_workflow_id,
+                workflow_id=workflow_id, #resolved_workflow_id,
                 workflow_metadata=workflow_metadata,
                 expand_subworkflows=not compress_subworkflows,
             )
@@ -115,27 +119,23 @@ def print_workflow_status(
     :param expand_sub_workflows:  Boolean, whether or not to print subworkflows
     :return:
     """
-    calls = list(workflow_metadata["calls"].keys())
+    calls_metadata = workflow_metadata["calls"]
+    calls = list(calls_metadata.keys())
 
     for call in calls:  # For each task in given metadata
         # If task has a key called 'subworkflowMetadata' in its first (zero) element
         # (shard) and expand_sub_workflow parameter is set to true then rerun this
         # function on that subworkflow
-        if (
-            "subWorkflowMetadata" in workflow_metadata["calls"][call][0]
-            and expand_sub_workflows
-        ):
+        if "subWorkflowMetadata" in calls_metadata[call][0] and expand_sub_workflows:
             sub_workflow_name = call
-            task_shards = workflow_metadata["calls"][sub_workflow_name]
+            sub_calls = calls_metadata[sub_workflow_name]
             print(f"{indent}SubWorkflow {sub_workflow_name}")
 
-            # For each element in total number of subworkflow calls get the subworkflow
-            # metadata. This loop will go through each shard if task is scattered
-            for i in range(len(task_shards) - 1):
-                sub_workflow_metadata = task_shards[i]["subWorkflowMetadata"]
-
+            # For each call in subworkflow calls get the subworkflow metadata.
+            # This loop will go through each shard if task is scattered
+            for sub_call in sub_calls:
                 print_workflow_status(
-                    workflow_metadata=sub_workflow_metadata,
+                    workflow_metadata=sub_call["subWorkflowMetadata"],
                     indent=indent + "\t",
                     expand_sub_workflows=expand_sub_workflows,
                 )
