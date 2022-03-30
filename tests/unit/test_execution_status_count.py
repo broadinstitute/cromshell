@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 import json
 
-from cromshell.execution_status_count import command as execution_status_count_command
+from cromshell.counts import command as execution_status_count_command
 
 
 class TestAlias:
@@ -12,7 +12,7 @@ class TestAlias:
 
     #def test_print_workflow_status(self) -> None:
 
-    # print_task_status
+    # print_call_status
     # print_task_status_summary
     # get_shard_status_count
 

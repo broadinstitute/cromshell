@@ -142,20 +142,20 @@ def print_workflow_status(
 
         # If no subworkflow is found then print status summary for task
         else:
-            print_task_status(call, indent, workflow_metadata)
+            print_call_status(call=call, indent=indent, workflow_calls_metadata=calls_metadata)
 
 
-def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
+def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> None:
     """
     Prints the task name and status count
 
-    :param task: Name of the task
+    :param call: Name of the call to print
     :param indent: Indent string given as "\t", used to indent print out
-    :param workflow_metadata: Metadata of the workflow to process
+    :param workflow_calls_metadata: The 'calls' of the workflow to process
     :return:
     """
 
-    shards = workflow_metadata["calls"][task]
+    shards = workflow_calls_metadata[call]
 
     shard_status_count = get_shard_status_count(shards)
 
@@ -168,7 +168,7 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
         known_statuses=TaskStatuses.list()
     )
 
-    # Determine what color to print task summary
+    # Determine what color to print task summary #Todo: Put this into a function
     if shards_failed == 0 and shards_running == 0:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif shards_failed > 0 and shards_running > 0:  # Running but will fail
@@ -182,10 +182,11 @@ def print_task_status(task: str, indent: str, workflow_metadata: dict) -> None:
 
     # Format and print task summary
     formatted_task_summary = (
-        f"{indent}{task}\t{shards_running} Running, "
+        f"{indent}{call}\t{shards_running} Running, "
         f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed"
     )
-    if shards_unknown > 0:  # if unknown status present append its count to print out.
+    # If unknown status present append its count to print out.
+    if shards_unknown > 0:
         formatted_task_summary += f", {shards_unknown} Unknown"
         DelayedLogMessage.save_log_message(
             log_type="warning",
@@ -244,8 +245,8 @@ def get_shard_status_count(shards: dict) -> dict:
 
 def get_list_of_failed_shards(shards: list) -> list:
     """
-    Print a list of the failed shards
-    :param shards: The shared of a called task
+    Get a list of the failed shards
+    :param shards: The metadata for all shards in a scatter or shard of a single task
     :return:
     """
     failed_shards = []
