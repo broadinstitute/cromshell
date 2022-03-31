@@ -228,19 +228,20 @@ def print_task_status_summary(workflow_metadata: dict) -> None:
     io_utils.pretty_print_json(format_json=workflow_status_summary)
 
 
-def get_shard_status_count(shards: dict) -> dict:
+def get_shard_status_count(shards: list) -> dict:
     """
     Count the number of shards for each status type and return as dictionary.
-    :param shards: Task shards
+    :param shards: The metadata for all shards in a scatter or shard of a single task
     :return:
     """
 
-    sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
-    statuses_count = {}
-    for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
-        statuses_count[status] = len(list(group))
+    statuses_counts = {}
+    grouped_shards = group_shards_by_status(shards=shards)
 
-    return statuses_count
+    for status in grouped_shards:
+        statuses_counts[status] = len(grouped_shards[status])
+
+    return statuses_counts
 
 
 def get_list_of_failed_shards(shards: list) -> list:
@@ -249,17 +250,27 @@ def get_list_of_failed_shards(shards: list) -> list:
     :param shards: The metadata for all shards in a scatter or shard of a single task
     :return:
     """
-    failed_shards = []
-    failed_shards_index = []
-    sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
-    for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
-        if status == "Failed":
-            failed_shards = list(group)
 
-    for shard in failed_shards:
+    failed_shards_index = []
+    grouped_shards = group_shards_by_status(shards=shards)
+
+    for shard in grouped_shards["Failed"]:
         failed_shards_index.append(shard["shardIndex"])
 
     return failed_shards_index
+
+
+def group_shards_by_status(shards: list) -> dict:
+    """
+    Groups shards by their status
+    :param shards: The metadata for all shards in a scatter or shard of a single task
+    :return:
+    """
+    grouped_shards = {}
+    sorted_shards = sorted(shards, key=lambda y: y["executionStatus"])
+    for status, group in groupby(sorted_shards, lambda x: x["executionStatus"]):
+        grouped_shards[status] = list(group)
+    return grouped_shards
 
 
 def get_unknown_status(shard_status_count: dict, known_statuses: list) -> (int, str):
