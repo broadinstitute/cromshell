@@ -181,6 +181,10 @@ def __load_cromshell_config_file(
         Path(cromshell_config_path).touch()
         with Path(cromshell_config_path).open("w") as crom_config_file:
             crom_config_file.write(config_template)
+        LOGGER.warning(
+            "Please update the cromwell server in following config file %s",
+            cromshell_config_path,
+        )
 
     with open(cromshell_config_path, "r") as cromshell_config_file:
         config_options = json.loads(cromshell_config_file.read())
