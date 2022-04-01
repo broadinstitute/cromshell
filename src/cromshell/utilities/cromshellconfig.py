@@ -182,7 +182,7 @@ def __load_cromshell_config_file(
         with Path(cromshell_config_path).open("w") as crom_config_file:
             crom_config_file.write(config_template)
         LOGGER.warning(
-            "Please update the cromwell server in following config file %s",
+            "Please update the cromwell server in the following config file %s",
             cromshell_config_path,
         )
 
