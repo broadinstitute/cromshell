@@ -80,9 +80,9 @@ let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
 
 # CROMSHELL_HEADER can be set externally and can be use to pass things like oauth tokens to curl...
 if [[ -z "${CROMSHELL_HEADER}" ]]; then
-  alias curl='curl --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
+  alias curl='curl -H "Authorization: Bearer <<token>>" -H "Referer: https://leonardo.dsde-dev.broadinstitute.org" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
 else
-  alias curl='curl -H "${CROMSHELL_HEADER}" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
+  alias curl='curl -H "Authorization: Bearer <<token>>" -H "Referer: https://leonardo.dsde-dev.broadinstitute.org" -H "${CROMSHELL_HEADER}" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
 fi
 
 ################################################################################
