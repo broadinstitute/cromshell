@@ -80,7 +80,7 @@ CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
 
 # CROMSHELL_HEADER can be set externally and can be use to pass things like oauth tokens to curl...
-GCLOUD_TOKEN= $(gcloud auth print-access-token) # BW-1192 expediently get token from local `gcloud` environment
+GCLOUD_TOKEN=$(gcloud auth print-access-token) # BW-1192 expediently get token from local `gcloud` environment
 if [[ -z "${CROMSHELL_HEADER}" ]]; then
   alias curl='curl -H "Authorization: Bearer '$GCLOUD_TOKEN'" -H "Referer: https://leonardo.dsde-dev.broadinstitute.org" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
 else
