@@ -8,7 +8,8 @@ SCRIPTDIR="$( cd "$( dirname "${UNALIASED_SCRIPT_NAME}" )" && pwd )"
 SCRIPTNAME=$( echo $0 | sed 's#.*/##g' )
 MINARGS=1
 MAXARGS=99
-PREREQUISITES="curl jq mail column tput rev base64 gunzip"
+# BW-1192 temporarily remove `mail` from prerequisites to allow running on Terra Notebook VM (email feature will not work)
+PREREQUISITES="curl jq column tput rev base64 gunzip"
 
 # Determine if this shell is interactive:
 ISINTERACTIVESHELL=true
@@ -79,10 +80,11 @@ CURL_CONNECT_TIMEOUT=5
 let CURL_MAX_TIMEOUT=2*${CURL_CONNECT_TIMEOUT}
 
 # CROMSHELL_HEADER can be set externally and can be use to pass things like oauth tokens to curl...
+GCLOUD_TOKEN= $(gcloud auth print-access-token) # BW-1192 expediently get token from local `gcloud` environment
 if [[ -z "${CROMSHELL_HEADER}" ]]; then
-  alias curl='curl -H "Authorization: Bearer <<token>>" -H "Referer: https://leonardo.dsde-dev.broadinstitute.org" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
+  alias curl='curl -H "Authorization: Bearer '$GCLOUD_TOKEN'" -H "Referer: https://leonardo.dsde-dev.broadinstitute.org" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
 else
-  alias curl='curl -H "Authorization: Bearer <<token>>" -H "Referer: https://leonardo.dsde-dev.broadinstitute.org" -H "${CROMSHELL_HEADER}" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
+  alias curl='curl -H "Authorization: Bearer '$GCLOUD_TOKEN'" -H "Referer: https://leonardo.dsde-dev.broadinstitute.org" -H "${CROMSHELL_HEADER}" --connect-timeout ${CURL_CONNECT_TIMEOUT} --max-time ${CURL_MAX_TIMEOUT}'
 fi
 
 ################################################################################
@@ -477,14 +479,15 @@ function assertCanCommunicateWithServer
 {
   # Make sure we can talk to the cromwell server:
   local f=$(makeTemp)
-  curl -s ${1}/api/workflows/v1/backends > ${f}  
+  result=$(curl -s ${1}/api/workflows/v1/backends)
+  echo $result > ${f}
   grep -q 'supportedBackends' ${f}
   r=$?
   # Do some cleanup here for daemon processes.
   rm -f ${f}
   if [[ ${r} -ne 0 ]] ; then
     turtleDead 
-    error "Error: Cannot communicate with Cromwell server: ${serverName}"
+    error "Error: Cannot communicate with Cromwell server: ${serverName} error is ${result}"
     exit 4
   fi
 }
