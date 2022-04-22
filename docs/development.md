@@ -8,21 +8,18 @@ Cromshell development requires python3 (>=.7) to be installed, afterwards
 the Cromshell development environment can be set up by the following steps:
 
 1. Pull cromshell git repository 
-
-
+```
     git clone git@github.com:broadinstitute/cromshell.git
     cd cromshell
     git checkout cromshell_2.0
-
+```
 2. Create a virtual python environment
-
-
+```
     python3 -mvenv venv
     . venv/bin/activate
     pip install -r dev-requirements.txt
     pip install -e .
-
-
+```
     
 ### Running Development Builds of Cromshell
 
@@ -90,8 +87,8 @@ When styling your code use the following [site](https://peps.python.org/pep-0008
   - Lower case name with underscores as spaces
   - Parameters with the expected data structure
   - Data structure of output
-  - Includes a doc string describing the function and parameters
-
+  - Includes a doc string describing the function and parameters.  
+```
 
     def alias_exists(alias_name: str, submission_file: str) -> bool:
        """
@@ -106,7 +103,7 @@ When styling your code use the following [site](https://peps.python.org/pep-0008
                if (row["ALIAS"] == alias_name) and (row["ALIAS"] != ""):
                    return True
            return False
-
+```
 - Have a goal to make unit tests for every new function added.
 
 ## Versioning
