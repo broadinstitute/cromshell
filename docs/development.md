@@ -41,10 +41,10 @@ If Cromshell determines `~/.cromshell` does not exist it will
 automatically create a hidden directory containing configuration files 
 after running on of its sub commands.
 
-Run 
-
+1. Run 
+```
     cromshell-alpha version
-
+```
 The following directory and files should be created
 
     > ~/.cromshell
@@ -55,13 +55,17 @@ The following directory and files should be created
 - all.workflow.database.tsv : Tab-delimited file listing all workflows executed by the user
 - cromshell_config.json : Configuration file for cromshell  
 
-Edit the cromshell_config file so that the proper Cromwell server is being used, for example:
-
+2. Edit the `cromshell_config` file so that the desired Cromwell server is being used, for example:
+```
 
     {
-      "cromwell_server": "http://cromwell-v51.dsde-methods.broadinstitute.org",
+      "cromwell_server": "http://localhost:8000",
       "requests_timeout": 5
     }
+```  
+You can set the `"cromwell_server"` to an existing server or create a local one temproraly using a docker container, then setting the config to  `http://localhost:8000` like in the example above. The command below can be used to create a Cromwell version 67 server container. 
+
+	docker run -p 8000:8000 broadinstitute/cromwell:67 server
 
 How do these configurations affect your cromshell1.0 configs?  
 Cromshell2.0 uses the same all.workflow.database.tsv as cromshell1, thus it will read-write 
