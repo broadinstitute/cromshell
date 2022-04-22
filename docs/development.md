@@ -12,6 +12,7 @@ the Cromshell development environment can be set up by the following steps:
     git clone git@github.com:broadinstitute/cromshell.git
     cd cromshell
     git checkout cromshell_2.0
+    git checkout -b <your initial>_<name of your new branch>
 ```
 2. Create a virtual python environment
 ```
