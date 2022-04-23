@@ -127,7 +127,7 @@ From source
 
 ## Development
 
-See [./docs/development.md](./docs/development.md)
+See [./docs/development.md](./docs/README.md)
 
 
 
