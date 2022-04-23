@@ -2,7 +2,7 @@
 
 This document describes the process of adding a command to Cromshell. Before following
 the process below be sure to have properly set up your dev environment, which is 
-described in [./development.md](../docs/README.md).
+described in [./README.md](../docs/README.md).
 
 ### Create A Command Directory 
 Create a directory that will hold your command scripts. The name of the directory 
