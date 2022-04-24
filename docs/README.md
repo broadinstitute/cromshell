@@ -23,8 +23,6 @@ the Cromshell development environment can be set up by the following steps:
     pip install -e .
 ```
     
-### Running Development Builds of Cromshell
-
 After following the above development environment setup steps, cromshell should 
 have been added to your path.
 Run `cromshell-alpha --help` to confirm installation.
@@ -66,7 +64,7 @@ The following directory and files should be created
 ```  
 You can set the `"cromwell_server"` to an existing server or create a local one temproraly using a docker container, then setting the config to  `http://localhost:8000` like in the example above. The command below can be used to create a Cromwell version 67 server container. 
 
-	docker run -p 8000:8000 broadinstitute/cromwell:67 server
+	docker run -d -p 8000:8000 broadinstitute/cromwell:67 server
 
 How do these configurations affect your cromshell1.0 configs?  
 Cromshell2.0 uses the same all.workflow.database.tsv as cromshell1, thus it will read-write 
