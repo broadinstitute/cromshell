@@ -124,7 +124,7 @@ to make them available for your command.
         print("hello world")
 
         if print_workflow:
-            print("workflow_id")
+            print(workflow_id)
 
 
 

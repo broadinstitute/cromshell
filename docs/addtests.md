@@ -90,6 +90,7 @@ feature, refer to the [docs](https://docs.pytest.org/en/6.2.x/parametrize.html) 
 
 Note:
 - You may need mock data for your tests, refer to [mockdata.md](../docs/mockdata.md)
+- You may to run the tests while your developing them, the instructions are in [runtests.md](../docs/runtests.md) 
 
 ### Add Integration tests
 
