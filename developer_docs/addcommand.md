@@ -2,7 +2,7 @@
 
 This document describes the process of adding a command to Cromshell. Before following
 the process below be sure to have properly set up your dev environment, which is 
-described in [../docs/README.md](../docs/README.md).
+described in [../developer_docs/README.md](../developer_docs/README.md).
 
 ### Create A Command Directory 
 Create a directory that will hold your command scripts. The name of the directory 
@@ -31,20 +31,21 @@ The `__init__.py` will stay empty but the `command.py` will house the script for
 
 Here is an example of the contents of a command.py which can be used as a template.
 
-    import logging
-    
-    import click
-    
-    LOGGER = logging.getLogger(__name__)
-    
-    @click.command(name="my-new-command")
-    @click.pass_obj
-    def main(config):
-        """My-new-command does things."""
-    
-        LOGGER.info("my-new-command")
-        print("hello world")
+```python
+import logging
 
+import click
+
+LOGGER = logging.getLogger(__name__)
+
+@click.command(name="my-new-command")
+@click.pass_obj
+def main(config):
+    """My-new-command does things."""
+
+    LOGGER.info("my-new-command")
+    print("hello world")
+```
 
 ### Expose your command to Cromshell
 In order to have your command be executable by Cromshell, your command will 
@@ -99,33 +100,33 @@ and [options](https://click.palletsprojects.com/en/8.1.x/options/) for commands.
 These are placed in the command.py file, under the click name decorator. Also, the 
 arguments and options will need to be passed to the main command function 
 to make them available for your command. 
+```python
+import logging
 
-    import logging
-    
-    import click
-    
-    LOGGER = logging.getLogger(__name__)
-    
-    @click.command(name="my-new-command")
-    @click.argument("workflow_id")
-    @click.option(
-        "-p",  # <- short option name
-        "--print_workflow",  # <- long option name
-        is_flag=True,
-        default=False,
-        help="Print workflow id",
-    )
-    
-    @click.pass_obj
-    def main(config, workflow_id, print_workflow):
-        """My-new-command does things."""
-    
-        LOGGER.info("my-new-command")
-        print("hello world")
+import click
 
-        if print_workflow:
-            print(workflow_id)
+LOGGER = logging.getLogger(__name__)
 
+@click.command(name="my-new-command")
+@click.argument("workflow_id")
+@click.option(
+    "-p",  # <- short option name
+    "--print_workflow",  # <- long option name
+    is_flag=True,
+    default=False,
+    help="Print workflow id",
+)
+
+@click.pass_obj
+def main(config, workflow_id, print_workflow):
+    """My-new-command does things."""
+
+    LOGGER.info("my-new-command")
+    print("hello world")
+
+    if print_workflow:
+        print(workflow_id)
+```
 
 
 
@@ -152,12 +153,14 @@ add to the list of functions.
           __main__.py
 
 
-- cromshellconfig.py : Holds function associated with Cromshells configurations, such as getting the Cromwell server api, getting Cromshells hidden directory, etc
-- http_utils.py : Common functions that relate to running HTTP calls, e.g. checking whether its possible to connect with the provided Cromwell server
-- io_utils.py : Functions used to write to the terminal 
+- cromshellconfig.py : Holds function associated with Cromshell's configurations, such as getting the Cromwell server api, getting Cromshells hidden directory, etc
+- http_utils.py : Common functions that relate to running HTTP calls, e.g. checking whether it is possible to connect with the provided Cromwell server
+- io_utils.py : Functions used to write to the terminal
 - submissions_file_utils.py : Functions related to the file holding all the workflows lunched by user
 - workflow_id_utils.py : Functions that check, resolve, get workflow IDs
 
 Here is an example of importing the modules to your command.py
 
-`from cromshell.utilities import http_utils, io_utils, workflow_id_utils`
+```python
+from cromshell.utilities import http_utils, io_utils, workflow_id_utils
+```
