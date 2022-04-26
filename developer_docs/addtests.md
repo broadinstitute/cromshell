@@ -27,6 +27,12 @@ It allows the testing tools Tox and Pytest to identify which files should be tes
 - **Names of classes containing tests begin with 'Test'**  
 - **Names of functions to be run as tests begin with 'test'**  
 
+### Install Testing Dependencies
+There are some test specific python packages that will need to be installed using 
+the command below.
+```python
+pip install -r dev-requirements.txt
+```
 ### Add Unit tests
 
 Begin by creating a file under the unit test directory having a name starting 
