@@ -31,7 +31,7 @@ It allows the testing tools Tox and Pytest to identify which files should be tes
 There are some test specific python packages that will need to be installed using 
 the command below.
 ```shell
-pip install -r dev-requirements.txt
+pip install -r test-requirements.txt
 ```
 ### Add Unit tests
 
