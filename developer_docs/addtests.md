@@ -117,7 +117,8 @@ with `test_` followed by the name of your command.
            utility_test_functions.py
 ```
 
-Below is an example of the contents of an integration test file. 
+Below is an example of the contents of an integration test file, given the command being
+tested is the command created in [addcommand.md](../developer_docs/addcommand.md). 
 
 ```python
 import pytest
@@ -125,9 +126,10 @@ import pytest
 from tests.integration import utility_test_functions
 
 class TestMyNewCommand:
-    
+
     """Tests for my_new_command """
 
+    # First Test
     def test_my_new_command(self):
         workflow_id = "639b81f9-414e-4c65-8dcf-bf7c57ffdff7"
         # Run cromshell alias
@@ -138,7 +140,21 @@ class TestMyNewCommand:
             ],
             exit_code=0,
         )
-        assert results.stdout == workflow_id
+        assert results.stdout.rstrip() == "hello world"
+
+    # Second Test
+    def test_my_new_command_with_print_option(self):
+        workflow_id = "639b81f9-414e-4c65-8dcf-bf7c57ffdff7"
+        # Run cromshell alias
+        results = utility_test_functions.run_cromshell_command(
+            command=[
+                "my-new-command",
+                "-p",
+                workflow_id,
+            ],
+            exit_code=0,
+        )
+        assert results.stdout.rstrip() == "hello world"+"\n"+workflow_id
 ```
 
 As you can see, formatting for integration tests is very similar to the unit tests, 
