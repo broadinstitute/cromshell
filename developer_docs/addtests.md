@@ -83,8 +83,6 @@ class TestMyNewCommand:
     )
     def test_get_hello_world_using_parametrize(self, y: str):
 
-        y = "hello world"
-
         assert my_new_command.get_hello_world() != y
 ```
 
