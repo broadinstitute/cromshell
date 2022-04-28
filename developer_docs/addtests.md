@@ -101,7 +101,7 @@ feature, refer to the [docs](https://docs.pytest.org/en/6.2.x/parametrize.html) 
 
 Note:
 - You may need mock data for your tests, refer to [mockdata.md](../developer_docs/mockdata.md)
-- You may to run the tests while your developing them, the instructions are in [runtests.md](../developer_docs/runtests.md) 
+- You may want to test the test scripts as you create them, the instructions to run tests are in [runtests.md](../developer_docs/runtests.md) but the easiest way to run a single unit test is via pytest (e.g. `pytest test_my_new_command.py`)
 
 ### Add Integration tests
 
