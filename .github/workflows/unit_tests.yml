@@ -20,11 +20,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Install Womtool
-        run: |
-          $CONDA/bin/conda install -y -c bioconda womtool
-          echo "$CONDA/bin" >> $GITHUB_PATH
-
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
