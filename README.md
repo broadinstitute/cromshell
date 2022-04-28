@@ -127,69 +127,8 @@ From source
 
 ## Development
 
-To do development in this codebase, the python3 development package must
-be installed.
+See [./docs/](./docs/README.md)
 
-After installation the cromshell development environment can be set up by
-the following commands:
 
-    python3 -mvenv venv
-    . venv/bin/activate
-    pip install -r dev-requirements.txt
-    pip install -e .
-    
-### Running Development Builds of Cromshell
 
-After following the above development environment setup steps, simply type
-```
-cromshell-alpha
-```
-Note that there is no leading `./` in this command.  This is due to the 
-development setup adding the cromshell python script to your path.
-
-### Linting files
-
-    # run all linting commands
-    tox -e lint
-
-    # reformat all project files
-    black src tests setup.py
-
-    # sort imports in project files
-    isort -rc src tests setup.py
-
-    # check pep8 against all project files
-    flake8 src tests setup.py
-
-    # lint python code for common errors and codestyle issues
-    pylint src
-
-### Tests
-
-    # run all linting and test
-    tox
-
-    # run only (fast) unit tests
-    tox -e unit
-
-    # run only linting
-    tox -e lint
-
-### Versioning
-
-We use `bumpversion` to maintain version numbers.
-DO NOT MANUALLY EDIT ANY VERSION NUMBERS.
-
-Our versions are specified by a 3 number semantic version system (https://semver.org/):
-
-	major.minor.patch
-
-To update the version with bumpversion do the following:
-
-`bumpversion PART` where PART is one of:
-- major
-- minor
-- patch
-
-This will increase the corresponding version number by 1.
 
