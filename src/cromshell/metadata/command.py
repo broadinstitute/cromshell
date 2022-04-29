@@ -117,7 +117,7 @@ def obtain_and_print_metadata(
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
-        headers=http_utils.generate_headers(config)
+        headers=http_utils.generate_headers(config),
     )
 
     io_utils.pretty_print_json(workflow_metadata_json, add_color=True)

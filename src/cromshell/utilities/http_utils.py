@@ -76,7 +76,9 @@ def generate_headers(config):
         headers["Referer"] = config.referer_header_url
 
     if config.gcloud_token_email is not None:
-        stream = os.popen(f"gcloud auth --account={config.gcloud_token_email} print-access-token")
+        stream = os.popen(
+            f"gcloud auth --account={config.gcloud_token_email} print-access-token"
+        )
         token = stream.read().strip()  # Strip trailing newline
         headers["Authorization"] = f"Bearer {token}"
 

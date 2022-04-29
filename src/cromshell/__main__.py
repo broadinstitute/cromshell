@@ -68,12 +68,12 @@ LOGGER = logging.getLogger(__name__)
 @click.option(
     "--gcloud_token_email",
     type=str,
-    help="Call `gcloud auth print-access-token` with this email and add the token as an auth header to requests."
+    help="Call `gcloud auth print-access-token` with this email and add the token as an auth header to requests.",
 )
 @click.option(
     "--referer_header_url",
     type=str,
-    help="For servers that require a referer, supply this URL in the `Referer:` header."
+    help="For servers that require a referer, supply this URL in the `Referer:` header.",
 )
 @click.pass_context
 def main_entry(

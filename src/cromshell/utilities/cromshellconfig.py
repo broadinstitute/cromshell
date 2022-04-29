@@ -44,6 +44,7 @@ CROMSHELL_CONFIG_OPTIONS_TEMPLATE = {
     "requests_timeout": requests_connect_timeout,
 }
 
+
 def override_requests_cert_parameters(skip_certs: bool):
     """Override requests settings for certs verification"""
 
@@ -266,11 +267,15 @@ def resolve_gcloud_token_email(email):
     global gcloud_token_email
 
     if email:
-        LOGGER.info(f"Will send auth header with token for {email} from command line options.")
+        LOGGER.info(
+            f"Will send auth header with token for {email} from command line options."
+        )
         gcloud_token_email = email
     elif "gcloud_token_email" in cromshell_config_options:
         config_gcloud_token_email = cromshell_config_options["gcloud_token_email"]
-        LOGGER.info(f"Will send auth header with token for {config_gcloud_token_email} from config.")
+        LOGGER.info(
+            f"Will send auth header with token for {config_gcloud_token_email} from config."
+        )
         gcloud_token_email = config_gcloud_token_email
     else:
         LOGGER.info("Not sending auth header.")
