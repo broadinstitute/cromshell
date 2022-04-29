@@ -52,9 +52,7 @@ def main(config, workflow_id):
     return ret_val
 
 
-def query_status(
-    config, workflow_id: str, log_to_screen: bool = True
-) -> (str, str, int):
+def query_status(config, workflow_id: str) -> (str, str, int):
     """
 
     :param config: object holding configurations
@@ -82,9 +80,8 @@ def query_status(
         + cromshellconfig.WorkflowStatuses.Aborted.value
     ):
         ret_val = 1
-        if log_to_screen:
-            log.display_logo(io_utils.dead_turtle)
-    elif workflow_status == "Running":
+        log.display_logo(io_utils.dead_turtle)
+    elif workflow_status == cromshellconfig.WorkflowStatuses.Running.value[0]:
         # Status claims this workflow is running fine, but we need to check to see
         # if there are any failed sub-processes.
         # To do this, we get the workflow metadata and search for any failures
@@ -108,11 +105,9 @@ def query_status(
         if not workflow_failed(metadata):
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
-            if log_to_screen:
-                log.display_logo(io_utils.turtle)
+            log.display_logo(io_utils.turtle)
         else:
-            if log_to_screen:
-                log.display_logo(io_utils.doomed_logo)
+            log.display_logo(io_utils.doomed_logo)
             workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value[0]
             message = (
                 "The workflow is Running but one of the instances "
@@ -123,8 +118,7 @@ def query_status(
             )
 
     else:
-        if log_to_screen:
-            log.display_logo(io_utils.turtle)
+        log.display_logo(io_utils.turtle)
     return requested_status_json, workflow_status, ret_val
 
 
