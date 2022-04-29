@@ -4,9 +4,11 @@ from traceback import print_exception
 from click.testing import CliRunner
 
 from cromshell.__main__ import main_entry as cromshell
-from cromshell.utilities.cromshellconfig import (CROMSHELL_CONFIG_FILE_NAME,
-                                                 __load_cromshell_config_file,
-                                                 config_dir)
+from cromshell.utilities.cromshellconfig import (
+    CROMSHELL_CONFIG_FILE_NAME,
+    __load_cromshell_config_file,
+    config_dir,
+)
 
 
 def get_current_cromwell_server():
