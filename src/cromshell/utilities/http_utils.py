@@ -27,7 +27,9 @@ def assert_can_communicate_with_server(config):
     if b"supportedBackends" not in request_out.content:
         log.display_logo(io_utils.dead_turtle)
         LOGGER.error(
-            "Error: Cannot communicate with Cromwell server: %s due to error %s", config.cromwell_server, request_out.content
+            "Error: Cannot communicate with Cromwell server: %s due to error %s",
+            config.cromwell_server,
+            request_out.content
         )
         raise Exception(
             f"Error: Cannot communicate with Cromwell server: {config.cromwell_server} due to error {request_out.content}"
