@@ -6,6 +6,8 @@ import os
 import re
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Optional
 
 from pygments import formatters, highlight, lexers
 from termcolor import colored
@@ -17,6 +19,8 @@ LOGGER = logging.getLogger(__name__)
 workflow_id_pattern = re.compile(
     "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
 )
+
+temporary_directory: Optional[TemporaryDirectory] = None
 
 
 def dead_turtle():
@@ -143,6 +147,39 @@ def create_directory(
             dir_path,
         )
         raise
+
+
+def temporary_zip_directory(zip_or_directory: Optional[str]) -> Optional[str]:
+    """Return the path to a temporary zip file containing contents of the directory,
+    otherwise return the unmodified zip_or_directory argument."""
+
+    if zip_or_directory and Path(zip_or_directory).is_dir():
+        zip_base = temporary_path(Path(zip_or_directory).name)
+        return shutil.make_archive(
+            base_name=zip_base,
+            format="zip",
+            root_dir=zip_or_directory,
+            verbose=LOGGER.isEnabledFor(logging.DEBUG),
+            logger=LOGGER,
+        )
+    else:
+        return zip_or_directory
+
+
+def temporary_path(name: str) -> str:
+    """Return a string nested under a temporary directory that will be cleaned up by cleanup_temporary_directory()."""
+    global temporary_directory
+    if not temporary_directory:
+        temporary_directory = TemporaryDirectory()
+    return temporary_directory.name + "/" + name
+
+
+def cleanup_temporary_directory() -> None:
+    """Cleanup all temporary files."""
+    global temporary_directory
+    if temporary_directory:
+        temporary_directory.cleanup()
+        temporary_directory = None
 
 
 def copy_files_to_directory(directory: str or Path, input_files: list or str):

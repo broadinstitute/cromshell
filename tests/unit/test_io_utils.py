@@ -4,6 +4,7 @@ import os
 import shutil
 from contextlib import redirect_stdout
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 
@@ -103,6 +104,57 @@ class TestIOUtilities:
 
         # assert the function stdout is the same as the expected out
         assert func_stdout.getvalue() == test_output
+
+    def test_temporary_zip_directory_for_directory(self, tmp_path: Path) -> None:
+        zip_dir = tmp_path / "my_dir"
+        sub_dir = zip_dir / "sub_dir"
+        file_1 = zip_dir / "1.txt"
+        file_2 = zip_dir / "2.txt"
+        file_3 = sub_dir / "3.txt"
+        zip_dir.mkdir()
+        sub_dir.mkdir()
+        file_1.write_text("")
+        file_2.write_text("")
+        file_3.write_text("")
+        zip_file = io_utils.temporary_zip_directory(str(zip_dir))
+        with ZipFile(zip_file, "r") as zip_obj:
+            assert sorted(zip_obj.namelist()) == [
+                "1.txt",
+                "2.txt",
+                "sub_dir/",
+                "sub_dir/3.txt",
+            ]
+        io_utils.cleanup_temporary_directory()
+
+    def test_temporary_zip_directory_for_file(self, tmp_path: Path) -> None:
+        zip_dir = tmp_path / "my_dir"
+        existing_zip = zip_dir / "existing.zip"
+        zip_dir.mkdir()
+        existing_zip.write_text("I'm a zip, I swear.")
+        zip_file = io_utils.temporary_zip_directory(str(existing_zip))
+        assert str(zip_file) == str(existing_zip)
+        io_utils.cleanup_temporary_directory()
+
+    def test_temporary_zip_directory_for_none(self) -> None:
+        zip_file = io_utils.temporary_zip_directory(None)
+        assert zip_file is None
+
+    def test_temporary_path_same(self) -> None:
+        # Calling temporary_path twice in a row with the same arguments should produce the same path.
+        io_utils.cleanup_temporary_directory()
+        path_1 = io_utils.temporary_path("abc")
+        path_2 = io_utils.temporary_path("abc")
+        io_utils.cleanup_temporary_directory()
+        assert path_1 == path_2
+
+    def test_temporary_path_different(self) -> None:
+        # Calling temporary_path after a cleanup should produce a different path.
+        io_utils.cleanup_temporary_directory()
+        path_1 = io_utils.temporary_path("abc")
+        io_utils.cleanup_temporary_directory()
+        path_2 = io_utils.temporary_path("abc")
+        io_utils.cleanup_temporary_directory()
+        assert path_1 != path_2
 
     def test_create_directory(self, tmp_path):
         test_io_utility_temp_folder = tmp_path / "test_io_utility"

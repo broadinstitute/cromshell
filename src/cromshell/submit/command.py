@@ -46,7 +46,7 @@ class WorkflowStatusError(Exception):
     "--dependencies-zip",
     type=click.Path(exists=True),
     required=False,
-    help="ZIP file containing workflow source files that are "
+    help="ZIP file or directory containing workflow source files that are "
     "used to resolve local imports. This zip bundle will be "
     "unpacked in a sandbox accessible to this workflow.",
 )
@@ -56,6 +56,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
 
     LOGGER.info("submit")
 
+    dependencies_zip = io_utils.temporary_zip_directory(dependencies_zip)
     validate_input(wdl, wdl_json, options_json, dependencies_zip)
 
     http_utils.assert_can_communicate_with_server(config)
@@ -120,6 +121,8 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
     update_submission_file(
         config.cromwell_server, config.submission_file_path, wdl, workflow_status
     )
+
+    io_utils.cleanup_temporary_directory()
 
     return 0
 
