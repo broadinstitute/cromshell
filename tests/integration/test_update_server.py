@@ -4,20 +4,20 @@ from traceback import print_exception
 from click.testing import CliRunner
 
 from cromshell.__main__ import main_entry as cromshell
-from cromshell.utilities.cromshellconfig import (
-    CROMSHELL_CONFIG_FILE_NAME,
-    __load_cromshell_config_file,
-    config_dir,
-)
+from cromshell.utilities import cromshellconfig
 
 
 def get_current_cromwell_server():
-    cromshell_config_dict = __load_cromshell_config_file(
-        config_directory=config_dir,
-        config_file_name=CROMSHELL_CONFIG_FILE_NAME,
+    cromshell_config_dict = cromshellconfig.__load_cromshell_config_file(
+        config_directory=cromshellconfig.config_dir,
+        config_file_name=cromshellconfig.CROMSHELL_CONFIG_FILE_NAME,
         config_file_template=None,
     )
-    print(os.path.join(config_dir, CROMSHELL_CONFIG_FILE_NAME))
+    print(
+        os.path.join(
+            cromshellconfig.config_dir, cromshellconfig.CROMSHELL_CONFIG_FILE_NAME
+        )
+    )
     print(cromshell_config_dict)
     return cromshell_config_dict["cromwell_server"]
 
