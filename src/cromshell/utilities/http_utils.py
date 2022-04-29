@@ -29,7 +29,7 @@ def assert_can_communicate_with_server(config):
         LOGGER.error(
             "Error: Cannot communicate with Cromwell server: %s due to error %s",
             config.cromwell_server,
-            request_out.content
+            request_out.content,
         )
         raise Exception(
             f"Error: Cannot communicate with Cromwell server: {config.cromwell_server} due to error {request_out.content}"
