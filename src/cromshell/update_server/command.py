@@ -1,12 +1,12 @@
-import logging
-import click
 import json
-from pathlib import Path
+import logging
 import os
+from pathlib import Path
 
+import click
 
 LOGGER = logging.getLogger(__name__)
-CROMWELL_SERVER_KEY = 'cromwell_server'
+CROMWELL_SERVER_KEY = "cromwell_server"
 
 
 @click.command(name="update-server")
@@ -16,10 +16,12 @@ def main(config, cromwell_server_url):
     """Update the default Cromwell server in the config file"""
 
     # location of the config file
-    cromshell_config_path = os.path.join(config.config_dir,
-                                         config.CROMSHELL_CONFIG_FILE_NAME)
-    assert os.access(cromshell_config_path, mode=os.W_OK), \
-        f"Cannot write to Cromshell config file {cromshell_config_path}"
+    cromshell_config_path = os.path.join(
+        config.config_dir, config.CROMSHELL_CONFIG_FILE_NAME
+    )
+    assert os.access(
+        cromshell_config_path, mode=os.W_OK
+    ), f"Cannot write to Cromshell config file {cromshell_config_path}"
 
     # the contents of the config file as a dict
     cromshell_config_dict = config.cromshell_config_options
