@@ -230,6 +230,7 @@ class TestCromshellConfig:
         self, test_config_referer_header_url
     ):
         reload(cromshellconfig)
+        cromshellconfig.cromshell_config_options = test_config_referer_header_url
         referer_header_url_cli = None
         cromshellconfig.resolve_referer_header_url(referer_header_url_cli)
 
@@ -241,6 +242,7 @@ class TestCromshellConfig:
         self, test_config_referer_header_url
     ):
         reload(cromshellconfig)
+        cromshellconfig.cromshell_config_options = test_config_referer_header_url
         referer_header_url_cli = "https://from_cli.example.com"
         cromshellconfig.resolve_referer_header_url(referer_header_url_cli)
 
@@ -258,6 +260,7 @@ class TestCromshellConfig:
         self, test_config_gcloud_token_email
     ):
         reload(cromshellconfig)
+        cromshellconfig.cromshell_config_options = test_config_gcloud_token_email
         gcloud_token_email_cli = None
         cromshellconfig.resolve_gcloud_token_email(gcloud_token_email_cli)
 
@@ -269,6 +272,7 @@ class TestCromshellConfig:
         self, test_config_gcloud_token_email
     ):
         reload(cromshellconfig)
+        cromshellconfig.cromshell_config_options = test_config_gcloud_token_email
         gcloud_token_email_cli = "from_cli@example.com"
         cromshellconfig.resolve_referer_header_url(gcloud_token_email_cli)
 
