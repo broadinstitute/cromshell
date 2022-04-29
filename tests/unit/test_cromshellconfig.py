@@ -243,7 +243,7 @@ class TestCromshellConfig:
         cromshellconfig.resolve_referer_header_url(referer_header_url_cli)
 
         assert (
-                cromshellconfig.referer_header_url == "https://from_cli.example.com"
+            cromshellconfig.referer_header_url == "https://from_cli.example.com"
         ), "CLI overrides config"
 
     def test_resolve_gcloud_token_email_default(self):

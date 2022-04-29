@@ -22,6 +22,9 @@ class TestHTTPUtilities:
                 short_error_message="TEST", response=mock_failed_response
             ), "If response.ok is False then exception should be raised"
 
+    def test_generate_headers(self):
+        http_utils.generate_headers()
+
     @pytest.fixture
     def mock_pass_response(self):
         """Create requests response object to be hold mock response"""
