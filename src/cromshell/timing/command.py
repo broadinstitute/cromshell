@@ -30,10 +30,15 @@ def main(config, workflow_id):
 
     # Print some status info.
     log.display_logo(io_utils.turtle)
-    LOGGER.info("Opening timing information in your default web browser for job ID: %s", workflow_id)
+    LOGGER.info(
+        "Opening timing information in your default web browser for job ID: %s",
+        workflow_id,
+    )
 
     # Open the system's default web browser and navigate to the timing diagram page.
-    server_url_for_browser=f'{cromshellconfig.cromwell_server}/api/workflows/v1/{workflow_id}/timing'
+    server_url_for_browser = (
+        f"{cromshellconfig.cromwell_server}/api/workflows/v1/{workflow_id}/timing"
+    )
     webbrowser.open_new_tab(server_url_for_browser)
 
     return ret_val
