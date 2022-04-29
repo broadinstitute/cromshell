@@ -11,6 +11,7 @@ from .metadata import command as metadata
 from .slim_metadata import command as slim_metadata
 from .status import command as status
 from .submit import command as submit
+from .update_server import command as update_server
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
@@ -112,6 +113,7 @@ main_entry.add_command(status.main)
 main_entry.add_command(submit.main)
 main_entry.add_command(slim_metadata.main)
 main_entry.add_command(metadata.main)
+main_entry.add_command(update_server.main)
 
 
 if __name__ == "__main__":
