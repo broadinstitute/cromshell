@@ -32,19 +32,49 @@ def main(config, workflow_id):
     # Check if Cromwell Server Backend works
     http_utils.assert_can_communicate_with_server(config)
 
+    requested_status_json, workflow_status, updated_ret_val = query_status(
+        config, workflow_id
+    )
+    ret_val = updated_ret_val
+
+    # Display status to user:
+    line_string = requested_status_json
+    print(line_string.replace(",", ",\n"))
+
+    # Update config.submission_file:
+    io_utils.update_all_workflow_database_tsv(
+        workflow_database_path=config.submission_file_path,
+        workflow_id=workflow_id,
+        column_to_update="STATUS",
+        update_value=workflow_status,
+    )
+
+    return ret_val
+
+
+def query_status(
+    config, workflow_id: str, log_to_screen: bool = True
+) -> (str, str, int):
+    """
+
+    :param config: object holding configurations
+    :param workflow_id: ID for workflow whose status is being requested
+    :param log_to_screen: whether to log to screen the status
+    :return: (json string of the status, status of the workflow, return value of the main command)
+    """
+
+    ret_val = 0
+
     # Request workflow status
     request_out = requests.get(
         f"{config.cromwell_api_workflow_id}/status",
         timeout=config.requests_connect_timeout,
         verify=config.requests_verify_certs,
     )
-
     requested_status_json = request_out.content.decode("utf-8")
     workflow_status_description = json.loads(request_out.content)
-
     # Hold our status string here
     workflow_status = workflow_status_description["status"]
-
     # Set return value based on workflow status
     if (
         workflow_status
@@ -52,7 +82,8 @@ def main(config, workflow_id):
         + cromshellconfig.WorkflowStatuses.Aborted.value
     ):
         ret_val = 1
-        log.display_logo(io_utils.dead_turtle)
+        if log_to_screen:
+            log.display_logo(io_utils.dead_turtle)
     elif workflow_status == "Running":
         # Status claims this workflow is running fine, but we need to check to see
         # if there are any failed sub-processes.
@@ -77,9 +108,11 @@ def main(config, workflow_id):
         if not workflow_failed(metadata):
             # We could not find 'Fail' in our metadata, so our
             # original Running status is correct.
-            log.display_logo(io_utils.turtle)
+            if log_to_screen:
+                log.display_logo(io_utils.turtle)
         else:
-            log.display_logo(io_utils.doomed_logo)
+            if log_to_screen:
+                log.display_logo(io_utils.doomed_logo)
             workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value[0]
             message = (
                 "The workflow is Running but one of the instances "
@@ -90,21 +123,9 @@ def main(config, workflow_id):
             )
 
     else:
-        log.display_logo(io_utils.turtle)
-
-    # Display status to user:
-    line_string = requested_status_json
-    print(line_string.replace(",", ",\n"))
-
-    # Update config.submission_file:
-    io_utils.update_all_workflow_database_tsv(
-        workflow_database_path=config.submission_file_path,
-        workflow_id=workflow_id,
-        column_to_update="STATUS",
-        update_value=workflow_status,
-    )
-
-    return ret_val
+        if log_to_screen:
+            log.display_logo(io_utils.turtle)
+    return requested_status_json, workflow_status, ret_val
 
 
 def workflow_failed(metadata: dict):
