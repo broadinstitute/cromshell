@@ -1,7 +1,8 @@
 graft tests
 graft src
 
-include README.rst
+include README.md
+include requirements.txt
 include LICENSE.txt
 include tox.ini .travis.yml
 
