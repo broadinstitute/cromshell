@@ -220,9 +220,81 @@ class TestCromshellConfig:
             cromshellconfig.requests_connect_timeout == 10
         ), "Requests timeout duration should be set to 10 sec"
 
+    def test_resolve_referer_header_url_default(self):
+        reload(cromshellconfig)
+        assert (
+            cromshellconfig.referer_header_url is None
+        ), "Default `referer_header_url` should be None"
+
+    def test_resolve_referer_header_url_config(
+        self, test_config_referer_header_url
+    ):
+        reload(cromshellconfig)
+        referer_header_url_cli = None
+        cromshellconfig.resolve_referer_header_url(referer_header_url_cli)
+
+        assert (
+            cromshellconfig.referer_header_url == "https://from_config.example.com"
+        ), "Use config value in absence of CLI"
+
+    def test_resolve_referer_header_url_cli(
+        self, test_config_referer_header_url
+    ):
+        reload(cromshellconfig)
+        referer_header_url_cli = "https://from_cli.example.com"
+        cromshellconfig.resolve_referer_header_url(referer_header_url_cli)
+
+        assert (
+                cromshellconfig.referer_header_url == "https://from_cli.example.com"
+        ), "CLI overrides config"
+
+    def test_resolve_gcloud_token_email_default(self):
+        reload(cromshellconfig)
+        assert (
+            cromshellconfig.gcloud_token_email is None
+        ), "Default `gcloud_token_email` should be None"
+
+    def test_resolve_gcloud_token_email_config(
+        self, test_config_gcloud_token_email
+    ):
+        reload(cromshellconfig)
+        gcloud_token_email_cli = None
+        cromshellconfig.resolve_gcloud_token_email(gcloud_token_email_cli)
+
+        assert (
+            cromshellconfig.gcloud_token_email == "from_config@example.com"
+        ), "Use config value in absence of CLI"
+
+    def test_resolve_gcloud_token_email_cli(
+        self, test_config_gcloud_token_email
+    ):
+        reload(cromshellconfig)
+        gcloud_token_email_cli = "from_cli@example.com"
+        cromshellconfig.resolve_referer_header_url(gcloud_token_email_cli)
+
+        assert (
+                cromshellconfig.referer_header_url == "from_cli@example.com"
+        ), "CLI overrides config"
+
     @pytest.fixture
     def mock_data_path(self):
         return os.path.join(os.path.dirname(__file__), "mock_data/")
+
+    @pytest.fixture
+    def test_config_empty(self):
+        return {}
+
+    @pytest.fixture
+    def test_config_gcloud_token_email(self):
+        return {
+            "gcloud_token_email": "from_config@example.com"
+        }
+
+    @pytest.fixture
+    def test_config_referer_header_url(self):
+        return {
+            "referer_header_url": "https://from_config.example.com"
+        }
 
     @pytest.fixture
     def test_config_options_with_timeout(self):

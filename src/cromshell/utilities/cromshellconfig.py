@@ -262,7 +262,7 @@ def resolve_referer_header_url(url: str):
         LOGGER.info("No referer header URL set.")
 
 
-def resolve_gcloud_token_email(email):
+def resolve_gcloud_token_email(email: str):
 
     global gcloud_token_email
 
