@@ -1,4 +1,5 @@
 import logging
+import os
 
 import requests
 
@@ -16,6 +17,7 @@ def assert_can_communicate_with_server(config):
             f"{config.get_cromwell_api()}/backends",
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,
+            headers=generate_headers(config),
         )
     except ConnectionError:
         LOGGER.error("Failed to connect to %s", config.cromwell_server)
@@ -61,3 +63,21 @@ def check_http_request_status_code(
                 f"Status_code: {response.status_code}\n"
                 f"Message: {response.text}"
             )
+
+
+def generate_headers(config):
+    """
+    Check the config for options that require a header and generate the appropriate map.
+    Will be an empty map if no relevant options are specified.
+    """
+    headers = {}
+
+    if config.referer_header_url is not None:
+        headers["Referer"] = config.referer_header_url
+
+    if config.gcloud_token_email is not None:
+        stream = os.popen(f"gcloud auth --account={config.gcloud_token_email} print-access-token")
+        token = stream.read().strip()  # Strip trailing newline
+        headers["Authorization"] = f"Bearer {token}"
+
+    return headers

@@ -37,6 +37,7 @@ def main(config, workflow_id):
         f"{config.cromwell_api_workflow_id}/status",
         timeout=config.requests_connect_timeout,
         verify=config.requests_verify_certs,
+        headers=http_utils.generate_headers(config),
     )
 
     requested_status_json = request_out.content.decode("utf-8")
@@ -68,6 +69,7 @@ def main(config, workflow_id):
             params=formatted_metadata_parameter,
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,
+            headers=http_utils.generate_headers(config),
         )
 
         # metadata holds the workflow metadata as a dictionary

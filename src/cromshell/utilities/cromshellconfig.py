@@ -35,13 +35,14 @@ cromshell_config_options = None
 cromwell_server = None
 # Request defaults
 requests_connect_timeout = 5
+referer_header_url = None
+gcloud_token_email = None
 requests_verify_certs = True
 
 CROMSHELL_CONFIG_OPTIONS_TEMPLATE = {
     "cromwell_server": "String",
     "requests_timeout": requests_connect_timeout,
 }
-
 
 def override_requests_cert_parameters(skip_certs: bool):
     """Override requests settings for certs verification"""
@@ -243,6 +244,36 @@ def resolve_requests_connect_timeout(timeout_cli: int):
     else:
         LOGGER.info("Using requests default timeout duration.")
         LOGGER.info("Request Timeout value: %d sec", requests_connect_timeout)
+
+
+def resolve_referer_header_url(url: str):
+
+    global referer_header_url
+
+    if url:
+        LOGGER.info(f"Will send referer header {url} from command line options.")
+        referer_header_url = url
+    elif "referer_header_url" in cromshell_config_options:
+        config_url = cromshell_config_options["referer_header_url"]
+        LOGGER.info(f"Will send referer header {config_url} from config.")
+        referer_header_url = config_url
+    else:
+        LOGGER.info("No referer header URL set.")
+
+
+def resolve_gcloud_token_email(email):
+
+    global gcloud_token_email
+
+    if email:
+        LOGGER.info(f"Will send auth header with token for {email} from command line options.")
+        gcloud_token_email = email
+    elif "gcloud_token_email" in cromshell_config_options:
+        config_gcloud_token_email = cromshell_config_options["gcloud_token_email"]
+        LOGGER.info(f"Will send auth header with token for {config_gcloud_token_email} from config.")
+        gcloud_token_email = config_gcloud_token_email
+    else:
+        LOGGER.info("Not sending auth header.")
 
 
 # Get and Set Cromshell Configuration Default Values
