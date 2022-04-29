@@ -1,9 +1,7 @@
 import time
-import termcolor
 import os
 import copy
 
-print("start")
 
 turtleRight = """
                __  
@@ -52,7 +50,8 @@ def init_grid(width, height, value):
 
 class AsciiImage:
 
-    def __init__(self, art: str, color: int):
+    def __init__(self, art: str, color: int, transparentChar = None):
+        self.transparentChar = transparentChar
         lines = art.splitlines()
         lines = [x for x in lines if len(x) > 0]
 
@@ -65,6 +64,13 @@ class AsciiImage:
         for y, line in enumerate(lines):
             for x, char in enumerate(line):
                 self.chars[y][x] = char
+
+    def init(self, width, height):
+        self.transparentChar = " "
+        self.width = width
+        self.height = height
+        self.colors = init_grid(self.width, self.height, 0)
+        self.chars = init_grid(self.width, self.height, " ")
 
     def getChar(self, x: int, y: int) -> str:
         return self.chars[self.height-y-1][x]
@@ -86,6 +92,9 @@ class AsciiImage:
         char, color = value
         self.setChar(x, y, char)
         self.setColor(x, y, color)
+
+    def isTransparent(self, x: int, y:int)-> bool:
+        return self.getChar(x,y) == self.transparentChar
 
 
 test = """123a
@@ -116,7 +125,8 @@ def print_image(image: AsciiImage):
 def composite(base: AsciiImage, overlay: AsciiImage, x: int, y: int):
     for j in range(0, overlay.height):
         for i in range(0, overlay.width):
-            base.setPixel(x + i, y + j, overlay.getPixel(i, j))
+            if not overlay.isTransparent(i,j):
+                base.setPixel(x + i, y + j, overlay.getPixel(i, j))
     return base
 
 
@@ -126,14 +136,39 @@ flower_yellow_base = """
 """
 
 flower_yellow_Image = AsciiImage(flower_yellow_base, 40)
-# flower_yellow_Image.setColor(1, 0, 11)
+flower_yellow_Image.setColor(1, 1, 11)
 
+flower_purple_base = """
+8
+|
+"""
+flower_purple_image = AsciiImage(flower_purple_base, 36)
+flower_purple_image.setColor(0,1,207)
 
+def generateBackground(width: int) -> AsciiImage:
+    blank = AsciiImage(width, 7)
+    composite(blank, grass,)
 def animateTurtle():
-    turtleRightImage = AsciiImage(turtleRight, 28)
+    turtleRightImage = AsciiImage(turtleRight, 28, " ")
     grassImage = AsciiImage(grass, 46)
 
-    composite(grassImage, flower_yellow_Image, 3,3)
+    composite(grassImage, flower_yellow_Image, 10,0)
+    composite(grassImage, flower_yellow_Image, 30, 0)
+    composite(grassImage, flower_purple_image, 14, 0)
+    composite(grassImage, flower_purple_image, 15, 1)
+    composite(grassImage, flower_purple_image, 15, 0)
+    composite(grassImage, flower_purple_image, 16, 0)
+
+    composite(grassImage, flower_purple_image, 54, 1)
+    composite(grassImage, flower_purple_image, 56, 0)
+    composite(grassImage, flower_purple_image, 59, 0)
+
+    composite(grassImage, flower_yellow_Image, 70, 0)
+    composite(grassImage, flower_yellow_Image, 71, 0)
+
+    composite(grassImage, flower_yellow_Image, 87, 0)
+    composite(grassImage, flower_yellow_Image, 60, 0)
+
     print(grassImage.height)
     print(turtleRightImage.height)
     assert turtleRightImage.height == grassImage.height
