@@ -20,7 +20,9 @@ class TestLogs:
             ("will_fail.json", ["ALL"], False),
         ],
     )
-    def test_workflow_that_is_doomed(self, test_file, status_keys, expect_logs, mock_data_path):
+    def test_workflow_that_is_doomed(
+        self, test_file, status_keys, expect_logs, mock_data_path
+    ):
         workflow_metadata_path = os.path.join(mock_data_path, test_file)
         with open(workflow_metadata_path, "r") as f:
             workflow_metadata = json.load(f)
