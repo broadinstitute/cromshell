@@ -1,0 +1,15 @@
+{
+    "calls": {
+        "HelloWorld.HelloWorldTask": [
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/HelloWorld/261ee81a-b6c4-4547-8373-4c879eb24858/call-HelloWorldTask/HelloWorldTask.log"
+                },
+                "executionStatus": "Done",
+                "shardIndex": -1
+            }
+        ]
+    },
+    "id": "261ee81a-b6c4-4547-8373-4c879eb24858"
+}

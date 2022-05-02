@@ -7,3 +7,4 @@ requests
 termcolor
 requests
 pygments
+gcsfs

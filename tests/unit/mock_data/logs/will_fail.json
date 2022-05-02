@@ -1,0 +1,25 @@
+{
+    "calls": {
+        "WillFailTester.FailFastTask": [
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/WillFailTester/019d7962-4c0c-4651-87ac-b90efff26ff6/call-FailFastTask/FailFastTask.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": -1
+            }
+        ],
+        "WillFailTester.PassRunsLong": [
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/WillFailTester/019d7962-4c0c-4651-87ac-b90efff26ff6/call-PassRunsLong/PassRunsLong.log"
+                },
+                "executionStatus": "Done",
+                "shardIndex": -1
+            }
+        ]
+    },
+    "id": "019d7962-4c0c-4651-87ac-b90efff26ff6"
+}

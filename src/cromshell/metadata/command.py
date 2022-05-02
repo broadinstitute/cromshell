@@ -79,7 +79,7 @@ def get_workflow_metadata(
     api_workflow_id: str,
     timeout: int,
     verify_certs: bool,
-) -> str:
+) -> dict:
     """Uses requests to get the metadata or sub-metadata of a workflow
     from the cromwell server and returns a JSON formatted string."""
 
