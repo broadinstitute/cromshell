@@ -77,7 +77,12 @@ def generate_headers(config):
 
     if config.gcloud_token_email is not None:
         out = check_output(  # Grab output, or raise error & halt Cromshell if nonzero exit code
-            ["gcloud", "auth", f"--account={config.gcloud_token_email}", "print-access-token"],
+            [
+                "gcloud",
+                "auth",
+                f"--account={config.gcloud_token_email}",
+                "print-access-token",
+            ],
         )
 
         token = out.decode("utf-8").strip()  # Decode bytes, strip trailing newline
