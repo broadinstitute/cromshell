@@ -12,10 +12,10 @@ class TestLogs:
     @pytest.mark.parametrize(
         "test_file, status_keys, expect_logs",
         [
-            ("success.json", ["Failure"], False),
+            ("success.json", ["Failed"], False),
             ("success.json", ["Done"], True),
-            ("will_fail.json", ["Failure"], True),
-            ("will_fail.json", ["Failure", "Done"], True),
+            ("will_fail.json", ["Failed"], True),
+            ("will_fail.json", ["Failed", "Done"], True),
             ("will_fail.json", ["RetryableFailure"], False),
             ("will_fail.json", ["ALL"], False),
         ],
