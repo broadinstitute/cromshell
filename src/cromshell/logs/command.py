@@ -18,7 +18,7 @@ LOGGER = logging.getLogger(__name__)
     default="Failed",
     help="Return a list with links to the logs with the indicated status. "
     "Separate multiple keys by comma or use 'ALL' to print all logs. "
-    "Some standard Cromwell status options are 'ALL', 'Done', 'RetryableFailure', 'Running', and 'Failure'.",
+    "Some standard Cromwell status options are 'ALL', 'Done', 'RetryableFailure', 'Running', and 'Failed'.",
 )
 @click.option(
     "-p",
