@@ -8,6 +8,7 @@ from cromshell.utilities.submissions_file_utils import update_submission_db
 
 from .abort import command as abort
 from .alias import command as alias
+from .logs import command as logs
 from .metadata import command as metadata
 from .slim_metadata import command as slim_metadata
 from .status import command as status
@@ -127,6 +128,7 @@ def version():
 main_entry.add_command(abort.main)
 main_entry.add_command(alias.main)
 main_entry.add_command(status.main)
+main_entry.add_command(logs.main)
 main_entry.add_command(submit.main)
 main_entry.add_command(slim_metadata.main)
 main_entry.add_command(metadata.main)

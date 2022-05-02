@@ -1,0 +1,417 @@
+{
+    "calls": {
+        "Mutect2.M2": [
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-0/M2-0.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 0
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-1/M2-1.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 1
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-2/M2-2.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 2
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-3/M2-3.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 3
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-4/M2-4.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 4
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-5/M2-5.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 5
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-6/M2-6.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 6
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-7/M2-7.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 7
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-8/M2-8.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 8
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-9/M2-9.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 9
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-10/M2-10.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 10
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-11/M2-11.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 11
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-12/M2-12.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 12
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-13/M2-13.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 13
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-14/M2-14.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 14
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-15/M2-15.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 15
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-16/M2-16.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 16
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-17/M2-17.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 17
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-18/M2-18.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 18
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-19/M2-19.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 19
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-20/M2-20.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 20
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-21/M2-21.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 21
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-22/M2-22.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 22
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-23/M2-23.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 23
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-24/M2-24.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 24
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-25/M2-25.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 25
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-26/M2-26.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 26
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-27/M2-27.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 27
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-28/M2-28.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 28
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-29/M2-29.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 29
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-30/M2-30.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 30
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-31/M2-31.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 31
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-32/M2-32.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 32
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-33/M2-33.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 33
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-34/M2-34.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 34
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-35/M2-35.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 35
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-36/M2-36.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 36
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-37/M2-37.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 37
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-38/M2-38.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 38
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-39/M2-39.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 39
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-40/M2-40.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 40
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-41/M2-41.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 41
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-42/M2-42.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 42
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-43/M2-43.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 43
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-44/M2-44.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 44
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-45/M2-45.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 45
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-46/M2-46.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 46
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-47/M2-47.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 47
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-48/M2-48.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 48
+            },
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-M2/shard-49/M2-49.log"
+                },
+                "executionStatus": "Failed",
+                "shardIndex": 49
+            }
+        ],
+        "Mutect2.SplitIntervals": [
+            {
+                "attempt": 1,
+                "backendLogs": {
+                    "log": "gs://broad-methods-cromwell-exec-bucket-instance-8/Mutect2/963f97c1-c087-4b6d-a1a5-037c1b7bb935/call-SplitIntervals/SplitIntervals.log"
+                },
+                "executionStatus": "Done",
+                "shardIndex": -1
+            }
+        ]
+    },
+    "id": "963f97c1-c087-4b6d-a1a5-037c1b7bb935"
+}
