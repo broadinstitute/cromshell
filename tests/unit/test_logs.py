@@ -17,7 +17,7 @@ class TestLogs:
             ("will_fail.json", ["Failed"], True),
             ("will_fail.json", ["Failed", "Done"], True),
             ("will_fail.json", ["RetryableFailure"], False),
-            ("will_fail.json", ["ALL"], False),
+            ("will_fail.json", ["ALL"], True),
         ],
     )
     def test_workflow_that_is_doomed(
