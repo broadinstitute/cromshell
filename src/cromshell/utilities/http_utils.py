@@ -1,5 +1,5 @@
 import logging
-import os
+from subprocess import check_output
 
 import requests
 
@@ -76,10 +76,11 @@ def generate_headers(config):
         headers["Referer"] = config.referer_header_url
 
     if config.gcloud_token_email is not None:
-        stream = os.popen(
-            f"gcloud auth --account={config.gcloud_token_email} print-access-token"
+        out = check_output(  # Grab output, or raise error & halt Cromshell if nonzero exit code
+            ["gcloud", "auth", f"--account={config.gcloud_token_email}", "print-access-token"],
         )
-        token = stream.read().strip()  # Strip trailing newline
+
+        token = out.decode("utf-8").strip()  # Decode bytes, strip trailing newline
         headers["Authorization"] = f"Bearer {token}"
 
     return headers
