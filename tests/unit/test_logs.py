@@ -30,6 +30,7 @@ class TestLogs:
         logs_output = logs_command.print_workflow_logs(
             workflow_metadata=workflow_metadata,
             expand_sub_workflows=True,
+            indent="",
             status_keys=status_keys,
             cat_logs=False,
         )
