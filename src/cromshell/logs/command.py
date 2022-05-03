@@ -101,8 +101,6 @@ def obtain_and_print_logs(
         verify_certs=config.requests_verify_certs,
     )
 
-    io_utils.pretty_print_json(workflow_status_json, add_color=True)
-
     # Parse the metadata for logs and print them to the output
     found_logs = print_workflow_logs(
         workflow_metadata=workflow_status_json,
