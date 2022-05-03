@@ -177,14 +177,11 @@ class TestSubmit:
         workflow_wdl_path = workflows_path.joinpath("helloWorld.wdl")
         workflow_json_path = workflows_path.joinpath("helloWorld.json")
 
-        assert (
-            submit_command.womtool_validate_wdl_and_json(
-                wdl=str(workflow_wdl_path),
-                wdl_json=str(workflow_json_path),
-                config=cromshellconfig,
-            )
-            == 0
-        ), "Womtool should have marked valid workflow as valid."
+        submit_command.womtool_validate_wdl_and_json(
+            wdl=str(workflow_wdl_path),
+            wdl_json=str(workflow_json_path),
+            config=cromshellconfig,
+        )
 
     @pytest.fixture
     def local_cromwell_url(self):

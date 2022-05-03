@@ -150,14 +150,17 @@ def validate_input(
     if dependencies_zip is not None:
         io_utils.assert_file_is_not_empty(dependencies_zip, "Dependencies Zip")
 
-    # At this point, we should validate our inputs if womtool is in PATH:
-    womtool_validate_wdl_and_json(wdl, wdl_json, config)
+    if dependencies_zip is None:
+        womtool_validate_wdl_and_json(wdl, wdl_json, config)
+    else:
+        # See: https://github.com/broadinstitute/cromshell/issues/139
+        LOGGER.info("Skipping validation of WDL plus a dependencies zip")
 
 
 def womtool_validate_wdl_and_json(
     wdl: str, wdl_json: str, config: cromshellconfig
-) -> int:
-    """If womtool is found in PATH, validates wdl and json"""
+) -> None:
+    """Validates WDL and input JSON using the Cromwell server's Womtool REST API"""
 
     LOGGER.info("Validating WDL with with server: %s", config.cromwell_server)
     request_out = womtool_validate_to_server(wdl, wdl_json, config)
@@ -176,8 +179,6 @@ def womtool_validate_wdl_and_json(
             "Error: Server reports workflow was not valid.\n"
             + ("\n".join(validate_status["errors"]))
         )
-
-    return 0
 
 
 def womtool_validate_to_server(
