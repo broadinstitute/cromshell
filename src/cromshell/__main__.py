@@ -65,6 +65,16 @@ LOGGER = logging.getLogger(__name__)
     "The use of verification is strongly advised as per ssl documentation. "
     "Use this flag only when communicating with internal cromwell servers.",
 )
+@click.option(
+    "--gcloud_token_email",
+    type=str,
+    help="Call `gcloud auth print-access-token` with this email and add the token as an auth header to requests.",
+)
+@click.option(
+    "--referer_header_url",
+    type=str,
+    help="For servers that require a referer, supply this URL in the `Referer:` header.",
+)
 @click.pass_context
 def main_entry(
     cromshell_config,
@@ -73,6 +83,8 @@ def main_entry(
     cromwell_url,
     requests_timeout,
     requests_skip_certs,
+    gcloud_token_email,
+    referer_header_url,
 ):
     """
     Cromshell is a script for submitting workflows to a
@@ -97,6 +109,8 @@ def main_entry(
     cromshellconfig.resolve_cromwell_config_server_address(server_user=cromwell_url)
     cromshellconfig.override_requests_cert_parameters(skip_certs=requests_skip_certs)
     cromshellconfig.resolve_requests_connect_timeout(timeout_cli=requests_timeout)
+    cromshellconfig.resolve_gcloud_token_email(email=gcloud_token_email)
+    cromshellconfig.resolve_referer_header_url(url=referer_header_url)
 
 
 @main_entry.command()
