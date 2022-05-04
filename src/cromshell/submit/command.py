@@ -228,6 +228,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
             files=submission_params,
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,
+            headers=http_utils.generate_headers(config),
         )
 
         return requests_out

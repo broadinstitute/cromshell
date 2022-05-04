@@ -1,6 +1,12 @@
-from io import open
+#!/usr/bin/env python
 
 from setuptools import find_packages, setup
+
+with open("requirements.txt") as fh:
+    install_requires = fh.readlines()
+
+with open("README.md") as fh:
+    long_description = fh.read()
 
 # following src dir layout according to
 # https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
@@ -13,15 +19,8 @@ setup(
     author_email="jonn@broadinstitute.org, louisb@broadinstitute.org, "
     "bshifaw@broadinstitute.org",
     license="BSD 3-Clause",
-    long_description=open("README.md").read(),
-    install_requires="""
-    termcolor
-    click>=8.0.0
-    requests
-    pygments
-    """.split(
-        "\n"
-    ),
+    long_description=long_description,
+    install_requires=install_requires,
     tests_require=["coverage", "pytest"],
     python_requires=">=3.7",
     packages=find_packages("src"),

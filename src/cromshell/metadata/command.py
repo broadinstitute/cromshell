@@ -79,6 +79,7 @@ def get_workflow_metadata(
     api_workflow_id: str,
     timeout: int,
     verify_certs: bool,
+    headers: map,
 ) -> str:
     """Uses requests to get the metadata or sub-metadata of a workflow
     from the cromwell server and returns a JSON formatted string."""
@@ -88,6 +89,7 @@ def get_workflow_metadata(
         params=meta_params,
         timeout=timeout,
         verify=verify_certs,
+        headers=headers,
     )
 
     http_utils.check_http_request_status_code(
@@ -115,6 +117,7 @@ def obtain_and_print_metadata(
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
+        headers=http_utils.generate_headers(config),
     )
 
     io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
