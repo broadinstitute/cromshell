@@ -272,6 +272,55 @@ class TestCromshellConfig:
             cromshellconfig.referer_header_url == "from_cli@example.com"
         ), "CLI overrides config"
 
+    def test__ensure_correct_submission_database_format__correct_database(self, tmpdir):
+        """When the database is fine, ensure it is not touched"""
+
+        cc__ensure_correct_submission_database_format = getattr(
+            cromshellconfig, "__ensure_correct_submission_database_format"
+        )
+
+        database_path = tmpdir.join("tmp.database.tsv")
+        with open(database_path, "w") as f:
+            f.write(
+                "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\ndate\tserver\trun\twdl\tstatus\talias"
+            )
+
+        old_format = cc__ensure_correct_submission_database_format(
+            submission_file_path=database_path,
+        )
+        assert (
+            not old_format
+        ), "cromshellconfig.__ensure_correct_submission_database_format thought a correct database was incorrect"
+
+    def test__ensure_correct_submission_database_format__old_database(self, tmpdir):
+        """When the database is fine, ensure it is not touched"""
+
+        cc__ensure_correct_submission_database_format = getattr(
+            cromshellconfig, "__ensure_correct_submission_database_format"
+        )
+
+        database_path = tmpdir.join("tmp.database.tsv")
+        with open(database_path, "w") as f:
+            f.write(
+                "DATE CROMWELL_SERVER RUN_ID WDL_NAME STATUS ALIAS\ndate server run wdl status alias"
+            )
+
+        # ensure that the function identifies the old database format and attempts a fix
+        old_format = cc__ensure_correct_submission_database_format(
+            submission_file_path=database_path,
+        )
+        assert (
+            old_format
+        ), "cromshellconfig.__ensure_correct_submission_database_format failed to identify an incorrect database"
+
+        # see if it's actually fixed
+        old_format = cc__ensure_correct_submission_database_format(
+            submission_file_path=database_path,
+        )
+        assert (
+            not old_format
+        ), "An old database was not fixed by cromshellconfig.__ensure_correct_submission_database_format"
+
     @pytest.fixture
     def mock_data_path(self):
         return os.path.join(os.path.dirname(__file__), "mock_data/")

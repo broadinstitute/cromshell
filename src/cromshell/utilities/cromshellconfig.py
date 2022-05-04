@@ -5,6 +5,7 @@ import os
 import warnings
 from enum import Enum
 from pathlib import Path
+from typing import Union
 
 import cromshell.utilities.submissions_file_utils as submissions_file_utils
 
@@ -129,7 +130,9 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                 )
 
 
-def __ensure_correct_submission_database_format(submission_file_path: str) -> None:
+def __ensure_correct_submission_database_format(
+    submission_file_path: Union[str, Path]
+) -> bool:
     """Read the first line of the submission database. If not tab-delimited (old format)
     then update the database so it is tab-delimited."""
 
@@ -149,6 +152,8 @@ def __ensure_correct_submission_database_format(submission_file_path: str) -> No
         LOGGER.info(
             f"Updated database at {submission_file_path} to tab-delimited format"
         )
+
+    return old_format  # for tests
 
 
 def __get_config_dir():
