@@ -97,10 +97,10 @@ def get_workflow_metadata(
     return requests_out.json()
 
 
-def obtain_and_print_metadata(
+def obtain_metadata(
     config, metadata_param: list, exclude_keys: bool, dont_expand_subworkflows: bool
-):
-    """Format metadata parameters and obtains metadata from cromwell server"""
+) -> str:
+    """Format metadata parameters and obtain metadata from cromwell server as string"""
 
     # Combine keys and flags into a dictionary
     formatted_metadata_parameter = format_metadata_params(
@@ -110,11 +110,26 @@ def obtain_and_print_metadata(
     )
 
     # Request workflow metadata
-    workflow_metadata_json = get_workflow_metadata(
+    workflow_metadata_json_string = get_workflow_metadata(
         meta_params=formatted_metadata_parameter,
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
     )
 
-    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
+    return workflow_metadata_json_string
+
+
+def obtain_and_print_metadata(
+    config, metadata_param: list, exclude_keys: bool, dont_expand_subworkflows: bool
+) -> None:
+    """Format metadata parameters and obtains metadata from cromwell server and prints"""
+
+    workflow_metadata_json_string = obtain_metadata(
+        config=config,
+        metadata_param=metadata_param,
+        exclude_keys=exclude_keys,
+        dont_expand_subworkflows=dont_expand_subworkflows,
+    )
+
+    io_utils.pretty_print_json(workflow_metadata_json_string, add_color=True)
