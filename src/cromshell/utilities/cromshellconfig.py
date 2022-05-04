@@ -104,6 +104,10 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
             "Checking submission file for associated cromwell server with the provided "
             "workflow id."
         )
+
+        # perform a check to see if the submission database is in a old format without tabs
+        __ensure_correct_submission_database_format(submission_file_path)
+
         with open(submission_file_path, "r") as csv_file:
             reader = csv.DictReader(csv_file, delimiter="\t")
             id_in_file = False
@@ -123,6 +127,26 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                     "Workflow id was not found in submission file, using default "
                     "cromwell server."
                 )
+
+
+def __ensure_correct_submission_database_format(submission_file_path: str) -> None:
+    """Read the first line of the submission database. If not tab-delimited (old format)
+    then update the database so it is tab-delimited."""
+
+    old_format = False
+
+    with open(submission_file_path, "r") as f:
+        first_line = f.readline()
+        if "\t" not in first_line:
+            old_format = True
+
+    if old_format:
+        LOGGER.info(f"Detected an old database format at {submission_file_path}")
+        with open(submission_file_path, "r") as f:
+            entire_file = f.read()
+        with open(submission_file_path, "w") as f:
+            f.write(entire_file.replace(" ", "\t"))
+        LOGGER.info(f"Updated database at {submission_file_path} to tab-delimited format")
 
 
 def __get_config_dir():
