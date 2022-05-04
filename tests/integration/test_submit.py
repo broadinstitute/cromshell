@@ -1,5 +1,6 @@
 import json
 import os
+from importlib import reload
 from pathlib import Path
 from traceback import print_exception
 
@@ -22,6 +23,7 @@ def run_cromshell_submit(
 ):
     """Run cromshell submit using CliRunner and assert job is successful"""
 
+    reload(cromshellconfig)
     runner = CliRunner(mix_stderr=False)
     # The absolute path will be passed to the invoke command because
     # the test is being run in temp directory created by CliRunner.
