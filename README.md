@@ -7,6 +7,12 @@
       ""     ""    ""                                                          ""    ""     ""
 ```
 
+---
+
+## Cromshell 2 Alpha Available now!
+See the **[cromshell_2.0](https://github.com/broadinstitute/cromshell/tree/cromshell_2.0)** branch for more information.
+
+---
 
 # Installation
 
