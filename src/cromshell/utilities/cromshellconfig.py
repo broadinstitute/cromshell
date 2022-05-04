@@ -146,7 +146,9 @@ def __ensure_correct_submission_database_format(submission_file_path: str) -> No
             entire_file = f.read()
         with open(submission_file_path, "w") as f:
             f.write(entire_file.replace(" ", "\t"))
-        LOGGER.info(f"Updated database at {submission_file_path} to tab-delimited format")
+        LOGGER.info(
+            f"Updated database at {submission_file_path} to tab-delimited format"
+        )
 
 
 def __get_config_dir():
