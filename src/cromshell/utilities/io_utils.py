@@ -2,10 +2,13 @@ import csv
 import fileinput
 import json
 import logging
-import os
 import re
 import shutil
+from contextlib import nullcontext
+from io import BytesIO
 from pathlib import Path
+from typing import BinaryIO, List, Union
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from pygments import formatters, highlight, lexers
 from termcolor import colored
@@ -86,15 +89,63 @@ def doomed_logo():
     )
 
 
-def assert_file_is_not_empty(file_path: str or Path, file_description: str):
-    """Confirm the provided file exist and is not empty."""
+def assert_path_is_not_empty(path: Union[str, Path], description: str):
+    """Confirm the provided file or directory exist and is not empty."""
 
-    if not Path(file_path).exists():
-        LOGGER.error("ERROR: %s does not exist: %s", file_description, file_path)
-        raise FileExistsError(f"ERROR: {file_description} does not exist: {file_path}")
-    if os.stat(file_path).st_size == 0:
-        LOGGER.error("ERROR: %s is empty: %s.", file_description, file_path)
-        raise EOFError(f"ERROR: {file_description} is empty: {file_path}.")
+    if not Path(path).exists():
+        LOGGER.error("ERROR: %s does not exist: %s", description, path)
+        raise FileExistsError(f"ERROR: {description} does not exist: {path}")
+    if Path(path).is_dir():
+        if not Path(path).iterdir():
+            LOGGER.error("ERROR: %s is empty: %s.", description, path)
+            raise EOFError(f"ERROR: {description} is empty: {path}.")
+    else:
+        if Path(path).stat().st_size == 0:
+            LOGGER.error("ERROR: %s is empty: %s.", description, path)
+            raise EOFError(f"ERROR: {description} is empty: {path}.")
+
+
+def open_or_zip(path: Union[str, Path, None]) -> Union[nullcontext, BytesIO, BinaryIO]:
+    """Return a context that may be used for reading the contents from the path.
+
+    If path is a directory returns the contents as an in memory zip file.
+    """
+
+    if not path:
+        return nullcontext()
+
+    path = Path(path)
+    if path.is_dir():
+        return zip_dir(path)
+    else:
+        return path.open("rb")
+
+
+def zip_dir(directory: Path) -> BytesIO:
+    """Zip the directory to an in memory BytesIO."""
+
+    zip_buffer = BytesIO()
+    base = Path(directory)
+    LOGGER.debug("Zipping directory: %s", directory)
+    # Based off of https://stackoverflow.com/questions/2463770/python-in-memory-zip-library
+    with ZipFile(zip_buffer, "a", ZIP_DEFLATED, False) as zip_file:
+        for child in base.iterdir():
+            add_to_zip(zip_file, base, child)
+
+    zip_buffer.seek(0)
+    return zip_buffer
+
+
+def add_to_zip(zip_file: ZipFile, base: Path, path: Path) -> None:
+    """Add the path to the zip file relative to the base."""
+
+    relative_path = path.relative_to(base)
+    LOGGER.debug("Zipping: %s", relative_path)
+    zip_file.write(path, relative_path)
+
+    if path.is_dir():
+        for child in path.iterdir():
+            add_to_zip(zip_file, base, child)
 
 
 def is_workflow_id_valid(workflow_id: str):
@@ -145,23 +196,28 @@ def create_directory(
         raise
 
 
-def copy_files_to_directory(directory: str or Path, input_files: list or str):
+def copy_files_to_directory(
+    directory: Union[str, Path],
+    inputs: Union[List[Union[str, Path, None]], Union[str, Path, None]],
+):
     """Copies files to specified directory"""
 
     # check dir exists
     if not Path(directory).exists():
         raise FileNotFoundError(f"Directory '{directory}' does not exist")
 
-    if isinstance(input_files, list):
-        for file in input_files:
-            if file is not None:
-                if not Path(file).exists():
-                    raise FileNotFoundError(f"Directory '{file}' does not exist")
-                shutil.copy(file, directory)
+    if not inputs:
+        pass
+    elif isinstance(inputs, list):
+        for file in inputs:
+            copy_files_to_directory(directory, file)
+    elif not Path(inputs).exists():
+        raise FileNotFoundError(f"File '{inputs}' does not exist")
+    elif Path(inputs).is_dir():
+        subdirectory = Path(directory) / Path(inputs).name
+        shutil.copytree(inputs, subdirectory, copy_function=shutil.copy)
     else:
-        if not Path(input_files).exists():
-            raise FileNotFoundError(f"Directory '{input_files}' does not exist")
-        shutil.copy(input_files, directory)
+        shutil.copy(inputs, directory)
 
 
 def update_all_workflow_database_tsv(

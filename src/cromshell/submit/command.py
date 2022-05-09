@@ -46,7 +46,7 @@ class WorkflowStatusError(Exception):
     "--dependencies-zip",
     type=click.Path(exists=True),
     required=False,
-    help="ZIP file containing workflow source files that are "
+    help="ZIP file or directory containing workflow source files that are "
     "used to resolve local imports. This zip bundle will be "
     "unpacked in a sandbox accessible to this workflow.",
 )
@@ -128,12 +128,12 @@ def validate_input(wdl: str, wdl_json: str, options_json: str, dependencies_zip:
     """Asserts files are not empty and if womtool is
     in path validates WDL and WDL input JSON"""
 
-    io_utils.assert_file_is_not_empty(wdl, "WDL")
-    io_utils.assert_file_is_not_empty(wdl_json, "Input JSON")
+    io_utils.assert_path_is_not_empty(wdl, "WDL")
+    io_utils.assert_path_is_not_empty(wdl_json, "Input JSON")
     if options_json is not None:
-        io_utils.assert_file_is_not_empty(options_json, "Options json")
+        io_utils.assert_path_is_not_empty(options_json, "Options json")
     if dependencies_zip is not None:
-        io_utils.assert_file_is_not_empty(dependencies_zip, "Dependencies Zip")
+        io_utils.assert_path_is_not_empty(dependencies_zip, "Dependencies Zip")
 
     # At this point, we should validate our inputs if womtool is in PATH:
     womtool_validate_wdl_and_json(wdl, wdl_json)
@@ -178,9 +178,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
     # handler, which avoids errors if optional files are NONE.
     with open(wdl, "rb") as wdl_file, open(wdl_json, "rb") as wdl_json_file, (
         open(options_json, "rb") if options_json is not None else none_context
-    ) as options_file, (
-        open(dependencies_zip, "rb") if dependencies_zip is not None else none_context
-    ) as dependencies_file:
+    ) as options_file, (io_utils.open_or_zip(dependencies_zip)) as dependencies_file:
 
         submission_params = {
             "workflowSource": wdl_file,
