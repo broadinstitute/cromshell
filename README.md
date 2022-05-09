@@ -119,7 +119,7 @@ From source
 ## Uninstallation
 From brew
 
-    brew uninstall cromshell-alpha
+    brew uninstall cromshell@2.0.0.alpha.1
 
 From source
 
