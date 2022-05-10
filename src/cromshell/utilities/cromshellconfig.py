@@ -23,7 +23,8 @@ SLIM_METADATA_DEFAULT_KEYS = [
     "subWorkflowMetadata",
     "subWorkflowId",
 ]
-API_STRING = "/api/workflows/v1"
+CROMWELL_API_STRING = "/api/workflows/v1"
+WOMTOOL_API_STRING = "/api/womtool/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined
@@ -207,8 +208,13 @@ def __get_cromwell_server(config_options: dict):
 
 
 def get_cromwell_api():
-    """Return a string combining the cromwell server and api string"""
-    return f"{cromwell_server}{API_STRING}"
+    """Return a string combining the cromwell server and the cromwell api string"""
+    return f"{cromwell_server}{CROMWELL_API_STRING}"
+
+
+def get_womtool_api():
+    """Return a string combining the cromwell server and the womtool api string"""
+    return f"{cromwell_server}{WOMTOOL_API_STRING}"
 
 
 def get_local_folder_name():

@@ -12,9 +12,6 @@ def mock_data_path():
     return Path(__file__).parent.joinpath("mock_data/")
 
 
-workflows_path = Path(__file__).parents[1].joinpath("workflows/")
-
-
 @pytest.fixture
 def temp_dir_path():
     return Path(tempfile.gettempdir() + "/test_io_utility/")
@@ -22,44 +19,6 @@ def temp_dir_path():
 
 class TestSubmit:
     """Test the submit command functions"""
-
-    @pytest.mark.parametrize(
-        "test_wdl_path, test_json_path",
-        [
-            (
-                workflows_path.joinpath("not_valid.wdl"),
-                workflows_path.joinpath("helloWorld.json"),
-            ),
-            (
-                workflows_path.joinpath("helloWorld.wdl"),
-                workflows_path.joinpath("not_valid.json"),
-            ),
-            (
-                workflows_path.joinpath("not_valid.wdl"),
-                workflows_path.joinpath("not_valid.json"),
-            ),
-        ],
-    )
-    def test_womtool_validate_not_valid_wdl_and_json(
-        self, test_wdl_path, test_json_path
-    ):
-
-        # asserts that an exception is raised by the function
-        with pytest.raises(submit_command.ValidationError):
-            submit_command.womtool_validate_wdl_and_json(
-                wdl=str(test_wdl_path), wdl_json=str(test_json_path)
-            ), "Womtool should have marked not valid workflow as not valid."
-
-    def test_womtool_validate_valid_wdl_and_json(self):
-        workflow_wdl_path = workflows_path.joinpath("helloWorld.wdl")
-        workflow_json_path = workflows_path.joinpath("helloWorld.json")
-
-        assert (
-            submit_command.womtool_validate_wdl_and_json(
-                wdl=str(workflow_wdl_path), wdl_json=str(workflow_json_path)
-            )
-            == 0
-        ), "Womtool should have marked valid workflow as valid."
 
     def test_update_submission_file(self, mock_data_path, tmp_path):
 

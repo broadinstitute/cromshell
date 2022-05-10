@@ -34,10 +34,8 @@ Current version: 2.0.0
   
    ####  Start/Stop workflows
    * `submit` `[-w]` *`<wdl>`* *`<inputs_json>`* `[options_json]` `[included_wdl_zip_file]`
+     * Will automatically validate the WDL and JSON file.
      * Submit a new workflow.
-     * Will automatically validate the WDL and JSON file if `womtool` is in your path.
-       * To add `womtool` to your path, install `cromwell` with brew:
-         * `brew install cromwell`
      * *`-w`*                     Wait for workflow to transition from 'Submitted' to some other status
                                   before ${SCRIPTNAME} exits
      * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
