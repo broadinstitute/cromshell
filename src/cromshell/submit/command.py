@@ -195,6 +195,7 @@ def womtool_validate_to_server(
             files=submission_params,
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,
+         headers=http_utils.generate_headers(config),
         )
 
         return requests_out
