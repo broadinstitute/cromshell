@@ -4,6 +4,7 @@ import os
 import shutil
 from contextlib import redirect_stdout
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 
@@ -13,24 +14,24 @@ from cromshell.utilities import io_utils, submissions_file_utils
 class TestIOUtilities:
     """Test io_utils  functions and variables"""
 
-    def test_assert_file_is_not_empty_file_exists(self):
+    def test_assert_path_is_not_empty_file_exists(self):
         # asserts that an exception is NOT raised by the function,
         # because we are giving the path to this current unit test
         # file which should exist and is not empty.
         current_file_name = Path(__file__).parent.absolute()
 
-        io_utils.assert_file_is_not_empty(
-            file_path=current_file_name, file_description="Io Utils"
+        io_utils.assert_path_is_not_empty(
+            path=current_file_name, description="Io Utils"
         )
 
         # asserts that an exception is raised by the function,
         # because we are giving it a fake file path which shouldn't exist
         with pytest.raises(FileExistsError):
-            io_utils.assert_file_is_not_empty(
-                file_path="/fake/file/path", file_description="Io Utils"
+            io_utils.assert_path_is_not_empty(
+                path="/fake/file/path", description="Io Utils"
             ), "Provided a fake file path, function is fail"
 
-    def test_assert_file_is_not_empty(self, tmp_path):
+    def test_assert_path_is_not_empty(self, tmp_path):
         # Create temp file path
         empty_temp_file_path = tmp_path / "empty.text"
         # Check temp does not exits
@@ -39,8 +40,8 @@ class TestIOUtilities:
                 pass
 
         with pytest.raises(EOFError):
-            io_utils.assert_file_is_not_empty(
-                file_path=empty_temp_file_path, file_description="Io Utils"
+            io_utils.assert_path_is_not_empty(
+                path=empty_temp_file_path, description="Io Utils"
             ), "Provided a fake file path, function is fail"
 
     @pytest.mark.parametrize(
@@ -104,6 +105,39 @@ class TestIOUtilities:
         # assert the function stdout is the same as the expected out
         assert func_stdout.getvalue() == test_output
 
+    def test_open_or_zip_directory(self, tmp_path: Path) -> None:
+        zip_dir = tmp_path / "my_dir"
+        sub_dir = zip_dir / "sub_dir"
+        file_1 = zip_dir / "1.txt"
+        file_2 = zip_dir / "2.txt"
+        file_3 = sub_dir / "3.txt"
+        zip_dir.mkdir()
+        sub_dir.mkdir()
+        file_1.touch()
+        file_2.touch()
+        file_3.touch()
+        with io_utils.open_or_zip(zip_dir) as content:
+            with ZipFile(content, "r") as zip_obj:
+                assert sorted(zip_obj.namelist()) == [
+                    "1.txt",
+                    "2.txt",
+                    "sub_dir/",
+                    "sub_dir/3.txt",
+                ]
+
+    def test_open_or_zip_file(self, tmp_path: Path) -> None:
+        zip_dir = tmp_path / "my_dir"
+        existing_zip = zip_dir / "existing.zip"
+        zip_dir.mkdir()
+        file_contents = "I'm a zip, I swear."
+        existing_zip.write_text(file_contents)
+        with io_utils.open_or_zip(existing_zip) as content:
+            assert content.read().decode() == file_contents
+
+    def test_open_or_zip_none(self) -> None:
+        with io_utils.open_or_zip(None) as content:
+            assert content is None
+
     def test_create_directory(self, tmp_path):
         test_io_utility_temp_folder = tmp_path / "test_io_utility"
 
@@ -159,21 +193,41 @@ class TestIOUtilities:
         # Test that dummy file should fail
         with pytest.raises(FileNotFoundError):
             io_utils.copy_files_to_directory(
-                directory=tmp_path, input_files="/dummy/file"
+                directory=tmp_path, inputs="/dummy/file"
             ), "Should fail because folder does not exist"
 
         # Test that dummy dir should fail
         file_to_cp = Path(__file__).absolute()
         with pytest.raises(FileNotFoundError):
             io_utils.copy_files_to_directory(
-                directory="/dummy/file/", input_files=file_to_cp
+                directory="/dummy/file/", inputs=file_to_cp
             ), "Should fail because folder does not exist"
 
         # Test function works with proper dir and file
-        io_utils.copy_files_to_directory(directory=tmp_path, input_files=file_to_cp)
+        io_utils.copy_files_to_directory(directory=tmp_path, inputs=file_to_cp)
         copied_file = Path(tmp_path).joinpath(file_to_cp.name)
         print(copied_file)
         assert copied_file.exists(), "Temp folder should have been created"
+
+        # Test function works with proper dir and list of file
+        io_utils.copy_files_to_directory(directory=tmp_path, inputs=[file_to_cp])
+        copied_file = Path(tmp_path).joinpath(file_to_cp.name)
+        print(copied_file)
+        assert copied_file.exists(), "Temp folder should have been created from a list"
+
+        # Test function works with two proper dirs
+        src_dir = Path(tmp_path) / "copy_src"
+        src_file = src_dir / "hello.txt"
+        dst_dir = Path(tmp_path) / "copy_dst"
+        src_dir.mkdir()
+        src_file.touch()
+        dst_dir.mkdir()
+        io_utils.copy_files_to_directory(directory=dst_dir, inputs=src_dir)
+        copied_file = dst_dir / src_dir.name / src_file.name
+        assert copied_file.exists(), "Temp folder should have been copied"
+
+        # Test function works with None
+        io_utils.copy_files_to_directory(directory=tmp_path, inputs=None)
 
         # 'tmp_path' is a default pytest fixture
 
