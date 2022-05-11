@@ -12,9 +12,8 @@ from .metadata import command as metadata
 from .slim_metadata import command as slim_metadata
 from .status import command as status
 from .submit import command as submit
-from .update_server import command as update_server
 from .timing import command as timing
-
+from .update_server import command as update_server
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
