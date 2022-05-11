@@ -277,7 +277,7 @@ class TextStatusesColor:
 
 def get_color_for_status_key(status):
     """Helper method for getting the correct font color for a given execution status for a job (or none for
-    unrecognized statuses) """
+    unrecognized statuses)"""
     if "Done" in status:
         task_status_font = TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif "Running" in status:
