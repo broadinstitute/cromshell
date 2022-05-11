@@ -1,11 +1,12 @@
 import logging
+import os
 
 import click
 import gcsfs
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import io_utils
+from cromshell.utilities.io_utils import get_color_for_status_key
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ def main(
         ],
         status_params=status_param,
         dont_expand_subworkflows=dont_expand_subworkflows,
-        cat_logs=print_logs,
+        print_logs=print_logs,
     )
 
     return 0
@@ -80,7 +81,7 @@ def main(
 def obtain_and_print_logs(
     config,
     metadata_param: list,
-    cat_logs: bool,
+    print_logs: bool,
     status_params: list,
     dont_expand_subworkflows: bool,
 ):
@@ -107,7 +108,7 @@ def obtain_and_print_logs(
         indent="",
         expand_sub_workflows=not dont_expand_subworkflows,
         status_keys=status_params,
-        cat_logs=cat_logs,
+        cat_logs=print_logs,
     )
 
     if not found_logs:
@@ -180,7 +181,7 @@ def print_task_logs(
     """
     Prints the backend logs from the workflow
     :param task: Name of the task
-    :param indent: Indent string given as "\t", used to indent print out
+    :param indent: Indent string given as a stirng of "\t", used to indent print out
     :param workflow_metadata: Metadata of the workflow to process
     :param cat_logs: Will use GCS to attempt to print the logs
     :return: true if any logs were printed
@@ -196,16 +197,7 @@ def print_task_logs(
 
         status = shard_list[i]["executionStatus"]
         if "ALL" in status_keys or status in status_keys:
-            if "Done" in status:
-                task_status_font = io_utils.TextStatusesColor.TASK_COLOR_SUCCEEDED
-            elif "Running" in status:
-                task_status_font = io_utils.TextStatusesColor.TASK_COLOR_RUNNING
-            elif "RetryableFailure" in status:
-                task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILING
-            elif "Failed":
-                task_status_font = io_utils.TextStatusesColor.TASK_COLOR_FAILED
-            else:
-                task_status_font = None
+            task_status_font = get_color_for_status_key(status)
 
             shardstring = (
                 "" if not sharded else "-shard-" + str(shard_list[i]["shardIndex"])
@@ -214,7 +206,7 @@ def print_task_logs(
             if cat_logs:
                 print(
                     colored(
-                        f"\n\n\n{'='*90}\n{indent}{task}{shardstring}:\t{status}\t {logs}\n{'='*90}",
+                        f"\n\n\n{'=' * os.get_terminal_size().columns }\n{indent}{task}{shardstring}:\t{status}\t {logs}\n{'=' * os.get_terminal_size().columns }",
                         color=task_status_font,
                     )
                 )
@@ -234,33 +226,6 @@ def print_task_logs(
                 )
             did_print = True
     return did_print
-
-
-def resolve_and_return_metadata_keys(
-    cli_key: list,
-    cromshell_config_options: dict,
-    config_slim_metadata_default_param: list,
-) -> list:
-    """Determines which metadata keys to use from cli, config file, and default
-    parameters, then returns a string of the processed keys ready to be used
-    in an api call. Also returns true if default parameter is being used else false."""
-
-    # If keys is specified in cli then use this first
-    if cli_key:
-        LOGGER.info("Using metadata key(s) from command line options.")
-        return cli_key
-
-    # If metadata_keys is specified in cromshell config file then use it for keys
-    elif "slim_metadata_keys" in cromshell_config_options:
-        LOGGER.info("Setting metadata key(s) from value in config file.")
-        # TODO: Turn to magic string in the config script once rebased with PR 156
-        return cromshell_config_options["slim_metadata_keys"]
-
-    # Return the default keys from config module constant
-    else:
-        LOGGER.info("No custom metadata keys were found in cli or config file.")
-        # The default metadata key needs to
-        return config_slim_metadata_default_param
 
 
 if __name__ == "__main__":

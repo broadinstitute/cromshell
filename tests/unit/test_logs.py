@@ -35,7 +35,6 @@ class TestLogs:
             cat_logs=False,
         )
 
-        # We should have found a failing output to print
         assert logs_output == expect_logs
 
     @pytest.fixture

@@ -273,3 +273,19 @@ class TextStatusesColor:
     TASK_COLOR_SUCCEEDED = "green"
     TASK_COLOR_FAILING = "yellow"
     TASK_COLOR_FAILED = "red"
+
+
+def get_color_for_status_key(status):
+    """Helper method for getting the correct font color for a given execution status for a job (or none for
+    unrecognized statuses) """
+    if "Done" in status:
+        task_status_font = TextStatusesColor.TASK_COLOR_SUCCEEDED
+    elif "Running" in status:
+        task_status_font = TextStatusesColor.TASK_COLOR_RUNNING
+    elif "RetryableFailure" in status:
+        task_status_font = TextStatusesColor.TASK_COLOR_FAILING
+    elif "Failed":
+        task_status_font = TextStatusesColor.TASK_COLOR_FAILED
+    else:
+        task_status_font = None
+    return task_status_font
