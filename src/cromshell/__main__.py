@@ -135,6 +135,5 @@ main_entry.add_command(update_server.main)
 main_entry.add_command(timing.main)
 
 
-
 if __name__ == "__main__":
     main_entry()  # pylint: disable=E1120
