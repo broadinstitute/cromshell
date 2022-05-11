@@ -34,10 +34,8 @@ Current version: 2.0.0
   
    ####  Start/Stop workflows
    * `submit` `[-w]` *`<wdl>`* *`<inputs_json>`* `[options_json]` `[included_wdl_zip_file]`
+     * Will automatically validate the WDL and JSON file.
      * Submit a new workflow.
-     * Will automatically validate the WDL and JSON file if `womtool` is in your path.
-       * To add `womtool` to your path, install `cromwell` with brew:
-         * `brew install cromwell`
      * *`-w`*                     Wait for workflow to transition from 'Submitted' to some other status
                                   before ${SCRIPTNAME} exits
      * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
@@ -95,7 +93,7 @@ Current version: 2.0.0
  * It keeps track of your most recently submitted jobs by storing their ids in `./cromshell/`  
  You may omit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs, e.g. "-1" will track the last job, "-2" will track the one before that, and so on.
  * You can override the default cromwell server by setting the argument `--cromwell_url` to the appropriate URL.
- * You can override the default cromshell configuration folder by setting the environmental variable `CROMSHELL_DIR` to the appropriate directory.
+ * You can override the default cromshell configuration folder by setting the environmental variable `CROMSHELL_CONFIG` to the appropriate directory.
  * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromshell status -- -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
  * Assign aliases to workflow ids using the alias command (i.e. `./cromshell alias -- -1 myAliasName`).
  * Once the Alias command is used to attach an alias to a workflow id, the alias name can be used instead of the id (i.e. `./cromshell status myAliasName`).
@@ -119,7 +117,7 @@ From source
 ## Uninstallation
 From brew
 
-    brew uninstall cromshell-alpha
+    brew uninstall cromshell@2.0.0.alpha.1
 
 From source
 

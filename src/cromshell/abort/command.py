@@ -30,7 +30,8 @@ def main(config, workflow_ids):
         http_utils.assert_can_communicate_with_server(config)
 
         requests_out = requests.post(
-            f"{config.cromwell_server}{config.API_STRING}/{wdl_id}/abort"
+            f"{config.cromwell_server}{config.CROMWELL_API_STRING}/{wdl_id}/abort",
+            headers=http_utils.generate_headers(config),
         )
 
         if requests_out.ok:

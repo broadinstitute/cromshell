@@ -23,7 +23,8 @@ SLIM_METADATA_DEFAULT_KEYS = [
     "subWorkflowMetadata",
     "subWorkflowId",
 ]
-API_STRING = "/api/workflows/v1"
+CROMWELL_API_STRING = "/api/workflows/v1"
+WOMTOOL_API_STRING = "/api/womtool/v1"
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined
@@ -35,6 +36,8 @@ cromshell_config_options = None
 cromwell_server = None
 # Request defaults
 requests_connect_timeout = 5
+referer_header_url = None
+gcloud_token_email = None
 requests_verify_certs = True
 
 CROMSHELL_CONFIG_OPTIONS_TEMPLATE = {
@@ -101,6 +104,7 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
             "Checking submission file for associated cromwell server with the provided "
             "workflow id."
         )
+
         with open(submission_file_path, "r") as csv_file:
             reader = csv.DictReader(csv_file, delimiter="\t")
             id_in_file = False
@@ -205,8 +209,13 @@ def __get_cromwell_server(config_options: dict):
 
 
 def get_cromwell_api():
-    """Return a string combining the cromwell server and api string"""
-    return f"{cromwell_server}{API_STRING}"
+    """Return a string combining the cromwell server and the cromwell api string"""
+    return f"{cromwell_server}{CROMWELL_API_STRING}"
+
+
+def get_womtool_api():
+    """Return a string combining the cromwell server and the womtool api string"""
+    return f"{cromwell_server}{WOMTOOL_API_STRING}"
 
 
 def get_local_folder_name():
@@ -243,6 +252,40 @@ def resolve_requests_connect_timeout(timeout_cli: int):
     else:
         LOGGER.info("Using requests default timeout duration.")
         LOGGER.info("Request Timeout value: %d sec", requests_connect_timeout)
+
+
+def resolve_referer_header_url(url: str):
+
+    global referer_header_url
+
+    if url:
+        LOGGER.info(f"Will send referer header {url} from command line options.")
+        referer_header_url = url
+    elif "referer_header_url" in cromshell_config_options:
+        config_url = cromshell_config_options["referer_header_url"]
+        LOGGER.info(f"Will send referer header {config_url} from config.")
+        referer_header_url = config_url
+    else:
+        LOGGER.info("No referer header URL set.")
+
+
+def resolve_gcloud_token_email(email: str):
+
+    global gcloud_token_email
+
+    if email:
+        LOGGER.info(
+            f"Will send auth header with token for {email} from command line options."
+        )
+        gcloud_token_email = email
+    elif "gcloud_token_email" in cromshell_config_options:
+        config_gcloud_token_email = cromshell_config_options["gcloud_token_email"]
+        LOGGER.info(
+            f"Will send auth header with token for {config_gcloud_token_email} from config."
+        )
+        gcloud_token_email = config_gcloud_token_email
+    else:
+        LOGGER.info("Not sending auth header.")
 
 
 # Get and Set Cromshell Configuration Default Values

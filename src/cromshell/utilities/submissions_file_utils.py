@@ -1,4 +1,11 @@
+import logging
+import shutil
+from datetime import date
 from enum import Enum
+from pathlib import Path
+from typing import Union
+
+LOGGER = logging.getLogger(__name__)
 
 
 class WorkflowDatabaseColumns(Enum):
@@ -36,3 +43,33 @@ class MutableSubmissionFileHeader(WorkflowDatabaseColumns):
     @classmethod
     def _get_database_columns(cls):
         return [key.value for key in cls]
+
+
+def update_submission_db(submission_file_path: Union[str, Path]) -> bool:
+    """Read the first line of the submission database. If not tab-delimited (old format)
+    then update the database so it is tab-delimited."""
+
+    old_format = False
+
+    with open(submission_file_path, "r") as f:
+        first_line = f.readline()
+        if "\t" not in first_line:
+            old_format = True
+
+    if old_format:
+        LOGGER.info(f"Detected an old database format at {submission_file_path}")
+        backup_filename = (
+            submission_file_path + "." + str(date.today()).replace("-", "") + ".bak"
+        )
+        shutil.copy(src=submission_file_path, dst=backup_filename)
+        LOGGER.info(f"Backed up old database at {backup_filename}")
+        with open(submission_file_path, "r") as f:
+            entire_file = f.read()
+        with open(submission_file_path + ".tmp", "w") as f:
+            f.write(entire_file.replace(" ", "\t"))
+        shutil.move(src=submission_file_path + ".tmp", dst=submission_file_path)
+        LOGGER.info(
+            f"Updated database at {submission_file_path} to tab-delimited format"
+        )
+
+    return old_format  # for tests

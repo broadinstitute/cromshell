@@ -2,13 +2,12 @@ import contextlib
 import csv
 import json
 import logging
-import shutil
-import subprocess
 from datetime import datetime
 from pathlib import Path, PurePath
 
 import click
 import requests
+from requests import Response
 
 from cromshell import log
 from cromshell.utilities import cromshellconfig, http_utils, io_utils
@@ -46,19 +45,29 @@ class WorkflowStatusError(Exception):
     "--dependencies-zip",
     type=click.Path(exists=True),
     required=False,
-    help="ZIP file containing workflow source files that are "
+    help="ZIP file or directory containing workflow source files that are "
     "used to resolve local imports. This zip bundle will be "
     "unpacked in a sandbox accessible to this workflow.",
 )
+@click.option(
+    "-n",
+    "--no-validation",
+    is_flag=True,
+    default=False,
+    help="Do not check womtool for validation before submitting.",
+)
 @click.pass_obj
-def main(config, wdl, wdl_json, options_json, dependencies_zip):
+def main(config, wdl, wdl_json, options_json, dependencies_zip, no_validation):
     """Submit a workflow and arguments to the Cromwell Server"""
 
     LOGGER.info("submit")
 
-    validate_input(wdl, wdl_json, options_json, dependencies_zip)
-
     http_utils.assert_can_communicate_with_server(config)
+
+    if no_validation:
+        LOGGER.info("Skipping WDL validation")
+    else:
+        validate_input(wdl, wdl_json, options_json, dependencies_zip, config)
 
     LOGGER.info("Submitting job to server: %s", cromshellconfig.cromwell_server)
     request_out = submit_workflow_to_server(
@@ -124,48 +133,72 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip):
     return 0
 
 
-def validate_input(wdl: str, wdl_json: str, options_json: str, dependencies_zip: str):
+def validate_input(
+    wdl: str,
+    wdl_json: str,
+    options_json: str,
+    dependencies_zip: str,
+    config: cromshellconfig,
+) -> None:
     """Asserts files are not empty and if womtool is
     in path validates WDL and WDL input JSON"""
 
-    io_utils.assert_file_is_not_empty(wdl, "WDL")
-    io_utils.assert_file_is_not_empty(wdl_json, "Input JSON")
+    io_utils.assert_path_is_not_empty(wdl, "WDL")
+    io_utils.assert_path_is_not_empty(wdl_json, "Input JSON")
     if options_json is not None:
-        io_utils.assert_file_is_not_empty(options_json, "Options json")
+        io_utils.assert_path_is_not_empty(options_json, "Options json")
     if dependencies_zip is not None:
-        io_utils.assert_file_is_not_empty(dependencies_zip, "Dependencies Zip")
+        io_utils.assert_path_is_not_empty(dependencies_zip, "Dependencies Zip")
 
-    # At this point, we should validate our inputs if womtool is in PATH:
-    womtool_validate_wdl_and_json(wdl, wdl_json)
+    if dependencies_zip is None:
+        womtool_validate_wdl_and_json(wdl, wdl_json, config)
+    else:
+        # See: https://github.com/broadinstitute/cromshell/issues/139
+        LOGGER.info("Skipping validation of WDL plus a dependencies zip")
 
 
-def womtool_validate_wdl_and_json(wdl: str, wdl_json: str):
-    """If womtool is found in PATH, validates wdl and json"""
+def womtool_validate_wdl_and_json(
+    wdl: str, wdl_json: str, config: cromshellconfig
+) -> None:
+    """Validates WDL and input JSON using the Cromwell server's Womtool REST API"""
 
-    if shutil.which("womtool") is not None:
+    LOGGER.info("Validating WDL with with server: %s", config.cromwell_server)
+    request_out = womtool_validate_to_server(wdl, wdl_json, config)
 
-        try:
-            validation_output = subprocess.run(
-                ["womtool", "validate", wdl, "-i", wdl_json],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=True,
-            )
-            if validation_output.returncode == 0:
-                LOGGER.info("WDL and JSON are valid.")
-        except subprocess.CalledProcessError as validation_output_error:
-            error_source = "Womtool"
-            error_source_message = validation_output_error.stderr.decode("utf-8")
-            short_error_message = "WDL and JSON files do not validate"
+    http_utils.check_http_request_status_code(
+        short_error_message="Failed to Validate Workflow", response=request_out
+    )
 
-            LOGGER.error("Error: %s", short_error_message)
-            LOGGER.error("%s Message: %s", error_source, error_source_message)
-            raise ValidationError(
-                f"Error: {short_error_message}\n"
-                f"{error_source} Message: {error_source_message}"
-            )
+    validate_status = json.loads(request_out.content)
 
-    return 0
+    if not validate_status["valid"]:
+        log.display_logo(dead_turtle)
+
+        LOGGER.error("Error: Server reports workflow was not valid.")
+        raise ValidationError(
+            "Error: Server reports workflow was not valid.\n"
+            + ("\n".join(validate_status["errors"]))
+        )
+
+
+def womtool_validate_to_server(
+    wdl: str, wdl_json: str, config: cromshellconfig
+) -> Response:
+    with open(wdl, "rb") as wdl_file, open(wdl_json, "rb") as wdl_json_file:
+        submission_params = {
+            "workflowSource": wdl_file,
+            "workflowInputs": wdl_json_file,
+        }
+
+        requests_out = requests.post(
+            f"{config.get_womtool_api()}/describe",
+            files=submission_params,
+            timeout=config.requests_connect_timeout,
+            verify=config.requests_verify_certs,
+            headers=http_utils.generate_headers(config),
+        )
+
+        return requests_out
 
 
 def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, config):
@@ -178,9 +211,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
     # handler, which avoids errors if optional files are NONE.
     with open(wdl, "rb") as wdl_file, open(wdl_json, "rb") as wdl_json_file, (
         open(options_json, "rb") if options_json is not None else none_context
-    ) as options_file, (
-        open(dependencies_zip, "rb") if dependencies_zip is not None else none_context
-    ) as dependencies_file:
+    ) as options_file, (io_utils.open_or_zip(dependencies_zip)) as dependencies_file:
 
         submission_params = {
             "workflowSource": wdl_file,
@@ -196,6 +227,7 @@ def submit_workflow_to_server(wdl, wdl_json, options_json, dependencies_zip, con
             files=submission_params,
             timeout=config.requests_connect_timeout,
             verify=config.requests_verify_certs,
+            headers=http_utils.generate_headers(config),
         )
 
         return requests_out
