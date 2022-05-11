@@ -181,7 +181,7 @@ def print_task_logs(
     """
     Prints the backend logs from the workflow
     :param task: Name of the task
-    :param indent: Indent string given as a stirng of "\t", used to indent print out
+    :param indent: Indent string given as a string of "\t" characters, used to indent print out
     :param workflow_metadata: Metadata of the workflow to process
     :param cat_logs: Will use GCS to attempt to print the logs
     :return: true if any logs were printed
