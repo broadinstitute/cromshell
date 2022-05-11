@@ -197,7 +197,7 @@ def __load_cromshell_config_file(
 
 
 def __get_cromwell_server(config_options: dict):
-    """Get Cromshell Server URL from configuration options"""
+    """Get Cromwell Server URL from configuration options"""
 
     if not config_options["cromwell_server"]:
         raise FileNotFoundError('Cromshell config file is missing "cromwell_server"')
