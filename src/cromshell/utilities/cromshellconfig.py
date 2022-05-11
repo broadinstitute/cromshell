@@ -104,6 +104,7 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
             "Checking submission file for associated cromwell server with the provided "
             "workflow id."
         )
+
         with open(submission_file_path, "r") as csv_file:
             reader = csv.DictReader(csv_file, delimiter="\t")
             id_in_file = False
