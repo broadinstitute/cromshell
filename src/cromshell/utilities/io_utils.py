@@ -256,3 +256,36 @@ def update_all_workflow_database_tsv(
                 print("\t".join(x for x in row.values() if x))  # writes row with update
             else:
                 print("\t".join(x for x in row.values() if x))  # rewrites row
+
+
+class TextStatusesColor:
+    """Enum to hold all possible status of workflow"""
+
+    COLOR_NORM = {"color": None, "attrs": None}
+    COLOR_UNDERLINED = {"color": None, "attrs": ["underline"]}
+    COLOR_FAILED = "\033[1;37;41m"
+    COLOR_DOOMED = "\033[1;31;47m"
+    COLOR_SUCCEEDED = "\033[1;30;42m"
+    COLOR_RUNNING = "\033[0;30;46m"
+    COLOR_ABORTED = "\033[0;30;43m"
+
+    TASK_COLOR_RUNNING = "blue"
+    TASK_COLOR_SUCCEEDED = "green"
+    TASK_COLOR_FAILING = "yellow"
+    TASK_COLOR_FAILED = "red"
+
+
+def get_color_for_status_key(status):
+    """Helper method for getting the correct font color for a given execution status for a job (or none for
+    unrecognized statuses)"""
+    if "Done" in status:
+        task_status_font = TextStatusesColor.TASK_COLOR_SUCCEEDED
+    elif "Running" in status:
+        task_status_font = TextStatusesColor.TASK_COLOR_RUNNING
+    elif "RetryableFailure" in status:
+        task_status_font = TextStatusesColor.TASK_COLOR_FAILING
+    elif "Failed":
+        task_status_font = TextStatusesColor.TASK_COLOR_FAILED
+    else:
+        task_status_font = None
+    return task_status_font
