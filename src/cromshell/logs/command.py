@@ -7,6 +7,7 @@ from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
 from cromshell.utilities.io_utils import get_color_for_status_key
+from cromshell.utilities import http_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -100,6 +101,7 @@ def obtain_and_print_logs(
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
+        headers=http_utils.generate_headers(config),
     )
 
     # Parse the metadata for logs and print them to the output
