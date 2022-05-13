@@ -42,38 +42,35 @@ def main(config, workflow_ids, json_summary, compress_subworkflows):
     LOGGER.info("counts")
 
     for workflow_id in workflow_ids:
-        # resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
-        #     cromshell_input=workflow_id,
-        #     submission_file_path=config.submission_file_path,
-        # )
-        #
-        # http_utils.set_and_check_cromwell_server(
-        #     config=config, workflow_id=resolved_workflow_id
-        # )
-        #
-        # # Get metadata
-        # formatted_metadata_parameter = metadata_command.format_metadata_params(
-        #     list_of_keys=config.METADATA_KEYS_TO_OMIT,
-        #     exclude_keys=True,
-        #     expand_subworkflows=not compress_subworkflows,
-        # )
-        #
-        # workflow_metadata = metadata_command.get_workflow_metadata(
-        #     meta_params=formatted_metadata_parameter,
-        #     api_workflow_id=config.cromwell_api_workflow_id,
-        #     timeout=config.requests_connect_timeout,
-        #     verify_certs=config.requests_verify_certs,
-        # )
+        resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
+            cromshell_input=workflow_id,
+            submission_file_path=config.submission_file_path,
+        )
 
-        import json
-        with open("/Users/bshifaw/Downloads/metadata-big.json", "r") as ff:
-            workflow_metadata = json.load(ff)
+        http_utils.set_and_check_cromwell_server(
+            config=config, workflow_id=resolved_workflow_id
+        )
+
+        # Get metadata
+        formatted_metadata_parameter = metadata_command.format_metadata_params(
+            list_of_keys=config.METADATA_KEYS_TO_OMIT,
+            exclude_keys=True,
+            expand_subworkflows=not compress_subworkflows,
+        )
+
+        workflow_metadata = metadata_command.get_workflow_metadata(
+            meta_params=formatted_metadata_parameter,
+            api_workflow_id=config.cromwell_api_workflow_id,
+            timeout=config.requests_connect_timeout,
+            verify_certs=config.requests_verify_certs,
+            headers=http_utils.generate_headers(config),
+        )
 
         if json_summary:
             print_task_status_summary(workflow_metadata=workflow_metadata)
         else:
             pretty_status_counts(
-                workflow_id=workflow_id, #resolved_workflow_id,
+                workflow_id=resolved_workflow_id,
                 workflow_metadata=workflow_metadata,
                 expand_subworkflows=not compress_subworkflows,
             )
@@ -142,7 +139,9 @@ def print_workflow_status(
 
         # If no subworkflow is found then print status summary for task
         else:
-            print_call_status(call=call, indent=indent, workflow_calls_metadata=calls_metadata)
+            print_call_status(
+                call=call, indent=indent, workflow_calls_metadata=calls_metadata
+            )
 
 
 def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> None:
@@ -164,11 +163,10 @@ def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> 
     shards_failed = shard_status_count.get(TaskStatuses.Failed.value, 0)
     shards_retried = shard_status_count.get(TaskStatuses.RetryableFailure.value, 0)
     shards_unknown, unknown_shard_status = get_unknown_status(
-        shard_status_count=shard_status_count,
-        known_statuses=TaskStatuses.list()
+        shard_status_count=shard_status_count, known_statuses=TaskStatuses.list()
     )
 
-    # Determine what color to print task summary #Todo: Put this into a function
+    # Determine what color to print task summary
     if shards_failed == 0 and shards_running == 0:
         task_status_font = io_utils.TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif shards_failed > 0 and shards_running > 0:  # Running but will fail
@@ -194,7 +192,7 @@ def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> 
             f"{unknown_shard_status}, an unknown task status is a status that does "
             f"not match the following known task statuses:  {TaskStatuses.list()} . "
             "Please report all relevant info to Cromshell git repository so we can "
-            "improve our code. "
+            "improve our code. ",
         )
 
     print(colored(formatted_task_summary, color=task_status_font))

@@ -6,8 +6,8 @@ import gcsfs
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities.io_utils import get_color_for_status_key
 from cromshell.utilities import http_utils
+from cromshell.utilities.io_utils import get_color_for_status_key
 
 LOGGER = logging.getLogger(__name__)
 

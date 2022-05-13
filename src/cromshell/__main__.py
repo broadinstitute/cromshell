@@ -8,8 +8,8 @@ from cromshell.utilities.submissions_file_utils import update_submission_db
 
 from .abort import command as abort
 from .alias import command as alias
-from .logs import command as logs
 from .counts import command as counts
+from .logs import command as logs
 from .metadata import command as metadata
 from .slim_metadata import command as slim_metadata
 from .status import command as status

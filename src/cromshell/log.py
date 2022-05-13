@@ -94,7 +94,7 @@ class DelayedLogMessage:
 
         if log_type != "warning" and log_type != "info":
             LOGGER.error("Functions 'log_type' must either be 'warning' or 'info'")
-            raise ValueError(f"Functions 'log_type' must either be 'warning' or 'info'")
+            raise ValueError("Functions 'log_type' must either be 'warning' or 'info'")
 
         cls.messages.append([log_type, log_message])
 
