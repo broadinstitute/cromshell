@@ -10,6 +10,11 @@ import pytest
 
 
 @pytest.fixture
+def tests_metadata_path():
+    return Path(__file__).parents[1].joinpath("metadata/")
+
+
+@pytest.fixture
 def mock_data_path():
     return Path(__file__).parent.joinpath("mock_data/")
 
