@@ -1,4 +1,5 @@
-# Hello World! 
+# Hello World!
+# echos hello world and exits with 1 in the command block
 #
 # Description of inputs:
 #
@@ -72,7 +73,8 @@ task HelloWorldTask {
     # Run our command:
      command <<<
          set -e
-				 echo 'Hello World!'				 
+				 echo 'Hello World!'
+				 exit 1
      >>>
 
     # ------------------------------------------------
