@@ -1,4 +1,7 @@
 {
 	"read_from_cache": false,
-	"write_to_cache": false
+	"write_to_cache": false,
+	"use_reference_disks": true,
+	"monitoring_image": "us.gcr.io/broad-dsde-methods/cromwell-task-monitor-bq:latest",
+	"monitoring_script": "gs://broad-dsp-methods-resources/cromwell_monitoring_script.sh"
 }
