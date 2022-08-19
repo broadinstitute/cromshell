@@ -1633,7 +1633,7 @@ function cost-detailed()
 
   r=$?
 
-  local total_cost=$(awk '{print $2}' ${tmp_cost_file} | tr '\n' '+' | sed 's#$#0#' | bc)
+	local total_cost=$(awk '{print $2}' ${tmp_cost_file} | tr '\n' '~' | sed -e 's#$#0#' -e 's@~@ + @g' -e 's@^@print(@' -e 's@$@)@' | python)
   local total_cost=$(echo "scale=2;${total_cost}/1" | bc)
 
   local tmpf2=$(makeTemp)
