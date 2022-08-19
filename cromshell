@@ -1588,7 +1588,7 @@ function cost()
   local tmp_cost_file=$( makeTemp )
 
   # Get the cost from Big Query:
-  bq query --use_legacy_sql=false "SELECT sum(cost) FROM \`${COST_TABLE}\`, UNNEST(labels) WHERE value = \"cromwell-${id}\" AND _PARTITIONDATE BETWEEN \"${START_DATE}\" AND \"${END_DATE}\";" > ${tmp_cost_file}
+  bq query --use_legacy_sql=false "SELECT sum(cost) FROM \`${COST_TABLE}\`, UNNEST(labels) WHERE value = \"cromwell-${id}\" AND partition_time BETWEEN \"${START_DATE}\" AND \"${END_DATE}\";" > ${tmp_cost_file}
   r=$?
 
   # Display the cost:
@@ -1626,7 +1626,7 @@ function cost-detailed()
     AND task.key LIKE \"wdl-task-name\"
     AND wfid.key LIKE \"cromwell-workflow-id\"
     AND wfid.value like \"%${id}\"
-    AND _PARTITIONDATE BETWEEN \"${START_DATE}\" AND \"${END_DATE}\"
+    AND partition_time BETWEEN \"${START_DATE}\" AND \"${END_DATE}\"
     GROUP BY 1,2,3
     ORDER BY 4 DESC
     ;" | tail -n+4 | grep -v '^+' | tr -d '|' | awk 'BEGIN{OFS="\t"}{print $(NF-1), $NF}' | sort > ${tmp_cost_file}
