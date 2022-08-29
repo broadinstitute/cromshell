@@ -7,7 +7,7 @@ from termcolor import colored
 from cromshell.log import DelayedLogMessage
 from cromshell.metadata import command as metadata_command
 from cromshell.utilities import http_utils, io_utils, workflow_id_utils
-from cromshell.utilities.cromshellconfig import TaskStatuses
+from cromshell.utilities.cromshellconfig import TaskStatus
 
 LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +83,8 @@ def pretty_status_counts(
     workflow_id: str, workflow_metadata: dict, expand_subworkflows: bool
 ) -> None:
     """
-    Prints the workflow summary and calls the task to print formatted workflow status
+    Prints the workflow status and runs the function to print
+    the workflow status summary.
 
     :param workflow_id: Hexadecimal identifier of workflow submission
     :param workflow_metadata: Metadata of the workflow to process
@@ -109,8 +110,8 @@ def print_workflow_status(
     workflow_metadata: dict, indent: str, expand_sub_workflows: bool
 ) -> None:
     """
-    Runs through each task of a workflow and calls a function to
-    print task status counts
+    Recursively parses a (sub-)workflow's metadata and prints out
+    the summary on its tasks statuses.
     :param workflow_metadata: Metadata of the workflow to process
     :param indent: Indent string given as "\t", used to indent print out
     :param expand_sub_workflows:  Boolean, whether or not to print subworkflows
@@ -119,10 +120,10 @@ def print_workflow_status(
     calls_metadata = workflow_metadata["calls"]
     calls = list(calls_metadata.keys())
 
-    for call in calls:  # For each task in given metadata
-        # If task has a key called 'subworkflowMetadata' in its first (zero) element
-        # (shard) and expand_sub_workflow parameter is set to true then rerun this
-        # function on that subworkflow
+    for call in calls:
+        # If task has a key called 'subworkflowMetadata' in its
+        # first (zero) element (shard) and expand_sub_workflow parameter
+        # is set to true then perform recursion.
         if "subWorkflowMetadata" in calls_metadata[call][0] and expand_sub_workflows:
             sub_workflow_name = call
             sub_calls = calls_metadata[sub_workflow_name]
@@ -154,16 +155,19 @@ def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> 
     :return:
     """
 
-    shards = workflow_calls_metadata[call]
+    # Scattered task calls and unscattered calls are treated similarly.
+    # Thus, `shards` list can either have one item (-1) representing an unscattered
+    # task call, or multiple items (0,1,...N) representing scattered task
+    shards: list = workflow_calls_metadata[call]
 
-    shard_status_count = get_shard_status_count(shards)
+    shard_status_count: dict = get_shard_status_count(shards)
 
-    shards_done = shard_status_count.get(TaskStatuses.Done.value, 0)
-    shards_running = shard_status_count.get(TaskStatuses.Running.value, 0)
-    shards_failed = shard_status_count.get(TaskStatuses.Failed.value, 0)
-    shards_retried = shard_status_count.get(TaskStatuses.RetryableFailure.value, 0)
+    shards_done = shard_status_count.get(TaskStatus.DONE.value, 0)
+    shards_running = shard_status_count.get(TaskStatus.RUNNING.value, 0)
+    shards_failed = shard_status_count.get(TaskStatus.FAILED.value, 0)
+    shards_retried = shard_status_count.get(TaskStatus.RETRYABLEFAILURE.value, 0)
     shards_unknown, unknown_shard_status = get_unknown_status(
-        shard_status_count=shard_status_count, known_statuses=TaskStatuses.list()
+        shard_status_count=shard_status_count, known_statuses=TaskStatus.list()
     )
 
     # Determine what color to print task summary
@@ -187,12 +191,12 @@ def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> 
     if shards_unknown > 0:
         formatted_task_summary += f", {shards_unknown} Unknown"
         DelayedLogMessage.save_log_message(
-            log_type="warning",
+            log_level=logging.WARNING,
             log_message="Cromshell found the following unknown task status(es) "
             f"{unknown_shard_status}, an unknown task status is a status that does "
-            f"not match the following known task statuses:  {TaskStatuses.list()} . "
+            f"not match the following known task statuses:  {TaskStatus.list()} . "
             "Please report all relevant info to Cromshell git repository so we can "
-            "improve our code. ",
+            "improve our code. Thank You.",
         )
 
     print(colored(formatted_task_summary, color=task_status_font))
@@ -244,7 +248,7 @@ def get_shard_status_count(shards: list) -> dict:
 
 def get_list_of_failed_shards(shards: list) -> list:
     """
-    Get a list of the failed shards
+    Get a list of the failed shards' indexes
     :param shards: The metadata for all shards in a scatter or shard of a single task
     :return:
     """
@@ -273,7 +277,8 @@ def group_shards_by_status(shards: list) -> dict:
 
 def get_unknown_status(shard_status_count: dict, known_statuses: list) -> (int, str):
     """
-    Gets the total unknown shards count the and list of unknown status names
+    Returns the name and the total shard count for statuses that do not match the normal
+    known statuses (Done, Failed, Running, etc.)
     :param shard_status_count: Dictionary having key=status and value=status_count
     :param known_statuses: List of statuses
     :return: Total number of unknown shard counts and list of unknown status names
@@ -282,7 +287,7 @@ def get_unknown_status(shard_status_count: dict, known_statuses: list) -> (int, 
     unknown_shard_status = []
     for status in shard_status_count.keys():
         if status not in known_statuses:
-            shards_unknown = shards_unknown + shard_status_count[status]
+            shards_unknown += shard_status_count[status]
             unknown_shard_status.append(status)
 
     return shards_unknown, unknown_shard_status

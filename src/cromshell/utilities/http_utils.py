@@ -91,9 +91,14 @@ def generate_headers(config):
     return headers
 
 
-def set_and_check_cromwell_server(config, workflow_id):
-    """Checks for an associated cromwell server for the workflow_id
-    and checks connection with the cromwell server"""
+def set_and_check_cromwell_server(config, workflow_id: str) -> None:
+    """
+    Checks for an associated cromwell server for the workflow_id
+    and checks connection with the cromwell server
+    :param config: cromshell configuration object
+    :param workflow_id: Hexadecimal identifier of workflow submission
+    :return: NA
+    """
 
     # Overrides the default cromwell url set in the cromshell config file or
     # command line argument if the workflow id is found in the submission file.

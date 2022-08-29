@@ -52,7 +52,7 @@ Current version: 2.0.0
      * Get the full metadata of a workflow.
    * `slim-metadata` *`[workflow-id] [[workflow-id]...]`*           
      * Get a subset of the metadata from a workflow.
-   * `counts` *`[-p] [-x] [workflow-id] [[workflow-id]...]`*   
+   * `counts` *`[-j] [-x] [workflow-id] [[workflow-id]...]`*   
      * Get the summarized status of all jobs in the workflow.
      * `-j` prints a JSON instead of a pretty summary of the execution status
      * `-x` compress sub-workflows for less detailed summarization

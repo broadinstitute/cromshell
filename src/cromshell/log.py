@@ -81,22 +81,35 @@ def get_package_paths(paths):
 
 
 class DelayedLogMessage:
+    """
+    Used to display log messages at a later time.
+    This class will save log messages over the course of a command, to be printed
+    later. This is useful if messages printed to the screen causes distraction to
+    the cromshell commands' normal printout. Saving and printing the log messages offers
+    a cleaner look.
+
+    """
     messages = []
 
     @classmethod
-    def save_log_message(cls, log_type: str, log_message: str) -> None:
+    def save_log_message(cls, log_level: int, log_message: str) -> None:
         """
         Saves log messages and type
-        :param log_type: Expecting either 'info' or 'warning'
+        :param log_level: Expects less than 40.
+        Representing debug(10), 'info'(20), or 'warning'(30)
         :param log_message: Log message
         :return:
         """
 
-        if log_type != "warning" and log_type != "info":
-            LOGGER.error("Functions 'log_type' must either be 'warning' or 'info'")
-            raise ValueError("Functions 'log_type' must either be 'warning' or 'info'")
+        if log_level > 40:
+            LOGGER.error(
+                "Functions 'log_type' must either be 'warning', 'info' or 'debug'."
+            )
+            raise ValueError(
+                "Functions 'log_type' must either be 'warning', 'info', or 'debug.'"
+            )
 
-        cls.messages.append([log_type, log_message])
+        cls.messages.append([log_level, log_message])
 
     @classmethod
     def display_log_messages(cls) -> None:

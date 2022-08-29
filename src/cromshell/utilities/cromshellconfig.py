@@ -65,20 +65,20 @@ def override_requests_cert_parameters(skip_certs: bool):
 class WorkflowStatuses(Enum):
     """Enum to hold all possible status of workflow"""
 
-    Failed = ["Failed", "fail"]
-    Aborted = ["Aborted", "abort"]
-    Running = ["Running"]
-    Succeeded = ["Succeeded"]
+    FAILED = ["Failed", "fail"]
+    ABORTED = ["Aborted", "abort"]
+    RUNNING = ["Running"]
+    SUCCEEDED = ["Succeeded"]
     DOOMED = ["DOOMED"]
 
 
-class TaskStatuses(Enum):
+class TaskStatus(Enum):
     """Enum to hold all possible status of workflow"""
 
-    Failed = "Failed"
-    Running = "Running"
-    Done = "Done"
-    RetryableFailure = "RetryableFailure"
+    FAILED = "Failed"
+    RUNNING = "Running"
+    DONE = "Done"
+    RETRYABLEFAILURE = "RetryableFailure"
 
     @classmethod
     def list(cls):

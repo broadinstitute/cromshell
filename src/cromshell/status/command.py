@@ -49,8 +49,8 @@ def main(config, workflow_id):
     # Set return value based on workflow status
     if (
         workflow_status
-        in cromshellconfig.WorkflowStatuses.Failed.value
-        + cromshellconfig.WorkflowStatuses.Aborted.value
+        in cromshellconfig.WorkflowStatuses.FAILED.value
+        + cromshellconfig.WorkflowStatuses.ABORTED.value
     ):
         ret_val = 1
         log.display_logo(io_utils.dead_turtle)
@@ -115,7 +115,7 @@ def workflow_failed(metadata: dict):
 
     # If the given dictionary contains a 'status' key and has value of "Failed"
     # then exit the function returning "True" to indicate workflow has failed
-    if metadata.get("status") == cromshellconfig.WorkflowStatuses.Failed.value[0]:
+    if metadata.get("status") == cromshellconfig.WorkflowStatuses.FAILED.value[0]:
         return True
 
     # If the dictionary does not contain a failed value for its status key or
@@ -152,7 +152,7 @@ def workflow_failed(metadata: dict):
                 else:
                     if (
                         shard["executionStatus"]
-                        == cromshellconfig.WorkflowStatuses.Failed.value[0]
+                        == cromshellconfig.WorkflowStatuses.FAILED.value[0]
                     ):
                         return True
     return False
