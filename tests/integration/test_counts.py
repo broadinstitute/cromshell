@@ -8,7 +8,7 @@ from tests.integration import test_submit, utility_test_functions
 workflows_path = Path(__file__).parents[1].joinpath("workflows/")
 
 
-def check_status(test_workflow_id: str):
+def wait_for_workflow_completion(test_workflow_id: str):
     import time
 
     count = 0
@@ -16,13 +16,13 @@ def check_status(test_workflow_id: str):
     print("Printing workflow status:")
     while count < 10:
         time.sleep(5)
-        count = 1 + count
-        # run status 1 time a minute unitl done, max 5x
+        count += 1
+        # run status check every 5 sec until done, max 10x
         status_result = utility_test_functions.run_cromshell_command(
             command=["status", test_workflow_id],
             exit_code=0,
         )
-
+        print(status_result.stdout)
         status_result_formatted = json.loads(status_result.stdout)
         status = status_result_formatted["status"]
         print(status)
@@ -89,8 +89,7 @@ class TestCounts:
             exit_code=0,
         )
 
-        # wait till workflow completes
-        check_status(test_workflow_id=test_workflow_id)
+        wait_for_workflow_completion(test_workflow_id=test_workflow_id)
 
         # run counts
         status_result = utility_test_functions.run_cromshell_command(

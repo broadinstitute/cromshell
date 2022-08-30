@@ -14,7 +14,7 @@ class TestCounts:
         [
             [
                 "failed_helloworld_metadata.json",
-                "counts/test_workflow_status_failed_helloword_metadata.json",
+                "counts/test_workflow_status_failed_helloword_metadata.txt",
             ],
             [
                 "succeeded_workflow_slim_metadata.json",
@@ -178,6 +178,17 @@ class TestCounts:
         )
 
     @pytest.mark.parametrize(
+        "test_shards",
+        [
+            # test_shard 1: having one failed shard
+            [{"executionStatus": "Done", "shardIndex": -1}],
+        ],
+    )
+    def test_get_list_of_failed_shards_with_no_failed_shards(self, test_shards):
+        with pytest.raises(KeyError):
+            counts_command.get_list_of_failed_shards(shards=test_shards)
+
+    @pytest.mark.parametrize(
         "test_shards, grouped_shards",
         [
             [
@@ -192,7 +203,7 @@ class TestCounts:
                     {"executionStatus": "Done", "shardIndex": 0},
                     {"executionStatus": "Failed", "shardIndex": 1},
                     {"executionStatus": "Done", "shardIndex": 2},
-                    {"executionStatus": "Failed", "shardIndex": 1},
+                    {"executionStatus": "Failed", "shardIndex": 3},
                 ],
                 # grouped_shard 2
                 {
@@ -202,7 +213,7 @@ class TestCounts:
                     ],
                     "Failed": [
                         {"executionStatus": "Failed", "shardIndex": 1},
-                        {"executionStatus": "Failed", "shardIndex": 1},
+                        {"executionStatus": "Failed", "shardIndex": 3},
                     ],
                 },
             ],

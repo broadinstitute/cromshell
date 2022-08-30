@@ -89,6 +89,7 @@ class DelayedLogMessage:
     a cleaner look.
 
     """
+
     messages = []
 
     @classmethod

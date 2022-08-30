@@ -1,18 +1,18 @@
-# Hello World! 
-#
-# Description of inputs:
-#
-#   Required:
-#     String docker                -  Docker image in which to run
-#
-#   Optional:
-#     Int  mem                     -  Amount of memory to give to the machine running each task in this workflow.
-#     Int  preemptible_attempts    -  Number of times to allow each task in this workflow to be preempted.
-#     Int  disk_space_gb           -  Amount of storage disk space (in Gb) to give to each machine running each task in this workflow.
-#     Int  cpu                     -  Number of CPU cores to give to each machine running each task in this workflow.
-#     Int  boot_disk_size_gb       -  Amount of boot disk space (in Gb) to give to each machine running each task in this workflow.
-#
 workflow HelloWorld {
+    meta {
+        workflow_description: "echos hello world"
+    }
+    parameter_meta {
+        # Description of inputs:
+        #   Required:
+        docker: "Docker image in which to run"
+        #   Optional:
+        mem: "Amount of memory to give to the machine running each task in this workflow."
+        preemptible_attempts: "Number of times to allow each task in this workflow to be preempted."
+        disk_space_gb: "Amount of storage disk space (in Gb) to give to each machine running each task in this workflow."
+        cpu: "Number of CPU cores to give to each machine running each task in this workflow."
+        boot_disk_size_gb: "Amount of boot disk space (in Gb) to give to each machine running each task in this workflow."
+    }
     String docker
 
     Int? mem
