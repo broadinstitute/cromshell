@@ -10,8 +10,4 @@ cython
 sphinx
 sphinx-rtd-theme
 mypy==0.770
-click>=8.0.0
-termcolor>=1.1.0
-requests>=2.27.1
-pygments>=2.12.0
-gcsfs>=2022.3.0
+requirements.txt
