@@ -3,6 +3,7 @@ from itertools import groupby
 
 import click
 from termcolor import colored
+from typing import Dict
 
 from cromshell.log import DelayedLogMessage
 from cromshell.metadata import command as metadata_command
@@ -187,6 +188,17 @@ def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> 
         f"{indent}{call}\t{shards_running} Running, "
         f"{shards_done} Done, {shards_retried} Preempted, {shards_failed} Failed"
     )
+
+    print(colored(formatted_task_summary, color=task_status_font))
+
+    # If the task has shards that failed list them
+    if shards_failed:
+        failed_shards_index = get_list_of_failed_shards(shards=shards)
+        if failed_shards_index != [-1]:  # Prints only if task was scattered
+            # Format and print task failed shards
+            failed_shards_summary = f"{indent}Failed shards: {failed_shards_index}"
+            print(colored(failed_shards_summary, color=task_status_font))
+
     # If unknown status present append its count to print out.
     if shards_unknown > 0:
         formatted_task_summary += f", {shards_unknown} Unknown"
@@ -198,16 +210,6 @@ def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> 
             "Please report all relevant info to Cromshell git repository so we can "
             "improve our code. Thank You.",
         )
-
-    print(colored(formatted_task_summary, color=task_status_font))
-
-    # If the task has shards that failed list them
-    if shards_failed:
-        failed_shards_index = get_list_of_failed_shards(shards=shards)
-        if failed_shards_index != [-1]:  # Prints only if task was scattered
-            # Format and print task failed shards
-            failed_shards_summary = f"{indent}Failed shards: {failed_shards_index}"
-            print(colored(failed_shards_summary, color=task_status_font))
 
 
 def print_task_status_summary(workflow_metadata: dict) -> None:
@@ -230,7 +232,7 @@ def print_task_status_summary(workflow_metadata: dict) -> None:
     io_utils.pretty_print_json(format_json=workflow_status_summary)
 
 
-def get_shard_status_count(shards: list) -> dict[str, int]:
+def get_shard_status_count(shards: list) -> Dict[str, int]:
     """
     Count the number of shards for each status type and return as dictionary.
     :param shards: The metadata for all shards in a scatter or shard of a single task
@@ -262,7 +264,7 @@ def get_list_of_failed_shards(shards: list) -> list:
     return failed_shards_index
 
 
-def group_shards_by_status(shards: list) -> dict[str, list]:
+def group_shards_by_status(shards: list) -> Dict[str, list]:
     """
     Groups shards by their status
     :param shards: The metadata for all shards in a scatter or shard of a single task
@@ -276,7 +278,7 @@ def group_shards_by_status(shards: list) -> dict[str, list]:
 
 
 def get_unknown_status(
-    shard_status_count: dict[str, int], known_statuses: list
+    shard_status_count: Dict[str, int], known_statuses: list
 ) -> (int, str):
     """
     Returns the name and the total shard count for statuses that do not match the normal
