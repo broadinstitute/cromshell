@@ -230,7 +230,7 @@ def print_task_status_summary(workflow_metadata: dict) -> None:
     io_utils.pretty_print_json(format_json=workflow_status_summary)
 
 
-def get_shard_status_count(shards: list) -> dict:
+def get_shard_status_count(shards: list) -> dict[str, int]:
     """
     Count the number of shards for each status type and return as dictionary.
     :param shards: The metadata for all shards in a scatter or shard of a single task
@@ -262,7 +262,7 @@ def get_list_of_failed_shards(shards: list) -> list:
     return failed_shards_index
 
 
-def group_shards_by_status(shards: list) -> dict:
+def group_shards_by_status(shards: list) -> dict[str, list]:
     """
     Groups shards by their status
     :param shards: The metadata for all shards in a scatter or shard of a single task
@@ -275,7 +275,9 @@ def group_shards_by_status(shards: list) -> dict:
     return grouped_shards
 
 
-def get_unknown_status(shard_status_count: dict, known_statuses: list) -> (int, str):
+def get_unknown_status(
+        shard_status_count: dict[str, int], known_statuses: list
+) -> (int, str):
     """
     Returns the name and the total shard count for statuses that do not match the normal
     known statuses (Done, Failed, Running, etc.)
