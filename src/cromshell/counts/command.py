@@ -276,7 +276,7 @@ def group_shards_by_status(shards: list) -> dict[str, list]:
 
 
 def get_unknown_status(
-        shard_status_count: dict[str, int], known_statuses: list
+    shard_status_count: dict[str, int], known_statuses: list
 ) -> (int, str):
     """
     Returns the name and the total shard count for statuses that do not match the normal
