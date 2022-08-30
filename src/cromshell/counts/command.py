@@ -1,9 +1,9 @@
 import logging
 from itertools import groupby
+from typing import Dict
 
 import click
 from termcolor import colored
-from typing import Dict
 
 from cromshell.log import DelayedLogMessage
 from cromshell.metadata import command as metadata_command
