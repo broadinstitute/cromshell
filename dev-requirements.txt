@@ -10,4 +10,4 @@ cython
 sphinx
 sphinx-rtd-theme
 mypy==0.770
-requirements.txt
+-r requirements.txt
