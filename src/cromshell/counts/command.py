@@ -258,7 +258,7 @@ def get_list_of_failed_shards(shards: list) -> list:
     failed_shards_index = []
     grouped_shards = group_shards_by_status(shards=shards)
 
-    for shard in grouped_shards["Failed"]:
+    for shard in grouped_shards.get('Failed', list()):
         failed_shards_index.append(shard["shardIndex"])
 
     return failed_shards_index

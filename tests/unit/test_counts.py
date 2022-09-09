@@ -167,6 +167,12 @@ class TestCounts:
                 # failed_shards
                 [1, 3],
             ],
+            [
+                # test_shard 1: having no failed shard
+                [{"executionStatus": "Done", "shardIndex": -1}],
+                # failed_shards
+                [],
+            ],
         ],
     )
     def test_get_list_of_failed_shards(self, test_shards, failed_index):
@@ -176,17 +182,6 @@ class TestCounts:
             )
             == failed_index
         )
-
-    @pytest.mark.parametrize(
-        "test_shards",
-        [
-            # test_shard 1: having one failed shard
-            [{"executionStatus": "Done", "shardIndex": -1}],
-        ],
-    )
-    def test_get_list_of_failed_shards_with_no_failed_shards(self, test_shards):
-        with pytest.raises(KeyError):
-            counts_command.get_list_of_failed_shards(shards=test_shards)
 
     @pytest.mark.parametrize(
         "test_shards, grouped_shards",

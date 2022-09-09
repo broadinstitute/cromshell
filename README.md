@@ -54,7 +54,7 @@ Current version: 2.0.0
      * Get a subset of the metadata from a workflow.
    * `counts` *`[-j] [-x] [workflow-id] [[workflow-id]...]`*   
      * Get the summarized status of all jobs in the workflow.
-     * `-j` prints a JSON instead of a pretty summary of the execution status
+     * `-j` prints a JSON instead of a pretty summary of the execution status (compresses subworkflows)
      * `-x` compress sub-workflows for less detailed summarization
    * `timing` *`[workflow-id] [[workflow-id]...]`*                  
      * Open the timing diagram in a browser.
