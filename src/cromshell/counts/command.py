@@ -73,23 +73,19 @@ def main(config, workflow_ids, json_summary, compress_subworkflows):
             pretty_status_counts(
                 workflow_id=resolved_workflow_id,
                 workflow_metadata=workflow_metadata,
-                expand_subworkflows=not compress_subworkflows,
             )
 
         DelayedLogMessage.display_log_messages()
     return 0
 
 
-def pretty_status_counts(
-    workflow_id: str, workflow_metadata: dict, expand_subworkflows: bool
-) -> None:
+def pretty_status_counts(workflow_id: str, workflow_metadata: dict) -> None:
     """
     Prints the workflow status and runs the function to print
     the workflow status summary.
 
     :param workflow_id: Hexadecimal identifier of workflow submission
     :param workflow_metadata: Metadata of the workflow to process
-    :param expand_subworkflows: Boolean, whether or not to print subworkflows
     :return:
     """
     workflow_status = workflow_metadata.get("status")
@@ -103,19 +99,15 @@ def pretty_status_counts(
     print_workflow_status(
         workflow_metadata=workflow_metadata,
         indent="\t",
-        expand_sub_workflows=expand_subworkflows,
     )
 
 
-def print_workflow_status(
-    workflow_metadata: dict, indent: str, expand_sub_workflows: bool
-) -> None:
+def print_workflow_status(workflow_metadata: dict, indent: str) -> None:
     """
     Recursively parses a (sub-)workflow's metadata and prints out
     the summary on its tasks statuses.
     :param workflow_metadata: Metadata of the workflow to process
     :param indent: Indent string given as "\t", used to indent print out
-    :param expand_sub_workflows:  Boolean, whether or not to print subworkflows
     :return:
     """
     calls_metadata = workflow_metadata["calls"]
@@ -123,9 +115,8 @@ def print_workflow_status(
 
     for call in calls:
         # If task has a key called 'subworkflowMetadata' in its
-        # first (zero) element (shard) and expand_sub_workflow parameter
-        # is set to true then perform recursion.
-        if "subWorkflowMetadata" in calls_metadata[call][0] and expand_sub_workflows:
+        # first (zero) element (shard) then perform recursion.
+        if "subWorkflowMetadata" in calls_metadata[call][0]:
             sub_workflow_name = call
             sub_calls = calls_metadata[sub_workflow_name]
             print(f"{indent}SubWorkflow {sub_workflow_name}")
@@ -136,7 +127,6 @@ def print_workflow_status(
                 print_workflow_status(
                     workflow_metadata=sub_call["subWorkflowMetadata"],
                     indent=indent + "\t",
-                    expand_sub_workflows=expand_sub_workflows,
                 )
 
         # If no subworkflow is found then print status summary for task

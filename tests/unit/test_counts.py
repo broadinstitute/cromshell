@@ -34,7 +34,7 @@ class TestCounts:
             workflow_summary = f.read()
 
         counts_command.print_workflow_status(
-            workflow_metadata=workflow_metadata, indent="\t", expand_sub_workflows=True
+            workflow_metadata=workflow_metadata, indent="\t"
         )
 
         captured = capsys.readouterr()
