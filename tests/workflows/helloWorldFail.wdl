@@ -1,7 +1,9 @@
+
 workflow HelloWorld {
     meta {
-        workflow_description: "echos hello world"
+        workflow_description: "echos hello world and exits with 1 in the command block"
     }
+
     parameter_meta {
         # Description of inputs:
         #   Required:
@@ -13,6 +15,7 @@ workflow HelloWorld {
         cpu: "Number of CPU cores to give to each machine running each task in this workflow."
         boot_disk_size_gb: "Amount of boot disk space (in Gb) to give to each machine running each task in this workflow."
     }
+
     String docker
 
     Int? mem
@@ -72,7 +75,8 @@ task HelloWorldTask {
     # Run our command:
      command <<<
          set -e
-				 echo 'Hello World!'				 
+				 echo 'Hello World!'
+				 exit 1
      >>>
 
     # ------------------------------------------------

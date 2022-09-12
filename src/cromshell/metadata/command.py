@@ -82,7 +82,7 @@ def get_workflow_metadata(
     headers: map,
 ) -> dict:
     """Uses requests to get the metadata or sub-metadata of a workflow
-    from the cromwell server and returns a JSON formatted string."""
+    from the cromwell server and returns it as a dictionary."""
 
     requests_out = requests.get(
         f"{api_workflow_id}/metadata",

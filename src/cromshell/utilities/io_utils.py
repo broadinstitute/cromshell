@@ -259,7 +259,7 @@ def update_all_workflow_database_tsv(
 
 
 class TextStatusesColor:
-    """Enum to hold all possible status of workflow"""
+    """Holds stdout formatting per workflow status"""
 
     COLOR_NORM = {"color": None, "attrs": None}
     COLOR_UNDERLINED = {"color": None, "attrs": ["underline"]}

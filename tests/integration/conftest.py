@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -16,3 +17,14 @@ def mock_data_path():
 @pytest.fixture
 def mock_workflow_database_tsv(mock_data_path):
     return mock_data_path.joinpath("all.workflow.database.tsv")
+
+
+@pytest.fixture
+def ansi_escape():
+    """
+    Removes ansi formatting from string. Useful when needing to remove
+    font or color formatting from a printout making assertions easier.
+    https://stackoverflow.com/questions/14693701
+    :return:
+    """
+    return re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")

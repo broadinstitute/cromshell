@@ -2,6 +2,8 @@ import logging
 import pkgutil
 from pathlib import Path
 
+LOGGER = logging.getLogger(__name__)
+
 # Default for boolean to display logo
 show_logo = True
 
@@ -31,7 +33,7 @@ def configure_logging(verbosity):
     format_string = get_logging_format_string(cromshell)
 
     # Set logging level:
-    log_level = logging.INFO
+    log_level = logging.WARNING
     if verbosity:
         log_level = int(verbosity)
 
@@ -76,3 +78,47 @@ def get_package_paths(paths):
             )
         else:
             yield child
+
+
+class DelayedLogMessage:
+    """
+    Used to display log messages at a later time.
+    This class will save log messages over the course of a command, to be printed
+    later. This is useful if messages printed to the screen causes distraction to
+    the cromshell commands' normal printout. Saving and printing the log messages offers
+    a cleaner look.
+
+    """
+
+    messages = []
+
+    @classmethod
+    def save_log_message(cls, log_level: int, log_message: str) -> None:
+        """
+        Saves log messages and type
+        :param log_level: Expects less than 40.
+        Representing debug(10), 'info'(20), or 'warning'(30)
+        :param log_message: Log message
+        :return:
+        """
+
+        if log_level > 40:
+            LOGGER.error(
+                "Functions 'log_type' must either be 'warning', 'info' or 'debug'."
+            )
+            raise ValueError(
+                "Functions 'log_type' must either be 'warning', 'info', or 'debug.'"
+            )
+
+        cls.messages.append([log_level, log_message])
+
+    @classmethod
+    def display_log_messages(cls) -> None:
+        """
+        Displays all saved log messages
+        :return:
+        """
+
+        if cls.messages:
+            for m in cls.messages:
+                LOGGER.info(f"{m[1]}") if m[0] == "info" else LOGGER.warning(f"{m[1]}")
