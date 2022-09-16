@@ -6,7 +6,7 @@ import gcsfs
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import http_utils
+from cromshell.utilities import http_utils, workflow_id_utils
 from cromshell.utilities.io_utils import get_color_for_status_key
 
 LOGGER = logging.getLogger(__name__)
@@ -57,7 +57,14 @@ def main(
         else str(status).strip(",").split(",")
     )
 
-    metadata_command.check_cromwell_server(config=config, workflow_id=workflow_id)
+    resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
+        cromshell_input=workflow_id,
+        submission_file_path=config.submission_file_path,
+    )
+
+    http_utils.set_and_check_cromwell_server(
+        config=config, workflow_id=resolved_workflow_id
+    )
 
     LOGGER.info("Status keys set to %s", status_param)
 
@@ -204,7 +211,11 @@ def print_task_logs(
             shardstring = (
                 "" if not sharded else "-shard-" + str(shard_list[i]["shardIndex"])
             )
-            logs = shard_list[i]["backendLogs"]["log"]
+
+            backend_logs = shard_list[i].get(
+                "backendLogs", {"log": "Backend Logs Not Found"}
+            )
+            logs = backend_logs.get("log")
             if cat_logs:
                 print(
                     colored(
