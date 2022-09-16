@@ -3,6 +3,7 @@ import logging
 import click
 
 from cromshell.metadata import command as metadata_command
+from cromshell.utilities import http_utils, workflow_id_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +48,14 @@ def main(
     # strip trailing comma from keys and split keys by comma
     key_param = [] if not keys else str(keys).strip(",").split(",")
 
-    metadata_command.check_cromwell_server(config=config, workflow_id=workflow_id)
+    resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
+        cromshell_input=workflow_id,
+        submission_file_path=config.submission_file_path,
+    )
+
+    http_utils.set_and_check_cromwell_server(
+        config=config, workflow_id=resolved_workflow_id
+    )
 
     # Resolve and get metadata keys from cli, config file, or config default
     metadata_parameter = resolve_and_return_metadata_keys(
