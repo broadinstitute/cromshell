@@ -43,6 +43,7 @@ def main(config, workflow_ids, json_summary, compress_subworkflows):
     LOGGER.info("counts")
 
     for workflow_id in workflow_ids:
+
         resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
             cromshell_input=workflow_id,
             submission_file_path=config.submission_file_path,

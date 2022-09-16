@@ -23,9 +23,7 @@ def wait_for_workflow_completion(test_workflow_id: str):
             exit_code=0,
         )
         print(status_result.stdout)
-        status_result_formatted = json.loads(status_result.stdout)
-        status = status_result_formatted["status"]
-        print(status)
+
         if status == "Failed" or status == "Succeeded":
             break
 
