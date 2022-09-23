@@ -40,7 +40,6 @@ def main(config, workflow_ids):
         )
 
         if requests_out.ok:
-            # Todo: Replace input with requests_out.json() once rebased with submit PR
             io_utils.pretty_print_json(requests_out.json())
         else:
             return_code = 1

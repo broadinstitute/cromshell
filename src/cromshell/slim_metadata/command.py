@@ -94,7 +94,6 @@ def resolve_and_return_metadata_keys(
     # If metadata_keys is specified in cromshell config file then use it for keys
     elif "slim_metadata_keys" in cromshell_config_options:
         LOGGER.info("Setting metadata key(s) from value in config file.")
-        # TODO: Turn to magic string in the config script once rebased with PR 156
         return cromshell_config_options["slim_metadata_keys"]
 
     # Return the default keys from config module constant
