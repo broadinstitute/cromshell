@@ -6,6 +6,7 @@ import warnings
 from enum import Enum
 from pathlib import Path
 
+import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.submissions_file_utils as submissions_file_utils
 
 LOGGER = logging.getLogger(__name__)
@@ -202,6 +203,10 @@ def __load_cromshell_config_file(
             "Please update the cromwell server in the following config file %s",
             cromshell_config_path,
         )
+
+    cofu.validate_cromshell_config_options_file(
+        config_options_file=cromshell_config_path
+    )
 
     with open(cromshell_config_path, "r") as cromshell_config_file:
         config_options = json.loads(cromshell_config_file.read())
