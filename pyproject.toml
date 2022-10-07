@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# TODO: update name (cromshell) and version (2.0.0.beta.1)
+name = "example_package_bshifaw"
+version = "0.0.4"
+readme = "README.md"
+
+
+[project.urls]
+"Homepage" = "https://github.com/broadinstitute/cromshell"
+"Bug Tracker" = "https://github.com/broadinstitute/cromshell/issues"
