@@ -10,24 +10,32 @@
 # cromshell
  A script for submitting workflows to a cromwell server and monitoring / querying their results.
 
-requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
-
-Current version: 2.0.0 
+Current version: 2.0.0.beta 
 
 ## Examples:
 
 ```
-         cromshell-alpha submit workflow.wdl inputs.json options.json dependencies.zip
-         cromshell-alpha status
-         cromshell-alpha -t 20 metadata
-         cromshell-alpha logs -2
+         cromshell-beta submit workflow.wdl inputs.json options.json dependencies.zip
+         cromshell-beta status
+         cromshell-beta -t 20 metadata
+         cromshell-beta logs -2
 ```
 
 ## Supported Flags:
+  * `--hide_logo`
+    * Hide turtle logo
+  * `--cromwell_url` `TEXT`
+    * Specify Cromwell URL used
   * `-t` `TIMEOUT`
-    * Set the curl connect timeout to `TIMEOUT` seconds.
-    * Also sets the curl max timeout to `2*TIMEOUT` seconds.
+    * Specify the server connection timeout in seconds. 
+    * Default is 5 sec.
     * `TIMEOUT` must be an integer.
+  * `--gcloud_token_email` `TEXT`
+    * Call `gcloud auth print-access-token` with
+    this email and add the token as an auth header to requests.
+  * `--referer_header_url` `TEXT`
+    * For servers that require a referer, supply
+    this URL in the `Referer:` header.
 
 ## Supported Subcommands:
 
@@ -62,26 +70,26 @@ Current version: 2.0.0
    #### Logs
    * `logs` *`[workflow-id] [[workflow-id]...]`*                     
      * List the log files produced by a workflow.
-   * `fetch-logs` *`[workflow-id] [[workflow-id]...]`*               
+   * [COMING SOON] `fetch-logs` *`[workflow-id] [[workflow-id]...]`*               
      * Download all logs produced by a workflow.
   
    #### Job Outputs
-   * `list-outputs` *`[workflow-id] [[workflow-id]...]`*           
+   * [COMING SOON] `list-outputs` *`[workflow-id] [[workflow-id]...]`*           
      *  List all output files produced by a workflow.
-   * `fetch-all` *`[workflow-id] [[workflow-id]...]`*             
+   * [COMING SOON] `fetch-all` *`[workflow-id] [[workflow-id]...]`*             
      * Download all output files produced by a workflow.
    
    ####  Get email notification on job completion
-   * `notify` *`[workflow-id]` `[daemon-server]` `email` `[cromwell-server]`*
+   * [COMING SOON] `notify` *`[workflow-id]` `[daemon-server]` `email` `[cromwell-server]`*
      * *`daemon-server`*  server to run the notification daemon on
 
    #### Display a list jobs submitted through cromshell
-   * `list` *`[-c]` `[-u]`*                                            
+   * [COMING SOON] `list` *`[-c]` `[-u]`*                                            
      * *`-c`*    Color the output by completion status
      * *`-u`*    Check completion status of all unfinished jobs
 
    #### Clean up local cached list
-   * `cleanup` *`[-s STATUS]`*    
+   * [COMING SOON] `cleanup` *`[-s STATUS]`*    
      * Remove completed jobs from local list.
        Will remove all jobs from the local list that are in a completed state,
        where a completed state is one of: `Succeeded`, `Failed`, `Aborted`
@@ -102,7 +110,7 @@ Current version: 2.0.0
 From brew
 
     brew tap broadinstitute/dsp
-    brew install cromshell@2.0.0.alpha.1
+    brew install cromshell@2.0.0.beta
 
 
 From source
@@ -112,16 +120,16 @@ From source
     git checkout cromshell_2.0
     pip install .
 
-    cromshell-alpha --help
+    cromshell-beta --help
 
 ## Uninstallation
 From brew
 
-    brew uninstall cromshell@2.0.0.alpha.1
+    brew uninstall cromshell@2.0.0.beta
 
 From source
 
-    pip uninstall cromshell-alpha
+    pip uninstall cromshell-beta
 
 ## Development
 
