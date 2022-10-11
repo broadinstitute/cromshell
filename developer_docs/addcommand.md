@@ -70,8 +70,8 @@ You need to make 2 changes to the `__main__.py` file
 
 You should now be able to call on your command through the command line. 
     
-    cromshell-alpha --help
-    Usage: cromshell-alpha [OPTIONS] COMMAND [ARGS]...
+    cromshell-beta --help
+    Usage: cromshell-beta [OPTIONS] COMMAND [ARGS]...
     
       Cromshell is a script for submitting workflows to a cromwell server and
       monitoring / querying their results.
