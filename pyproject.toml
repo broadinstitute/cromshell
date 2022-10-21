@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 # TODO: update name (cromshell) and version (2.0.0.beta.1)
-name = "example_package_bshifaw"
-version = "0.0.4"
+name = "cromshell-draft-release"
+version = "0.0.0"
 readme = "README.md"
 
 
