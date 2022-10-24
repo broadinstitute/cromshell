@@ -1,57 +1,14 @@
 import json
 import os
-from importlib import reload
 from pathlib import Path
-from traceback import print_exception
 
 import pytest
-from click.testing import CliRunner
 
-from cromshell.__main__ import main_entry as cromshell
 from cromshell.submit import command as submit_command
 from cromshell.utilities import cromshellconfig
+from tests.integration.utility_test_functions import run_cromshell_submit
 
 workflows_path = Path(__file__).parents[1].joinpath("workflows/")
-
-
-def run_cromshell_submit(
-    wdl: str,
-    json_file: str,
-    no_validation: bool,
-    local_cromwell_url: str,
-    exit_code: int,
-):
-    """Run cromshell submit using CliRunner and assert job is successful"""
-
-    reload(cromshellconfig)
-    runner = CliRunner(mix_stderr=False)
-    # The absolute path will be passed to the invoke command because
-    # the test is being run in temp directory created by CliRunner.
-    absolute_wdl = str(Path(wdl).resolve())
-    absolute_json = str(Path(json_file).resolve())
-    optional_args = []
-    if no_validation:
-        optional_args.append("--no-validation")
-    with runner.isolated_filesystem():
-        result = runner.invoke(
-            cromshell,
-            [
-                "--cromwell_url",
-                local_cromwell_url,
-                "--hide_logo",
-                "submit",
-                absolute_wdl,
-                absolute_json,
-            ]
-            + optional_args,
-        )
-        assert result.exit_code == exit_code, (
-            f"\nSTDOUT:\n{result.stdout}"
-            f"\nSTDERR:\n{result.stderr}"
-            f"\nExceptions:\n{result.exception}"
-            f"\n{print_exception(*result.exc_info)}"
-        )
-        return result
 
 
 def workflow_id_in_txt_db(result, local_workflow_database_tsv: Path):

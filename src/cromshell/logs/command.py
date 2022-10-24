@@ -138,7 +138,7 @@ def print_workflow_logs(
     call out to the helper in order to print found logs
     :param workflow_metadata: Metadata of the workflow to process
     :param indent: Indent string given as "\t", used to indent print out
-    :param expand_sub_workflows:  Boolean, whether or not to print subworkflows
+    :param expand_sub_workflows:  Boolean, whether to print subworkflows
     :return: true if any logs matching the parameters were found
     """
     did_print = False
@@ -190,8 +190,10 @@ def print_task_logs(
     """
     Prints the backend logs from the workflow
     :param task: Name of the task
-    :param indent: Indent string given as a string of "\t" characters, used to indent print out
+    :param indent: Indent string given as a string of "\t" characters,
+    used to indent print out
     :param workflow_metadata: Metadata of the workflow to process
+    :param status_keys: Determines what logs to show based on call status
     :param cat_logs: Will use GCS to attempt to print the logs
     :return: true if any logs were printed
     """
@@ -212,14 +214,12 @@ def print_task_logs(
                 "" if not sharded else "-shard-" + str(shard_list[i]["shardIndex"])
             )
 
-            backend_logs = shard_list[i].get(
-                "backendLogs", {"log": "Backend Logs Not Found"}
-            )
-            logs = backend_logs.get("log")
+            logs = get_backend_logs(shard_list[i])
+
             if cat_logs:
                 print(
                     colored(
-                        f"\n\n\n{'=' * os.get_terminal_size().columns }\n{indent}{task}{shardstring}:\t{status}\t {logs}\n{'=' * os.get_terminal_size().columns }",
+                        f"\n\n\n{'=' * os.get_terminal_size().columns}\n{indent}{task}{shardstring}:\t{status}\t {logs}\n{'=' * os.get_terminal_size().columns}",
                         color=task_status_font,
                     )
                 )
@@ -239,6 +239,25 @@ def print_task_logs(
                 )
             did_print = True
     return did_print
+
+
+def get_backend_logs(task_instance: dict) -> str:
+    """
+    Gets the backend log for an instance of a task call
+
+    :param task_instance: Metadata info of a task instance
+        e.g. (workflow_metadata['calls'][SomeWorkflow.SomeTask][0])
+    :return:
+    """
+    if task_instance.get("backend") == "Local":
+        backend_logs = {"log": "Backend Logs Not Available Due to Local Execution"}
+
+    else:
+        backend_logs = task_instance.get(
+            "backendLogs", {"log": "Backend Logs Not Found"}
+        )
+
+    return backend_logs.get("log")
 
 
 if __name__ == "__main__":
