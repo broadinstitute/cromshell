@@ -1,5 +1,3 @@
-import csv
-import fileinput
 import json
 import logging
 import re
@@ -12,8 +10,6 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from pygments import formatters, highlight, lexers
 from termcolor import colored
-
-from cromshell.utilities import submissions_file_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -218,44 +214,6 @@ def copy_files_to_directory(
         shutil.copytree(inputs, subdirectory, copy_function=shutil.copy)
     else:
         shutil.copy(inputs, directory)
-
-
-def update_all_workflow_database_tsv(
-    workflow_database_path: str,
-    workflow_id: str,
-    column_to_update: str,
-    update_value: str,
-) -> None:
-    """
-    Updates the all_workflow_database_tsv for a given workflow_id and column
-    :param workflow_database_path: Path to all_workflow_database tsv file
-    :param workflow_id: Hexadecimal identifier of workflow submission
-    :param column_to_update:["STATUS", "ALIAS"]
-    :param update_value: Value of the cell to update
-    :return:
-    """
-
-    available_columns = [
-        column.value for column in submissions_file_utils.MutableSubmissionFileHeader
-    ]
-    if column_to_update not in available_columns:
-        raise ValueError(
-            f"Invalid column_to_update: '{column_to_update}'. "
-            f"Expected one of: '{available_columns}'"
-        )
-
-    # Update config.submission_file:
-    with fileinput.FileInput(
-        workflow_database_path, inplace=True, backup=".bak"
-    ) as csv_file:
-        reader = csv.DictReader(csv_file, delimiter="\t")
-        print("\t".join(reader.fieldnames))  # print statement rewrites file header
-        for row in reader:
-            if row["RUN_ID"] == workflow_id:
-                row[column_to_update] = update_value
-                print("\t".join(x for x in row.values() if x))  # writes row with update
-            else:
-                print("\t".join(x for x in row.values() if x))  # rewrites row
 
 
 class TextStatusesColor:

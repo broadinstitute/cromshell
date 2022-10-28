@@ -1,3 +1,5 @@
+import csv
+import fileinput
 import logging
 import shutil
 from datetime import date
@@ -45,9 +47,9 @@ class MutableSubmissionFileHeader(WorkflowDatabaseColumns):
         return [key.value for key in cls]
 
 
-def update_submission_db(submission_file_path: Union[str, Path]) -> bool:
+def update_submission_db_format(submission_file_path: Union[str, Path]) -> bool:
     """Read the first line of the submission database. If not tab-delimited (old format)
-    then update the database so it is tab-delimited."""
+    then update the database to tab-delimited."""
 
     old_format = False
 
@@ -73,3 +75,39 @@ def update_submission_db(submission_file_path: Union[str, Path]) -> bool:
         )
 
     return old_format  # for tests
+
+
+def update_row_values_in_submission_db(
+    workflow_database_path: str,
+    workflow_id: str,
+    column_to_update: str,
+    update_value: str,
+) -> None:
+    """
+    Updates the all_workflow_database_tsv for a given workflow_id and column
+    :param workflow_database_path: Path to all_workflow_database tsv file
+    :param workflow_id: Hexadecimal identifier of workflow submission
+    :param column_to_update:["STATUS", "ALIAS"]
+    :param update_value: Value of the cell to update
+    :return:
+    """
+
+    available_columns = [column.value for column in MutableSubmissionFileHeader]
+    if column_to_update not in available_columns:
+        raise ValueError(
+            f"Invalid column_to_update: '{column_to_update}'. "
+            f"Expected one of: '{available_columns}'"
+        )
+
+    # Update config.submission_file:
+    with fileinput.FileInput(
+        workflow_database_path, inplace=True, backup=".bak"
+    ) as csv_file:
+        reader = csv.DictReader(csv_file, delimiter="\t")
+        print("\t".join(reader.fieldnames))  # print statement rewrites file header
+        for row in reader:
+            if row["RUN_ID"] == workflow_id:
+                row[column_to_update] = update_value
+                print("\t".join(x for x in row.values() if x))  # writes row with update
+            else:
+                print("\t".join(x for x in row.values() if x))  # rewrites row

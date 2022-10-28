@@ -8,6 +8,7 @@ from zipfile import ZipFile
 
 import pytest
 
+import cromshell.utilities.submissions_file_utils
 from cromshell.utilities import io_utils, submissions_file_utils
 
 
@@ -290,7 +291,7 @@ class TestIOUtilities:
 
         if should_fail:
             with pytest.raises(ValueError):
-                io_utils.update_all_workflow_database_tsv(
+                cromshell.utilities.submissions_file_utils.update_row_values_in_submission_db(
                     workflow_database_path=temp_submission_file,
                     workflow_id=workflow_id,
                     column_to_update=column_to_update,
@@ -298,7 +299,7 @@ class TestIOUtilities:
                 )
         else:
             # Run function to change alias using the temp submission file
-            io_utils.update_all_workflow_database_tsv(
+            cromshell.utilities.submissions_file_utils.update_row_values_in_submission_db(
                 workflow_database_path=temp_submission_file,
                 workflow_id=workflow_id,
                 column_to_update=column_to_update,

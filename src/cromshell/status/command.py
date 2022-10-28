@@ -4,6 +4,7 @@ import logging
 import click
 import requests
 
+import cromshell.utilities.submissions_file_utils
 from cromshell import log
 from cromshell.metadata import command as metadata_command
 from cromshell.utilities import (
@@ -103,7 +104,7 @@ def main(config, workflow_id):
     log.DelayedLogMessage.display_log_messages()
 
     # Update config.submission_file:
-    io_utils.update_all_workflow_database_tsv(
+    cromshell.utilities.submissions_file_utils.update_row_values_in_submission_db(
         workflow_database_path=config.submission_file_path,
         workflow_id=workflow_id,
         column_to_update="STATUS",

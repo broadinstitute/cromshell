@@ -32,9 +32,9 @@ class TestSubmit:
 
         # Run update submission file command which should append a line to the
         # temp submission with the provided info
-        submit_command.update_submission_file(
+        submit_command.add_submission_to_all_database_tsv(
             cromwell_server="https://cromwell-UnitTest.dsde-methods.broadinstitute.org",
-            submission_file=temp_submission_file,
+            submissions_file=temp_submission_file,
             wdl="/made/up/path/UnitTest.wdl",
             workflow_status={
                 "id": "73650b78-64e5-4ce7-a73e-3eb264133f20",

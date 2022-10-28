@@ -203,8 +203,8 @@ def submit_workflow_to_server(
         return requests_out
 
 
-def update_submission_file(
-    cromwell_server: str, submission_file: str, wdl: str, workflow_status: dict
+def add_submission_to_all_database_tsv(
+    cromwell_server: str, submissions_file: str, wdl: str, workflow_status: dict
 ):
     """Update the submission file with recently submitted job"""
 
@@ -217,7 +217,7 @@ def update_submission_file(
         "",  # Placeholder for Alias column
     ]
 
-    with open(submission_file, "a") as sub_f:
+    with open(submissions_file, "a") as sub_f:
         writer = csv.writer(sub_f, delimiter="\t", lineterminator="\n")
         writer.writerow(submission_row)
 
@@ -286,7 +286,7 @@ def post_submission_logging(
     )
 
     # 3. Update config.submission_file_path:
-    update_submission_file(
+    add_submission_to_all_database_tsv(
         config.cromwell_server, config.submission_file_path, wdl, workflow_status
     )
 

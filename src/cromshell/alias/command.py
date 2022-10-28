@@ -4,7 +4,6 @@ import re
 
 import click
 
-import cromshell.utilities.io_utils as io_utils
 import cromshell.utilities.submissions_file_utils as submissions_file_utils
 import cromshell.utilities.workflow_id_utils as workflow_id_utils
 
@@ -44,7 +43,7 @@ def main(config, workflow_id: str or int, alias: str):
         submission_file_path=config.submission_file_path,
     )
 
-    io_utils.update_all_workflow_database_tsv(
+    submissions_file_utils.update_row_values_in_submission_db(
         workflow_database_path=config.submission_file_path,
         workflow_id=resolved_workflow_id,
         column_to_update=submissions_file_utils.MutableSubmissionFileHeader.Alias.value,
@@ -135,7 +134,7 @@ def alias_exists(alias_name: str, submission_file) -> bool:
 
 def check_workflow_has_alias(workflow_id: str, submission_file: str) -> None:
     """
-    Checks if workflow id has alias listed in submission file, print warning if so.
+    Checks if workflow id has alias listed in submission file, print warning if so
     :param workflow_id: Hexadecimal identifier of workflow submission
     :param submission_file: Path to cromshell submission file
     :return:
