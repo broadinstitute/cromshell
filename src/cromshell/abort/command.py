@@ -35,14 +35,14 @@ def main(config, workflow_ids):
         )
 
         if requests_out.ok:
-            io_utils.pretty_print_json(requests_out.json())
+            io_utils.pretty_print_json(format_json=requests_out.json())
         else:
             return_code = 1
 
             http_utils.check_http_request_status_code(
                 short_error_message="Failed to abort workflow.",
                 response=requests_out,
-                # Raising exception is set to false to allow
+                # Raising exception is set false to allow
                 # command to abort remaining workflows.
                 raise_exception=False,
             )

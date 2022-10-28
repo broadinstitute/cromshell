@@ -18,7 +18,7 @@ workflow_id_pattern = re.compile(
 )
 
 
-def dead_turtle():
+def dead_turtle() -> None:
     """Print Dead Turtle"""
 
     print(
@@ -36,7 +36,7 @@ def dead_turtle():
     )
 
 
-def turtle():
+def turtle() -> None:
     """Print Alive Turtle"""
 
     print(
@@ -54,7 +54,7 @@ def turtle():
     )
 
 
-def doomed_logo():
+def doomed_logo() -> None:
     """Print Doom"""
 
     print(
@@ -85,7 +85,7 @@ def doomed_logo():
     )
 
 
-def assert_path_is_not_empty(path: Union[str, Path], description: str):
+def assert_path_is_not_empty(path: Union[str, Path], description: str) -> None:
     """Confirm the provided file or directory exist and is not empty."""
 
     if not Path(path).exists():
@@ -154,10 +154,15 @@ def is_workflow_id_valid(workflow_id: str):
 
 
 def color_json(formatted_json: str) -> str:
+    """
+    Returns json with highlights
+    :param formatted_json:
+    :return:
+    """
     return highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
 
 
-def pretty_print_json(format_json: str or dict, add_color: bool = False):
+def pretty_print_json(format_json: str or dict, add_color: bool = False) -> None:
     """Prints JSON String in a fancy way
 
     - json_text: valid json string or dictionary, NOT json file path"""
@@ -175,7 +180,7 @@ def pretty_print_json(format_json: str or dict, add_color: bool = False):
 
 def create_directory(
     dir_path: str or Path, parents: bool = True, exist_ok: bool = False
-):
+) -> None:
     """Creates a Directory
     - dir_path: full path to directory being created
     - parents: whether the new directory will need to be nested
@@ -195,7 +200,7 @@ def create_directory(
 def copy_files_to_directory(
     directory: Union[str, Path],
     inputs: Union[List[Union[str, Path, None]], Union[str, Path, None]],
-):
+) -> None:
     """Copies files to specified directory"""
 
     # check dir exists
@@ -233,9 +238,14 @@ class TextStatusesColor:
     TASK_COLOR_FAILED = "red"
 
 
-def get_color_for_status_key(status):
-    """Helper method for getting the correct font color for a given execution status for a job (or none for
-    unrecognized statuses)"""
+def get_color_for_status_key(status: str) -> str:
+    """
+    Helper method for getting the correct font color for
+    a given execution status for a job (or none for unrecognized statuses)
+    """
+
+    task_status_font = None
+
     if "Done" in status:
         task_status_font = TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif "Running" in status:
@@ -244,6 +254,5 @@ def get_color_for_status_key(status):
         task_status_font = TextStatusesColor.TASK_COLOR_FAILING
     elif "Failed":
         task_status_font = TextStatusesColor.TASK_COLOR_FAILED
-    else:
-        task_status_font = None
+
     return task_status_font

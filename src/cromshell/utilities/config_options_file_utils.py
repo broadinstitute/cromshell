@@ -33,7 +33,7 @@ def valid_json(json_to_validate: str or Path, json_is_file_path: bool = True) ->
     return True
 
 
-def validate_json_schema(loaded_json_file: dict, json_schema: dict):
+def validate_json_schema(loaded_json_file: dict, json_schema: dict) -> None:
     """
 
     :param loaded_json_file:
@@ -81,7 +81,7 @@ def validate_json_schema(loaded_json_file: dict, json_schema: dict):
             )
 
 
-def validate_cromshell_config_options_file(config_options_file: Path):
+def validate_cromshell_config_options_file(config_options_file: Path) -> None:
     """
 
     :param config_options_file:

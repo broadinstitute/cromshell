@@ -47,7 +47,7 @@ CROMSHELL_CONFIG_OPTIONS_TEMPLATE = {
 }
 
 
-def override_requests_cert_parameters(skip_certs: bool):
+def override_requests_cert_parameters(skip_certs: bool) -> None:
     """Override requests settings for certs verification"""
 
     global requests_verify_certs
@@ -86,15 +86,15 @@ class TaskStatus(Enum):
         return [key.value for key in cls]
 
 
-def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
+def resolve_cromwell_config_server_address(server_user=None, workflow_id=None) -> None:
     """
     Override Cromwell Server From Command Line or Environment or Submission file
 
     This function allows users to override the cromwell server set in the
     cromshell config file using the command line options or environment
-    variables. By default the server URL in the config file is used, however
-    if an URL is specified in the command line or environment then this
-    overrides the default. If a workflow Id is provided without a server URL
+    variables. By default, the server URL in the config file is used, however
+    if a URL is specified in the command line or environment then this
+    overrides the default. If a workflow ID is provided without a server URL
     then the server associated with a workflow id in the submission file
     overrides the default. If a workflow ID is provided but isn't found
     in the submission file then the default server is used.
@@ -140,7 +140,7 @@ def resolve_cromwell_config_server_address(server_user=None, workflow_id=None):
                 )
 
 
-def __get_config_dir():
+def __get_config_dir() -> str:
     """Get Path To Cromshell Hidden Directory"""
 
     # If env CROMSHELL_CONFIG set then use for cromshell hidden dir else use home dir.
@@ -163,7 +163,7 @@ def __get_config_dir():
 def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
     """
     Get File Path To Cromshell Submission File path. Creates new submission file
-    if one does not already exists.
+    if one does not already exist.
     :param config_directory: Path to cromshell config directory
     :param sub_file_name: Name of cromshell submission file
     :return: Path to cromshell submission file
@@ -184,12 +184,12 @@ def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
 
 
 def __load_cromshell_config_file(
-    config_directory, config_file_name, config_file_template
-):
+    config_directory: str, config_file_name: str, config_file_template: str
+) -> dict:
     """Load options from Cromshell Config File to dictionary"""
     # TODO: Add more config settings to validate user key and values
 
-    cromshell_config_path = os.path.join(config_directory, config_file_name)
+    cromshell_config_path = Path(os.path.join(config_directory, config_file_name))
     if not Path(cromshell_config_path).exists():
         LOGGER.info("Cromshell config file %s was not found", cromshell_config_path)
         LOGGER.info("Creating %s", cromshell_config_path)
@@ -214,7 +214,7 @@ def __load_cromshell_config_file(
     return config_options
 
 
-def __get_cromwell_server(config_options: dict):
+def __get_cromwell_server(config_options: dict) -> dict:
     """Get Cromwell Server URL from configuration options"""
 
     if not config_options["cromwell_server"]:
@@ -226,25 +226,25 @@ def __get_cromwell_server(config_options: dict):
     return config_options["cromwell_server"]
 
 
-def get_cromwell_api():
+def get_cromwell_api() -> str:
     """Return a string combining the cromwell server and the cromwell api string"""
     return f"{cromwell_server}{CROMWELL_API_STRING}"
 
 
-def get_womtool_api():
+def get_womtool_api() -> str:
     """Return a string combining the cromwell server and the womtool api string"""
     return f"{cromwell_server}{WOMTOOL_API_STRING}"
 
 
-def get_local_folder_name():
+def get_local_folder_name() -> str:
     """Return a string combining the cromwell server without http/https"""
     return cromwell_server.replace("https://", "").replace("http://", "")
 
 
-def resolve_requests_connect_timeout(timeout_cli: int):
+def resolve_requests_connect_timeout(timeout_cli: int) -> None:
     """Override the default request timeout duration.
 
-    By default the timeout duration is 5 sec, however
+    By default, the timeout duration is 5 sec, however
     if the option is specified in the cromshell config file or
     command line then this overrides the default.
     CLI > Config File > Default
@@ -272,7 +272,7 @@ def resolve_requests_connect_timeout(timeout_cli: int):
         LOGGER.info("Request Timeout value: %d sec", requests_connect_timeout)
 
 
-def resolve_referer_header_url(url: str):
+def resolve_referer_header_url(url: str) -> None:
 
     global referer_header_url
 

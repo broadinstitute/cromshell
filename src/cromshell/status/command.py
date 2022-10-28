@@ -114,7 +114,7 @@ def main(config, workflow_id):
     return ret_val
 
 
-def workflow_failed(metadata: dict):
+def workflow_failed(metadata: dict) -> bool:
     """Checks a workflow metadata dictionary for failing statuses
     Returns True to indicate workflow or some task(s) has failed"""
 

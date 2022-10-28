@@ -87,7 +87,7 @@ def obtain_and_print_logs(
     print_logs: bool,
     status_params: list,
     dont_expand_subworkflows: bool,
-):
+) -> None:
     """Format metadata parameters and obtains metadata from cromwell server"""
 
     # Combine keys and flags into a dictionary
@@ -117,7 +117,8 @@ def obtain_and_print_logs(
 
     if not found_logs:
         print(
-            f"No logs with status {status_params} found for workflow, try adding the argument '-s ALL' to list logs with any status"
+            f"No logs with status {status_params} found for workflow, try adding "
+            f"the argument '-s ALL' to list logs with any status"
         )
 
 
@@ -168,7 +169,13 @@ def print_workflow_logs(
         # If no subworkflow is found then print status summary for the task
         else:
             did_print = (
-                print_task_logs(task, indent, workflow_metadata, status_keys, cat_logs)
+                print_task_logs(
+                    task=task,
+                    indent=indent,
+                    workflow_metadata=workflow_metadata,
+                    status_keys=status_keys,
+                    cat_logs=cat_logs,
+                )
                 or did_print
             )
 

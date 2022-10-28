@@ -3,7 +3,7 @@ from cromshell.utilities import http_utils, workflow_id_utils
 
 def resolve_workflow_id_and_server(workflow_id: str, cromshell_config) -> str:
     """
-    Resoelves the workflow id and sets the cromwell server
+    Resolves the workflow id and sets the cromwell server
 
     :param workflow_id:
     :param cromshell_config:

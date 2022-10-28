@@ -62,16 +62,26 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip, no_validation):
 
     LOGGER.info("submit")
 
-    http_utils.assert_can_communicate_with_server(config)
+    http_utils.assert_can_communicate_with_server(config=config)
 
     if no_validation:
         LOGGER.info("Skipping WDL validation")
     else:
-        validate_input(wdl, wdl_json, options_json, dependencies_zip, config)
+        validate_input(
+            wdl=wdl,
+            wdl_json=wdl_json,
+            options_json=options_json,
+            dependencies_zip=dependencies_zip,
+            config=config,
+        )
 
     LOGGER.info("Submitting job to server: %s", cromshellconfig.cromwell_server)
     request_out = submit_workflow_to_server(
-        wdl, wdl_json, options_json, dependencies_zip, config
+        wdl=wdl,
+        wdl_json=wdl_json,
+        options_json=options_json,
+        dependencies_zip=dependencies_zip,
+        config=config,
     )
 
     # Get our workflow status and job ID:
@@ -81,8 +91,8 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip, no_validation):
     post_submission_checks(request_out=request_out, workflow_status=workflow_status)
 
     # Everything checks out, display success to terminal
-    log.display_logo(io_utils.turtle)
-    io_utils.pretty_print_json(request_out.json())
+    log.display_logo(logo=io_utils.turtle)
+    io_utils.pretty_print_json(format_json=request_out.json())
 
     # If we get here, we successfully submitted the job and should track it locally:
     post_submission_logging(
@@ -107,15 +117,17 @@ def validate_input(
     """Asserts files are not empty and if womtool is
     in path validates WDL and WDL input JSON"""
 
-    io_utils.assert_path_is_not_empty(wdl, "WDL")
-    io_utils.assert_path_is_not_empty(wdl_json, "Input JSON")
+    io_utils.assert_path_is_not_empty(path=wdl, description="WDL")
+    io_utils.assert_path_is_not_empty(path=wdl_json, description="Input JSON")
     if options_json is not None:
-        io_utils.assert_path_is_not_empty(options_json, "Options json")
+        io_utils.assert_path_is_not_empty(path=options_json, description="Options json")
     if dependencies_zip is not None:
-        io_utils.assert_path_is_not_empty(dependencies_zip, "Dependencies Zip")
+        io_utils.assert_path_is_not_empty(
+            path=dependencies_zip, description="Dependencies Zip"
+        )
 
     if dependencies_zip is None:
-        womtool_validate_wdl_and_json(wdl, wdl_json, config)
+        womtool_validate_wdl_and_json(wdl=wdl, wdl_json=wdl_json, config=config)
     else:
         # See: https://github.com/broadinstitute/cromshell/issues/139
         LOGGER.info("Skipping validation of WDL plus a dependencies zip")
@@ -127,7 +139,7 @@ def womtool_validate_wdl_and_json(
     """Validates WDL and input JSON using the Cromwell server's Womtool REST API"""
 
     LOGGER.info("Validating WDL with with server: %s", config.cromwell_server)
-    request_out = womtool_validate_to_server(wdl, wdl_json, config)
+    request_out = womtool_validate_to_server(wdl=wdl, wdl_json=wdl_json, config=config)
 
     http_utils.check_http_request_status_code(
         short_error_message="Failed to Validate Workflow", response=request_out
@@ -136,7 +148,7 @@ def womtool_validate_wdl_and_json(
     validate_status = json.loads(request_out.content)
 
     if not validate_status["valid"]:
-        log.display_logo(dead_turtle)
+        log.display_logo(logo=dead_turtle)
 
         LOGGER.error("Error: Server reports workflow was not valid.")
         raise ValidationError(
@@ -205,7 +217,7 @@ def submit_workflow_to_server(
 
 def add_submission_to_all_database_tsv(
     cromwell_server: str, submissions_file: str, wdl: str, workflow_status: dict
-):
+) -> None:
     """Update the submission file with recently submitted job"""
 
     submission_row = [
@@ -237,9 +249,9 @@ def post_submission_checks(request_out: Response, workflow_status: dict) -> None
 
     # 2. Check messages from server for workflow problems.
 
-    # 2.A If the status is not `Submitted`, something went wrong:
+    # 2. A If the status is not `Submitted`, something went wrong:
     if workflow_status["status"] != "Submitted":
-        log.display_logo(dead_turtle)
+        log.display_logo(logo=dead_turtle)
 
         LOGGER.error("Error: Server reports job was not properly submitted.")
         LOGGER.error("Cromshell Server Message: %s", request_out.text)
@@ -250,7 +262,7 @@ def post_submission_checks(request_out: Response, workflow_status: dict) -> None
 
     # 2.B If the ID is not an ID, something went wrong:
     if not io_utils.is_workflow_id_valid(workflow_status["id"]):
-        log.display_logo(dead_turtle)
+        log.display_logo(logo=dead_turtle)
 
         LOGGER.error("Error: Did not get a valid ID back. Something went wrong.")
         LOGGER.error("Cromshell Server Message: %s", request_out.text)
@@ -278,16 +290,19 @@ def post_submission_logging(
     run_directory = Path(config.config_dir).joinpath(
         server_folder_name, workflow_status["id"]
     )
-    io_utils.create_directory(run_directory)
+    io_utils.create_directory(dir_path=run_directory)
 
     # 2. Copy input to run directory
     io_utils.copy_files_to_directory(
-        run_directory, [wdl, wdl_json, options_json, dependencies_zip]
+        directory=run_directory, inputs=[wdl, wdl_json, options_json, dependencies_zip]
     )
 
     # 3. Update config.submission_file_path:
     add_submission_to_all_database_tsv(
-        config.cromwell_server, config.submission_file_path, wdl, workflow_status
+        cromwell_server=config.cromwell_server,
+        submissions_file=config.submission_file_path,
+        wdl=wdl,
+        workflow_status=workflow_status,
     )
 
 

@@ -9,7 +9,7 @@ from cromshell.utilities import cromshellconfig, io_utils
 LOGGER = logging.getLogger(__name__)
 
 
-def assert_can_communicate_with_server(config):
+def assert_can_communicate_with_server(config: cromshellconfig) -> None:
     """Check Connection with Cromwell Server"""
 
     try:
@@ -42,7 +42,7 @@ def check_http_request_status_code(
     short_error_message: str,
     response: requests.models.Response,
     raise_exception: bool = True,
-):
+) -> None:
     """Check request response "ok" key value. If status_code is
     equal to or greater than 400 Response.ok returns
     False and checker function will fail with error.
@@ -65,7 +65,7 @@ def check_http_request_status_code(
             )
 
 
-def generate_headers(config):
+def generate_headers(config: cromshellconfig) -> dict:
     """
     Check the config for options that require a header and generate the appropriate map.
     Will be an empty map if no relevant options are specified.
@@ -91,7 +91,7 @@ def generate_headers(config):
     return headers
 
 
-def set_and_check_cromwell_server(config, workflow_id: str) -> None:
+def set_and_check_cromwell_server(config: cromshellconfig, workflow_id: str) -> None:
     """
     Checks for an associated cromwell server for the workflow_id
     and checks connection with the cromwell server

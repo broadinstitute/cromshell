@@ -89,7 +89,7 @@ def get_workflow_metadata(
 
 def obtain_and_print_metadata(
     config, metadata_param: list, exclude_keys: bool, dont_expand_subworkflows: bool
-):
+) -> None:
     """Format metadata parameters and obtains metadata from cromwell server"""
 
     # Combine keys and flags into a dictionary
@@ -108,4 +108,4 @@ def obtain_and_print_metadata(
         headers=http_utils.generate_headers(config),
     )
 
-    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
+    io_utils.pretty_print_json(format_json=workflow_metadata_json, add_color=True)

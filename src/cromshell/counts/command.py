@@ -213,7 +213,7 @@ def print_task_status_summary(workflow_metadata: dict) -> None:
 
         # Add the status counts for this task to dictionary holding other
         # task status counts
-        workflow_status_summary[task] = get_shard_status_count(shards)
+        workflow_status_summary[task] = get_shard_status_count(shards=shards)
 
     io_utils.pretty_print_json(format_json=workflow_status_summary)
 
