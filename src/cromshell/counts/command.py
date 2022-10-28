@@ -7,7 +7,7 @@ from termcolor import colored
 
 from cromshell.log import DelayedLogMessage
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import http_utils, io_utils, workflow_id_utils
+from cromshell.utilities import command_setup_utils, http_utils, io_utils
 from cromshell.utilities.cromshellconfig import TaskStatus
 
 LOGGER = logging.getLogger(__name__)
@@ -44,13 +44,8 @@ def main(config, workflow_ids, json_summary, compress_subworkflows):
 
     for workflow_id in workflow_ids:
 
-        resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
-            cromshell_input=workflow_id,
-            submission_file_path=config.submission_file_path,
-        )
-
-        http_utils.set_and_check_cromwell_server(
-            config=config, workflow_id=resolved_workflow_id
+        resolved_workflow_id = command_setup_utils.resolve_workflow_id_and_server(
+            workflow_id=workflow_id, cromshell_config=config
         )
 
         # Get metadata

@@ -6,7 +6,12 @@ import requests
 
 from cromshell import log
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import cromshellconfig, http_utils, io_utils, workflow_id_utils
+from cromshell.utilities import (
+    command_setup_utils,
+    cromshellconfig,
+    http_utils,
+    io_utils,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,13 +26,8 @@ def main(config, workflow_id):
 
     ret_val = 0
 
-    resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
-        cromshell_input=workflow_id,
-        submission_file_path=config.submission_file_path,
-    )
-
-    http_utils.set_and_check_cromwell_server(
-        config=config, workflow_id=resolved_workflow_id
+    command_setup_utils.resolve_workflow_id_and_server(
+        workflow_id=workflow_id, cromshell_config=config
     )
 
     # Request workflow status
@@ -81,12 +81,17 @@ def main(config, workflow_id):
         else:
             log.display_logo(io_utils.doomed_logo)
             workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value[0]
+
+            requested_status_json = (
+                f'{{"status":"{workflow_status}","id":"{workflow_id}"}}'
+            )
+
             message = (
                 "The workflow is Running but one of the instances "
                 "has failed which will lead to failure."
             )
-            requested_status_json = (
-                f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message} '
+            log.DelayedLogMessage.save_log_message(
+                log_level=logging.WARNING, log_message=message
             )
 
     else:
@@ -95,6 +100,7 @@ def main(config, workflow_id):
     # Display status to user:
     line_string = requested_status_json
     print(line_string.replace(",", ",\n"))
+    log.DelayedLogMessage.display_log_messages()
 
     # Update config.submission_file:
     io_utils.update_all_workflow_database_tsv(

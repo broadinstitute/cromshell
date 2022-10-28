@@ -214,7 +214,7 @@ def update_submission_file(
         workflow_status["id"],
         PurePath(wdl).name,
         workflow_status["status"],
-        "",  # Place holder for Alias column
+        "",  # Placeholder for Alias column
     ]
 
     with open(submission_file, "a") as sub_f:

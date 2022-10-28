@@ -3,7 +3,7 @@ import logging
 import click
 import requests
 
-from cromshell.utilities import http_utils, io_utils, workflow_id_utils
+from cromshell.utilities import command_setup_utils, http_utils, io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,13 +25,8 @@ def main(config, workflow_ids):
 
     for wdl_id in workflow_ids:
 
-        resolved_workflow_id = workflow_id_utils.resolve_workflow_id(
-            cromshell_input=wdl_id,
-            submission_file_path=config.submission_file_path,
-        )
-
-        http_utils.set_and_check_cromwell_server(
-            config=config, workflow_id=resolved_workflow_id
+        command_setup_utils.resolve_workflow_id_and_server(
+            workflow_id=wdl_id, cromshell_config=config
         )
 
         requests_out = requests.post(
