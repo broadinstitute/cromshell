@@ -186,8 +186,14 @@ def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
 def __load_cromshell_config_file(
     config_directory: str, config_file_name: str, config_file_template: str
 ) -> dict:
-    """Load options from Cromshell Config File to dictionary"""
-    # TODO: Add more config settings to validate user key and values
+    """
+    Load options from Cromshell Config File to dictionary.
+
+    :param config_directory: Path to cromshell config directory
+    :param config_file_name:
+    :param config_file_template:
+    :return:
+    """
 
     cromshell_config_path = Path(os.path.join(config_directory, config_file_name))
     if not Path(cromshell_config_path).exists():
