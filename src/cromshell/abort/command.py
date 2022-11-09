@@ -30,7 +30,7 @@ def main(config, workflow_ids):
         )
 
         requests_out = requests.post(
-            f"{config.cromwell_server}{config.cromwell_api_workflow_id}/abort",
+            f"{config.cromwell_api_workflow_id}/abort",
             headers=http_utils.generate_headers(config),
         )
 
