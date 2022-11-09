@@ -250,7 +250,7 @@ def post_submission_checks(request_out: Response, workflow_status: dict) -> None
     # 2. Check messages from server for workflow problems.
 
     # 2. A If the status is not `Submitted`, something went wrong:
-    if workflow_status["status"] != "Submitted":
+    if workflow_status["status"] != cromshellconfig.WorkflowStatuses.SUBMITTED.value:
         log.display_logo(logo=dead_turtle)
 
         LOGGER.error("Error: Server reports job was not properly submitted.")
@@ -285,19 +285,17 @@ def post_submission_logging(
     the submission database tsv.
 
     """
-    # 1. Create a directory to hold function input files, using server name
+    # Create a directory to hold function input files, using server name
     server_folder_name = config.get_local_folder_name()
     run_directory = Path(config.config_dir).joinpath(
         server_folder_name, workflow_status["id"]
     )
     io_utils.create_directory(dir_path=run_directory)
 
-    # 2. Copy input to run directory
     io_utils.copy_files_to_directory(
         directory=run_directory, inputs=[wdl, wdl_json, options_json, dependencies_zip]
     )
 
-    # 3. Update config.submission_file_path:
     add_submission_to_all_database_tsv(
         cromwell_server=config.cromwell_server,
         submissions_file=config.submission_file_path,

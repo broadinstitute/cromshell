@@ -65,9 +65,11 @@ def override_requests_cert_parameters(skip_certs: bool) -> None:
 
 class WorkflowStatuses(Enum):
     """Enum to hold all possible status of workflow"""
+    # States listed here: https://github.com/broadinstitute/cromwell/blob/32d5d0cbf07e46f56d3d070f457eaff0138478d5/core/src/main/scala/cromwell/core/WorkflowState.scala
 
+    SUBMITTED = ["Submitted"]
     FAILED = ["Failed", "fail"]
-    ABORTED = ["Aborted", "abort"]
+    ABORTED = ["Aborted", "Aborting", "abort"]
     RUNNING = ["Running"]
     SUCCEEDED = ["Succeeded"]
     DOOMED = ["DOOMED"]
