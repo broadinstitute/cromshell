@@ -5,7 +5,7 @@ import os
 import warnings
 from enum import Enum
 from pathlib import Path
-from typing import Union
+from typing import Dict, Union
 
 import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.submissions_file_utils as submissions_file_utils
@@ -189,7 +189,7 @@ def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
 
 def __load_cromshell_config_file(
     config_directory: str, config_file_name: str, config_file_template: str
-) -> dict[str, Union[str, list, int, dict, float]]:
+) -> Dict[str, Union[str, list, int, dict, float]]:
     """
     Load options from Cromshell Config File to dictionary.
 
