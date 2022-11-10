@@ -31,7 +31,6 @@ class TestLogs:
         expected_logs: str,
         ansi_escape,
     ):
-        # submit workflow
         test_workflow_id = utility_test_functions.submit_workflow(
             local_cromwell_url=local_cromwell_url,
             wdl=wdl,

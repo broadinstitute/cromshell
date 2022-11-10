@@ -290,7 +290,7 @@ class TestIOUtilities:
         shutil.copyfile(submission_file, temp_submission_file)
 
         if should_fail:
-            with pytest.raises(ValueError):
+            with pytest.raises(KeyError):
                 cromshell.utilities.submissions_file_utils.update_row_values_in_submission_db(
                     workflow_database_path=temp_submission_file,
                     workflow_id=workflow_id,

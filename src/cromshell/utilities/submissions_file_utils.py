@@ -92,11 +92,11 @@ def update_row_values_in_submission_db(
     :return:
     """
 
-    available_columns = [column.value for column in MutableSubmissionFileHeader]
-    if column_to_update not in available_columns:
-        raise ValueError(
+    mutable_columns = [column.value for column in MutableSubmissionFileHeader]
+    if column_to_update not in mutable_columns:
+        raise KeyError(
             f"Invalid column_to_update: '{column_to_update}'. "
-            f"Expected one of: '{available_columns}'"
+            f"Expected one of: '{mutable_columns}'"
         )
 
     # Update config.submission_file:

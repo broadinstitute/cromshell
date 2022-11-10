@@ -6,7 +6,7 @@ from cromshell.utilities import config_options_file_utils as cofu
 
 
 class TestConfigOptionsFileUtils:
-    """Test the functions config_options_file_utils.py"""
+    """Test the functions in config_options_file_utils.py"""
 
     @pytest.mark.parametrize(
         "json_to_validate, json_is_file_path, validity",
