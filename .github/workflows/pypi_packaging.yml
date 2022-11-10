@@ -42,18 +42,19 @@ jobs:
         run: python3 -m build
 
       - name: Replace version tag in pyproject.toml
-        run: sed -iE "s/version = $PARTITION_COLUMN.*/version = \"${{ inputs.version }}\"/" pyproject.toml
+        run: |
+          sed -iE "s/^\s*version\s*=\s*.*$/version = \"${{ inputs.version }}\"/" pyproject.toml
 
       - name: Publish to testPyPi using project 'cromshell-draft-release'
         if: ${{ inputs.PyPI_Repo  == 'testpypi' }}
         run: | 
-          sed -iE "s/name = $PARTITION_COLUMN.*/name = \"cromshell-draft-release\"/" pyproject.toml
+          sed -iE "s/^\s*name\s*=\s*.*$/name = \"cromshell-draft-release\"/" pyproject.toml
           cat pyproject.toml
           python3 -m twine upload --username __token__ --password ${{ secrets.Test_PYPI_TOKEN }} --repository testpypi dist/*
 
       - name: Publish to PyPi using project 'cromshell'
         if: ${{ inputs.PyPI_Repo  == 'pypi' }}
         run: |
-          sed -iE "s/name = $PARTITION_COLUMN.*/name = \"cromshell\"/" pyproject.toml
+          sed -iE "s/^\s*name\s*=\s*.*$/name = \"cromshell\"/" pyproject.toml
           cat pyproject.toml
           python3 -m twine upload --username __token__ --password ${{ secrets.PYPI_TOKEN }} --repository pypi dist/*
