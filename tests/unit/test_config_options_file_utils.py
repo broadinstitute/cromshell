@@ -84,12 +84,12 @@ class TestConfigOptionsFileUtils:
 
         if validity:
             cofu.validate_json_schema(
-                loaded_json_file=config_file_args, json_schema=cofu.CONFIG_FILE_TEMPLATE
+                loaded_json=config_file_args, json_schema=cofu.CONFIG_FILE_TEMPLATE
             )
         else:
             with pytest.raises(error_type):
                 cofu.validate_json_schema(
-                    loaded_json_file=config_file_args,
+                    loaded_json=config_file_args,
                     json_schema=cofu.CONFIG_FILE_TEMPLATE,
                 )
 

@@ -250,7 +250,10 @@ def post_submission_checks(request_out: Response, workflow_status: dict) -> None
     # 2. Check messages from server for workflow problems.
 
     # 2. A If the status is not `Submitted`, something went wrong:
-    if workflow_status["status"] != cromshellconfig.WorkflowStatuses.SUBMITTED.value:
+    if (
+        workflow_status["status"]
+        not in cromshellconfig.WorkflowStatuses.SUBMITTED.value
+    ):
         log.display_logo(logo=dead_turtle)
 
         LOGGER.error("Error: Server reports job was not properly submitted.")

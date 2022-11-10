@@ -5,6 +5,7 @@ import os
 import warnings
 from enum import Enum
 from pathlib import Path
+from typing import Union
 
 import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.submissions_file_utils as submissions_file_utils
@@ -65,6 +66,7 @@ def override_requests_cert_parameters(skip_certs: bool) -> None:
 
 class WorkflowStatuses(Enum):
     """Enum to hold all possible status of workflow"""
+
     # States listed here: https://github.com/broadinstitute/cromwell/blob/32d5d0cbf07e46f56d3d070f457eaff0138478d5/core/src/main/scala/cromwell/core/WorkflowState.scala
 
     SUBMITTED = ["Submitted"]
@@ -187,7 +189,7 @@ def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
 
 def __load_cromshell_config_file(
     config_directory: str, config_file_name: str, config_file_template: str
-) -> dict:
+) -> dict[str, Union[str, list, int, dict, float]]:
     """
     Load options from Cromshell Config File to dictionary.
 

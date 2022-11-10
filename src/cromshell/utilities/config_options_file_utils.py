@@ -16,9 +16,7 @@ def valid_json(json_to_validate: str or Path, json_is_file_path: bool = True) ->
     :return:
     """
 
-    # The json.load() is used to read the JSON document from file and
-    # The json.loads() is used to convert the JSON String document
-    # into the Python dictionary.
+    # The json.load() used for json files, and json.loads() used for JSON String.
 
     try:
         if json_is_file_path:
@@ -33,10 +31,10 @@ def valid_json(json_to_validate: str or Path, json_is_file_path: bool = True) ->
     return True
 
 
-def validate_json_schema(loaded_json_file: dict, json_schema: dict) -> None:
+def validate_json_schema(loaded_json: dict, json_schema: dict) -> None:
     """
 
-    :param loaded_json_file:
+    :param loaded_json:
     :param json_schema:
     :return:
     """
@@ -55,7 +53,7 @@ def validate_json_schema(loaded_json_file: dict, json_schema: dict) -> None:
         "Dict": dict,
     }
 
-    for key in loaded_json_file:
+    for key in loaded_json:
         if key not in json_schema:
             LOGGER.error(
                 "JSON key: '%s' is not an accepted option. "
@@ -64,19 +62,19 @@ def validate_json_schema(loaded_json_file: dict, json_schema: dict) -> None:
                 list(json_schema.keys()),
             )
             raise KeyError(
-                f"ERROR: key: '{key}' is not an found in the provided JSON schema"
+                f"ERROR: key: '{key}' is not found in the provided JSON schema"
             )
 
-        if type(loaded_json_file[key]) != json_value_types[json_schema[key]]:
+        if not isinstance(loaded_json[key], json_value_types[json_schema[key]]):
             LOGGER.error(
                 "The expected value type for option '%s' is '%s', but %s was provided.",
                 key,
                 json_schema[key],
-                type(loaded_json_file[key]),
+                type(loaded_json[key]),
             )
             raise ValueError(
                 f"The expected value type for option '{key}' is "
-                f"'{json_schema[key]}', but {type(loaded_json_file[key])} "
+                f"'{json_schema[key]}', but {type(loaded_json[key])} "
                 f"was provided."
             )
 
@@ -92,13 +90,14 @@ def validate_cromshell_config_options_file(config_options_file: Path) -> None:
 
     if not valid_json(json_to_validate=config_options_file):
         LOGGER.error(
-            "The provided file: %s failed JSON validation.", config_options_file
+            "The provided file: %s failed JSON format validation. Check that"
+            "the file adheres to basic JSON formatting rules.",
+            config_options_file,
         )
         raise ValueError(
-            f"ERROR: The provided file: {config_options_file} failed JSON validation."
+            f"ERROR: The provided file: {config_options_file} failed JSON format"
+            "validation."
         )
 
     with open(config_options_file, "r") as f:
-        validate_json_schema(
-            loaded_json_file=json.load(f), json_schema=CONFIG_FILE_TEMPLATE
-        )
+        validate_json_schema(loaded_json=json.load(f), json_schema=CONFIG_FILE_TEMPLATE)
