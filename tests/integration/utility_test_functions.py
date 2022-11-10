@@ -38,7 +38,23 @@ def run_cromshell_command(command: list, exit_code: int):
         return result
 
 
-def wait_for_workflow_completion(test_workflow_id: str):
+def wait_for_workflow_completion(
+    test_workflow_id: str, status_to_reach: str or list = None
+):
+    """
+
+    :param test_workflow_id: The workflow id whose status will be checked
+    :param status_to_reach: The status to wait for. By default, will be Succeeded
+    or Failed.
+    :return:
+    """
+
+    if status_to_reach is None:
+        status_to_reach = (
+            cromshellconfig.WorkflowStatuses.SUCCEEDED.value
+            + cromshellconfig.WorkflowStatuses.FAILED.value
+        )
+
     import time
 
     count = 0
@@ -56,10 +72,10 @@ def wait_for_workflow_completion(test_workflow_id: str):
         status_result_formatted = json.loads(status_result.stdout)
         status = status_result_formatted["status"]
 
-        if status == "Failed" or status == "Succeeded":
+        if status in status_to_reach:
             break
 
-    assert status == "Failed" or "Succeeded", "Workflow did not complete"
+    assert status in status_to_reach, f"Workflow didn't reach status: {status_to_reach}"
 
 
 def submit_workflow(

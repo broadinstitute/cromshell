@@ -28,3 +28,8 @@ def ansi_escape():
     :return:
     """
     return re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+@pytest.fixture
+def local_cromwell_url():
+    return "http://localhost:8000"
