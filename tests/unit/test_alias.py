@@ -42,20 +42,27 @@ class TestAlias:
         )
 
     @pytest.mark.parametrize(
-        "workflow_id, alias_existence",
+        "workflow_id, alias_exist, new_alias",
         [
-            ["a63aa10c-a43e-4ca7-9be9-c2d2aa08b96d", True],
-            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", False],
+            ["a63aa10c-a43e-4ca7-9be9-c2d2aa08b96d", True, "somealias"],
+            ["a63aa10c-a43e-4ca7-9be9-c2d2aa08b96d", True, ""],
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", False, "somealias"],
+            ["b3b197b3-fdca-4647-9fd8-bf16d2cb734d", False, ""],
         ],
     )
     #  'caplog' is pytest fixture
     def test_check_workflow_has_alias(
-        self, workflow_id, alias_existence, mock_workflow_database_tsv, caplog
+        self, workflow_id, alias_exist, new_alias, mock_workflow_database_tsv, caplog
     ) -> None:
         alias_command.check_workflow_has_alias(
-            workflow_id=workflow_id, submission_file=mock_workflow_database_tsv
+            workflow_id=workflow_id,
+            submission_file=mock_workflow_database_tsv,
+            alias_name=new_alias,
         )
         for record in caplog.records:
             assert record.levelname == "WARNING"
-            if alias_existence:
-                assert "Workflow already has alias, its current alias" in caplog.text
+            if alias_exist:
+                if new_alias == "":
+                    assert "will be removed." in caplog.text
+                else:
+                    assert f"will be replaced with '{new_alias}'" in caplog.text

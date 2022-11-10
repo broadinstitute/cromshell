@@ -20,10 +20,10 @@ def assert_workflow_id_matches_alias(
             if row[sfu.ImmutableSubmissionFileHeader.Run_ID.value] == workflow_id:
                 #  If alias_name is "" (which is when we want to remove an alias) assert
                 #  that the alias for the workflow id returns None. Else (when adding
-                #  and alias) assert that the alias for the workflow id returns
+                #  an alias) assert that the alias for the workflow id returns
                 #  the matching alias name.
                 if alias_name == "":
-                    assert row[sfu.MutableSubmissionFileHeader.Alias.value] is None
+                    assert row[sfu.MutableSubmissionFileHeader.Alias.value] == ""
                 else:
                     assert (
                         row[sfu.MutableSubmissionFileHeader.Alias.value] == alias_name

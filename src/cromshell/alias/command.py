@@ -41,6 +41,7 @@ def main(config, workflow_id: str or int, alias: str):
     run_workflow_checks(
         workflow_id=resolved_workflow_id,
         submission_file_path=config.submission_file_path,
+        alias_name=alias,
     )
 
     submissions_file_utils.update_row_values_in_submission_db(
@@ -78,7 +79,9 @@ def run_alias_pre_checks(alias_name: str, submission_file_path: str) -> None:
         raise ValueError(f"Alias already exists: {alias_name} ")
 
 
-def run_workflow_checks(workflow_id: str, submission_file_path: str) -> None:
+def run_workflow_checks(
+    workflow_id: str, submission_file_path: str, alias_name: str
+) -> None:
     """
     Run checks on workflow id to confirm it exists and whether it already has an alias
     :param workflow_id: Hexadecimal identifier of workflow submission
@@ -96,7 +99,9 @@ def run_workflow_checks(workflow_id: str, submission_file_path: str) -> None:
 
     # check if workflow id already has alias, if so print a warning message
     check_workflow_has_alias(
-        workflow_id=workflow_id, submission_file=submission_file_path
+        workflow_id=workflow_id,
+        submission_file=submission_file_path,
+        alias_name=alias_name,
     )
 
 
@@ -132,11 +137,14 @@ def alias_exists(alias_name: str, submission_file) -> bool:
         return False
 
 
-def check_workflow_has_alias(workflow_id: str, submission_file: str) -> None:
+def check_workflow_has_alias(
+    workflow_id: str, submission_file: str, alias_name: str
+) -> None:
     """
     Checks if workflow id has alias listed in submission file, print warning if so
     :param workflow_id: Hexadecimal identifier of workflow submission
     :param submission_file: Path to cromshell submission file
+    :param alias_name: the new alias name
     :return:
     """
 
@@ -144,9 +152,15 @@ def check_workflow_has_alias(workflow_id: str, submission_file: str) -> None:
         reader = csv.DictReader(csv_file, delimiter="\t")
         for row in reader:
             if row["RUN_ID"] == workflow_id:
-                if row["ALIAS"] is not None:
-                    LOGGER.warning(
-                        "Workflow already has alias, its current "
-                        "alias '%s' will be replaced",
-                        row["ALIAS"],
-                    )
+                if row["ALIAS"] != "":
+                    if alias_name == "":
+                        LOGGER.warning(
+                            "Workflows current alias '%s' will be removed.",
+                            row["ALIAS"],
+                        )
+                    else:
+                        LOGGER.warning(
+                            "Workflows current alias '%s' will be replaced with '%s'.",
+                            row["ALIAS"],
+                            alias_name,
+                        )
