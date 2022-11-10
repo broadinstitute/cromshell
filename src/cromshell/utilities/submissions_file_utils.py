@@ -1,5 +1,4 @@
 import csv
-import fileinput
 import logging
 import shutil
 from datetime import date
@@ -82,6 +81,7 @@ def update_row_values_in_submission_db(
     workflow_id: str,
     column_to_update: str,
     update_value: str,
+    fields: list = WorkflowDatabaseColumns.get_submission_file_headers(),
 ) -> None:
     """
     Updates the all_workflow_database_tsv for a given workflow_id and column
@@ -89,6 +89,7 @@ def update_row_values_in_submission_db(
     :param workflow_id: Hexadecimal identifier of workflow submission
     :param column_to_update:["STATUS", "ALIAS"]
     :param update_value: Value of the cell to update
+    :param fields: submission db column name
     :return:
     """
 
@@ -99,15 +100,21 @@ def update_row_values_in_submission_db(
             f"Expected one of: '{mutable_columns}'"
         )
 
-    # Update config.submission_file:
-    with fileinput.FileInput(
-        workflow_database_path, inplace=True, backup=".bak"
-    ) as csv_file:
-        reader = csv.DictReader(csv_file, delimiter="\t")
-        print("\t".join(reader.fieldnames))  # print statement rewrites file header
+    import tempfile
+
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+
+    # Update row in temp file:
+    with open(workflow_database_path, "r") as tsv_file, open(
+        tmp.name, "w"
+    ) as tempfile_tsv:
+        reader = csv.DictReader(tsv_file, delimiter="\t", fieldnames=fields)
+        writer = csv.DictWriter(tempfile_tsv, delimiter="\t", fieldnames=fields)
         for row in reader:
             if row["RUN_ID"] == workflow_id:
                 row[column_to_update] = update_value
-                print("\t".join(x for x in row.values() if x))  # writes row with update
-            else:
-                print("\t".join(x for x in row.values() if x))  # rewrites row
+            writer.writerow(row)
+
+    # copy over submission tsv with tempfile
+    shutil.move(tmp.name, workflow_database_path)
+    tmp.close()
