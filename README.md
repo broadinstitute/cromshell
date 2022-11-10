@@ -22,7 +22,7 @@ Current version: 2.0.0.beta
 ```
 
 ## Supported Flags:
-  * `--hide_logo`
+  * `--no_turtle` or `--I_hate_turtles`
     * Hide turtle logo
   * `--cromwell_url` `TEXT`
     * Specify Cromwell URL used
@@ -44,8 +44,7 @@ Current version: 2.0.0.beta
    * `submit` `[-w]` *`<wdl>`* *`<inputs_json>`* `[options_json]` `[included_wdl_zip_file]`
      * Will automatically validate the WDL and JSON file.
      * Submit a new workflow.
-     * *`-w`*                     Wait for workflow to transition from 'Submitted' to some other status
-                                  before ${SCRIPTNAME} exits
+     * *`-w`* [COMING SOON] Wait for workflow to transition from 'Submitted' to some other status before ${SCRIPTNAME} exits.
      * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
    * `abort` *`[workflow-id] [[workflow-id]...]`*                   
      * Abort a running workflow.
@@ -110,7 +109,7 @@ Current version: 2.0.0.beta
 From brew
 
     brew tap broadinstitute/dsp
-    brew install cromshell@2.0.0.beta
+    brew install cromshell@2.0.0.beta.1
 
 
 From source

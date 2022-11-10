@@ -31,7 +31,7 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     classifiers=[
-        "Development Status :: 3 - Beta",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",

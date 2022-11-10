@@ -53,7 +53,8 @@ LOGGER = logging.getLogger(__name__)
     help="Highest level logging for debugging",
 )
 @click.option(
-    "--hide_logo",
+    "--no_turtle",
+    "--I_hate_turtles",
     flag_value=True,
     help="Hide turtle logo",
 )
