@@ -507,7 +507,7 @@ function populateLastWorkflowId()
 
 function aliasExists(){
   alias_name=${1}
-  grep -q "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE}
+  grep -P -q "\\t${alias_name}\$" ${CROMWELL_SUBMISSIONS_FILE}
 }
 
 function alias_workflow() 
@@ -763,13 +763,17 @@ function waitOnSubmittedStatus()
 function submit() 
 {
   local doWait=false
+  local saveInputJsonAsAlias=false
     
   # Handle Arguments:
   local OPTIND
-  while getopts "w" opt ; do
+  while getopts "wa" opt ; do
     case ${opt} in 
       w)
         doWait=true
+        ;;
+      a)
+        saveInputJsonAsAlias=true
         ;;
       *)
         invalidSubCommand submit flag ${OPTARG}
@@ -796,6 +800,14 @@ function submit()
   assertRequiredFileIsNonEmpty "${json}" "Input JSON"
 
   # At this point, we should validate our inputs if we can:
+  if $saveInputJsonAsAlias; then
+    local workflowAlias=$(basename ${json})
+    if aliasExists ${workflowAlias}; then
+      echo -e "Alias ${workflowAlias} is already in use. Please pick a new alias."
+      exit 8
+    fi
+  fi
+
   which womtool &> /dev/null
   local r=$?
   if [[ ${r} -eq 0 ]] ; then
@@ -860,7 +872,11 @@ function submit()
 
   cp ${1} ${2} ${3} ${4} ${runDir}/
 
-  echo -e "$(date +%Y%m%d_%H%M%S)\t${CROMWELL_URL}\t${id}\t$(basename ${1})\tSubmitted" >> ${CROMWELL_SUBMISSIONS_FILE}
+  if $saveInputJsonAsAlias ; then
+    workflowAlias="\t${workflowAlias}"
+  fi
+
+  echo -e "$(date +%Y%m%d_%H%M%S)\t${CROMWELL_URL}\t${id}\t$(basename ${1})\tSubmitted${workflowAlias}" >> ${CROMWELL_SUBMISSIONS_FILE}
 
   # Now that we've submitted our task, we should see if we have to wait:
   if ${doWait} ; then
