@@ -4,9 +4,15 @@ import logging
 import click
 import requests
 
+import cromshell.utilities.submissions_file_utils
 from cromshell import log
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import cromshellconfig, http_utils, io_utils
+from cromshell.utilities import (
+    command_setup_utils,
+    cromshellconfig,
+    http_utils,
+    io_utils,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,16 +27,9 @@ def main(config, workflow_id):
 
     ret_val = 0
 
-    # Set cromwell server using submission file. Running the function below with
-    # passing only the workflow id overrides the default cromwell url set in the
-    # cromshell config file, command line argument, and environment. This takes
-    # place only if the workflow id is found in the submission file.
-    cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
-
-    config.cromwell_api_workflow_id = f"{config.get_cromwell_api()}/{workflow_id}"
-
-    # Check if Cromwell Server Backend works
-    http_utils.assert_can_communicate_with_server(config)
+    command_setup_utils.resolve_workflow_id_and_server(
+        workflow_id=workflow_id, cromshell_config=config
+    )
 
     # Request workflow status
     request_out = requests.get(
@@ -83,12 +82,17 @@ def main(config, workflow_id):
         else:
             log.display_logo(io_utils.doomed_logo)
             workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value[0]
+
+            requested_status_json = (
+                f'{{"status":"{workflow_status}","id":"{workflow_id}"}}'
+            )
+
             message = (
                 "The workflow is Running but one of the instances "
                 "has failed which will lead to failure."
             )
-            requested_status_json = (
-                f'{{"status":"{workflow_status}","id":"{workflow_id}"}}\n{message} '
+            log.DelayedLogMessage.save_log_message(
+                log_level=logging.WARNING, log_message=message
             )
 
     else:
@@ -97,9 +101,10 @@ def main(config, workflow_id):
     # Display status to user:
     line_string = requested_status_json
     print(line_string.replace(",", ",\n"))
+    log.DelayedLogMessage.display_log_messages()
 
     # Update config.submission_file:
-    io_utils.update_all_workflow_database_tsv(
+    cromshell.utilities.submissions_file_utils.update_row_values_in_submission_db(
         workflow_database_path=config.submission_file_path,
         workflow_id=workflow_id,
         column_to_update="STATUS",
@@ -109,7 +114,7 @@ def main(config, workflow_id):
     return ret_val
 
 
-def workflow_failed(metadata: dict):
+def workflow_failed(metadata: dict) -> bool:
     """Checks a workflow metadata dictionary for failing statuses
     Returns True to indicate workflow or some task(s) has failed"""
 

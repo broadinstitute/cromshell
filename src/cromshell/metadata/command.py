@@ -3,7 +3,7 @@ import logging
 import click
 import requests
 
-from cromshell.utilities import cromshellconfig, http_utils, io_utils
+from cromshell.utilities import command_setup_utils, http_utils, io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +23,9 @@ def main(config, workflow_id: str, dont_expand_subworkflows: bool):
 
     LOGGER.info("metadata")
 
-    check_cromwell_server(config=config, workflow_id=workflow_id)
+    command_setup_utils.resolve_workflow_id_and_server(
+        workflow_id=workflow_id, cromshell_config=config
+    )
 
     obtain_and_print_metadata(
         config=config,
@@ -33,20 +35,6 @@ def main(config, workflow_id: str, dont_expand_subworkflows: bool):
     )
 
     return 0
-
-
-def check_cromwell_server(config, workflow_id):
-    """Checks for an associated cromwell server for the workflow_id
-    and checks connection with the cromwell server"""
-
-    # Overrides the default cromwell url set in the cromshell config file or
-    # command line argument if the workflow id is found in the submission file.
-    cromshellconfig.resolve_cromwell_config_server_address(workflow_id=workflow_id)
-
-    config.cromwell_api_workflow_id = f"{config.get_cromwell_api()}/{workflow_id}"
-
-    # Check if Cromwell Server Backend works
-    http_utils.assert_can_communicate_with_server(config)
 
 
 def format_metadata_params(
@@ -101,7 +89,7 @@ def get_workflow_metadata(
 
 def obtain_and_print_metadata(
     config, metadata_param: list, exclude_keys: bool, dont_expand_subworkflows: bool
-):
+) -> None:
     """Format metadata parameters and obtains metadata from cromwell server"""
 
     # Combine keys and flags into a dictionary
@@ -120,4 +108,4 @@ def obtain_and_print_metadata(
         headers=http_utils.generate_headers(config),
     )
 
-    io_utils.pretty_print_json(workflow_metadata_json, add_color=True)
+    io_utils.pretty_print_json(format_json=workflow_metadata_json, add_color=True)

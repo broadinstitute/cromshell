@@ -1,54 +1,10 @@
-import json
 from pathlib import Path
 
 import pytest
 
-from tests.integration import test_submit, utility_test_functions
+from tests.integration import utility_test_functions
 
 workflows_path = Path(__file__).parents[1].joinpath("workflows/")
-
-
-def wait_for_workflow_completion(test_workflow_id: str):
-    import time
-
-    count = 0
-    status = ""
-    print("Printing workflow status:")
-    while count < 10:
-        time.sleep(5)
-        count += 1
-        # run status check every 5 sec until done, max 10x
-        status_result = utility_test_functions.run_cromshell_command(
-            command=["status", test_workflow_id],
-            exit_code=0,
-        )
-        print(status_result.stdout)
-        status_result_formatted = json.loads(status_result.stdout)
-        status = status_result_formatted["status"]
-        print(status)
-        if status == "Failed" or status == "Succeeded":
-            break
-
-    assert status == "Failed" or "Succeeded", "Workflow did not complete"
-
-
-def submit_workflow(
-    local_cromwell_url: str,
-    wdl: str,
-    json_file: str,
-    exit_code: int,
-) -> str:
-    # Run cromshell submit
-    submit_result = test_submit.run_cromshell_submit(
-        wdl=wdl,
-        json_file=json_file,
-        no_validation=False,
-        exit_code=exit_code,
-        local_cromwell_url=local_cromwell_url,
-    )
-
-    stdout_substring_formatted = json.loads(submit_result.stdout)
-    return stdout_substring_formatted["id"]
 
 
 class TestCounts:
@@ -82,14 +38,16 @@ class TestCounts:
         ansi_escape,
     ):
         # submit workflow
-        test_workflow_id = submit_workflow(
+        test_workflow_id = utility_test_functions.submit_workflow(
             local_cromwell_url=local_cromwell_url,
             wdl=wdl,
             json_file=json_file,
             exit_code=0,
         )
 
-        wait_for_workflow_completion(test_workflow_id=test_workflow_id)
+        utility_test_functions.wait_for_workflow_completion(
+            test_workflow_id=test_workflow_id
+        )
 
         # run counts
         status_result = utility_test_functions.run_cromshell_command(

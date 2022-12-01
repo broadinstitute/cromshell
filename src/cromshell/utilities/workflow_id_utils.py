@@ -96,7 +96,7 @@ def obtain_workflow_id_using_alias(alias_name: str, submission_file_path: str) -
         raise ValueError(f"Unable to find alias {alias_name} in submission file")
 
 
-def workflow_id_exists(workflow_id: str, submission_file) -> bool:
+def workflow_id_exists(workflow_id: str, submission_file: str) -> bool:
     """
     Check if workflow ID exists in submission file.
     :param workflow_id: Hexadecimal identifier of workflow

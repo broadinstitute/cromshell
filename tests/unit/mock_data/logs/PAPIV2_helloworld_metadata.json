@@ -1,0 +1,235 @@
+{
+    "actualWorkflowLanguage": "WDL",
+    "actualWorkflowLanguageVersion": "draft-2",
+    "calls": {
+        "HelloWorld.HelloWorldTask": [
+            {
+                "attempt": 1,
+                "backend": "PAPIv2",
+                "backendLabels": {
+                    "cromwell-workflow-id": "cromwell-9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b",
+                    "wdl-task-name": "helloworldtask"
+                },
+                "backendLogs": {
+                    "log": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/HelloWorldTask.log"
+                },
+                "backendStatus": "Success",
+                "callCaching": {
+                    "allowResultReuse": true,
+                    "effectiveCallCachingMode": "ReadAndWriteCache",
+                    "hashes": {
+                        "backend name": "85D6F63859525E464173387636E20324",
+                        "command template": "265419AF4D334CAD1CC95E22CABFC8E5",
+                        "input": {
+                            "Boolean use_ssd": "68934A3E9455FA72420237EB05902327",
+                            "Int command_mem": "051928341BE67DCBA03F0E04104D9047",
+                            "Int default_boot_disk_size_gb": "9BF31C7FF062936A96D3C8BD1F8F2FF3",
+                            "Int default_disk_space_gb": "F899139DF5E1059396431415E770C6DD",
+                            "Int default_ram_mb": "BE767243CA8F574C740FB4C26CC6DCEB",
+                            "Int machine_mem": "BE767243CA8F574C740FB4C26CC6DCEB",
+                            "String docker": "1013E15CCD5A51F2B5A9F9DB9A13A756"
+                        },
+                        "input count": "8F14E45FCEEA167A5A36DEDD4BEA2543",
+                        "output count": "CFCD208495D565EF66E7DFF9F98764DA",
+                        "runtime attribute": {
+                            "continueOnReturnCode": "CFCD208495D565EF66E7DFF9F98764DA",
+                            "docker": "D1FA3055EB3A898E0F62F288A334EB0A",
+                            "failOnStderr": "68934A3E9455FA72420237EB05902327"
+                        }
+                    },
+                    "hit": false,
+                    "result": "Cache Miss"
+                },
+                "callRoot": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask",
+                "commandLine": "    set -e\necho 'Hello World!'",
+                "compressedDockerSize": 4991278,
+                "dockerImageUsed": "frolvlad/alpine-bash@sha256:edac5ae03440fe8dcf3ff3410373c8dce56cca2915c74b5bf39afecff1693b28",
+                "end": "2022-10-21T19:12:53.198Z",
+                "executionEvents": [
+                    {
+                        "description": "Worker \"google-pipelines-worker-6debdda87d7e05f880737046b3f87c2a\" assigned in \"us-east1-b\" on a \"custom-1-3072\" machine",
+                        "endTime": "2022-10-21T19:10:54.271Z",
+                        "startTime": "2022-10-21T19:10:15.348Z"
+                    },
+                    {
+                        "description": "Worker released",
+                        "endTime": "2022-10-21T19:12:08.760Z",
+                        "startTime": "2022-10-21T19:12:08.760Z"
+                    },
+                    {
+                        "description": "UpdatingJobStore",
+                        "endTime": "2022-10-21T19:12:53.198Z",
+                        "startTime": "2022-10-21T19:12:52.199Z"
+                    },
+                    {
+                        "description": "UserAction",
+                        "endTime": "2022-10-21T19:11:54.971Z",
+                        "startTime": "2022-10-21T19:11:50.783Z"
+                    },
+                    {
+                        "description": "CallCacheReading",
+                        "endTime": "2022-10-21T19:09:48.639Z",
+                        "startTime": "2022-10-21T19:09:48.634Z"
+                    },
+                    {
+                        "description": "Complete in GCE / Cromwell Poll Interval",
+                        "endTime": "2022-10-21T19:12:52.016Z",
+                        "startTime": "2022-10-21T19:12:08.760Z"
+                    },
+                    {
+                        "description": "Pending",
+                        "endTime": "2022-10-21T19:09:48.049Z",
+                        "startTime": "2022-10-21T19:09:48.048Z"
+                    },
+                    {
+                        "description": "WaitingForValueStore",
+                        "endTime": "2022-10-21T19:09:48.266Z",
+                        "startTime": "2022-10-21T19:09:48.266Z"
+                    },
+                    {
+                        "description": "RunningJob",
+                        "endTime": "2022-10-21T19:10:03.560Z",
+                        "startTime": "2022-10-21T19:09:48.639Z"
+                    },
+                    {
+                        "description": "ContainerSetup",
+                        "endTime": "2022-10-21T19:11:30.236Z",
+                        "startTime": "2022-10-21T19:11:26.183Z"
+                    },
+                    {
+                        "description": "Localization",
+                        "endTime": "2022-10-21T19:11:50.783Z",
+                        "startTime": "2022-10-21T19:11:31.132Z"
+                    },
+                    {
+                        "description": "Pulling \"frolvlad/alpine-bash@sha256:edac5ae03440fe8dcf3ff3410373c8dce56cca2915c74b5bf39afecff1693b28\"",
+                        "endTime": "2022-10-21T19:11:26.183Z",
+                        "startTime": "2022-10-21T19:11:23.952Z"
+                    },
+                    {
+                        "description": "waiting for quota",
+                        "endTime": "2022-10-21T19:10:15.348Z",
+                        "startTime": "2022-10-21T19:10:03.560Z"
+                    },
+                    {
+                        "description": "Pulling \"gcr.io/google.com/cloudsdktool/cloud-sdk:276.0.0-slim\"",
+                        "endTime": "2022-10-21T19:11:23.952Z",
+                        "startTime": "2022-10-21T19:10:54.271Z"
+                    },
+                    {
+                        "description": "PreparingJob",
+                        "endTime": "2022-10-21T19:09:48.634Z",
+                        "startTime": "2022-10-21T19:09:48.266Z"
+                    },
+                    {
+                        "description": "Background",
+                        "endTime": "2022-10-21T19:11:30.760Z",
+                        "startTime": "2022-10-21T19:11:30.427Z"
+                    },
+                    {
+                        "description": "Delocalization",
+                        "endTime": "2022-10-21T19:12:08.760Z",
+                        "startTime": "2022-10-21T19:11:54.971Z"
+                    },
+                    {
+                        "description": "RequestingExecutionToken",
+                        "endTime": "2022-10-21T19:09:48.266Z",
+                        "startTime": "2022-10-21T19:09:48.049Z"
+                    },
+                    {
+                        "description": "UpdatingCallCache",
+                        "endTime": "2022-10-21T19:12:52.199Z",
+                        "startTime": "2022-10-21T19:12:52.016Z"
+                    }
+                ],
+                "executionStatus": "Done",
+                "inputs": {
+                    "boot_disk_size_gb": null,
+                    "command_mem": 2048,
+                    "cpu": null,
+                    "default_boot_disk_size_gb": 15,
+                    "default_disk_space_gb": 100,
+                    "default_ram_mb": 3072,
+                    "disk_space_gb": null,
+                    "docker": "frolvlad/alpine-bash",
+                    "machine_mem": 3072,
+                    "mem": null,
+                    "preemptible_attempts": null,
+                    "use_ssd": false
+                },
+                "jes": {
+                    "endpointUrl": "https://lifesciences.googleapis.com/",
+                    "executionBucket": "gs://broad-dsp-lrma-cromwell-central",
+                    "googleProject": "broad-dsp-lrma",
+                    "instanceName": "google-pipelines-worker-6debdda87d7e05f880737046b3f87c2a",
+                    "machineType": "custom-1-3072",
+                    "zone": "us-east1-b"
+                },
+                "jobId": "projects/602335226495/locations/us-central1/operations/7523289379686914908",
+                "labels": {
+                    "cromwell-workflow-id": "cromwell-9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b",
+                    "wdl-task-name": "HelloWorldTask"
+                },
+                "outputs": {},
+                "preemptible": false,
+                "returnCode": 0,
+                "runtimeAttributes": {
+                    "bootDiskSizeGb": "15",
+                    "continueOnReturnCode": "0",
+                    "cpu": "1",
+                    "cpuMin": "1",
+                    "disks": "local-disk 100 HDD",
+                    "docker": "frolvlad/alpine-bash",
+                    "failOnStderr": "false",
+                    "maxRetries": "0",
+                    "memory": "3 GB",
+                    "memoryMin": "2 GB",
+                    "noAddress": "false",
+                    "preemptible": "0",
+                    "zones": "us-east1-b,us-east1-c,us-east1-d"
+                },
+                "shardIndex": -1,
+                "start": "2022-10-21T19:09:48.048Z",
+                "stderr": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/stderr",
+                "stdout": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/stdout"
+            }
+        ]
+    },
+    "end": "2022-10-21T19:12:53.940Z",
+    "id": "9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b",
+    "inputs": {
+        "HelloWorld.HelloWorldTask.default_boot_disk_size_gb": 15,
+        "HelloWorld.HelloWorldTask.default_disk_space_gb": 100,
+        "HelloWorld.HelloWorldTask.default_ram_mb": 3072,
+        "HelloWorld.HelloWorldTask.use_ssd": false,
+        "HelloWorld.boot_disk_size_gb": null,
+        "HelloWorld.cpu": null,
+        "HelloWorld.disk_space_gb": null,
+        "HelloWorld.docker": "frolvlad/alpine-bash",
+        "HelloWorld.mem": null,
+        "HelloWorld.preemptible_attempts": null
+    },
+    "labels": {
+        "cromwell-workflow-id": "cromwell-9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b"
+    },
+    "outputs": {},
+    "start": "2022-10-21T19:09:45.889Z",
+    "status": "Succeeded",
+    "submission": "2022-10-21T19:09:27.744Z",
+    "workflowName": "HelloWorld",
+    "workflowProcessingEvents": [
+        {
+            "cromwellId": "cromid-dea8727",
+            "cromwellVersion": "63",
+            "description": "Finished",
+            "timestamp": "2022-10-21T19:12:53.940Z"
+        },
+        {
+            "cromwellId": "cromid-dea8727",
+            "cromwellVersion": "63",
+            "description": "PickedUp",
+            "timestamp": "2022-10-21T19:09:45.888Z"
+        }
+    ],
+    "workflowRoot": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/"
+}

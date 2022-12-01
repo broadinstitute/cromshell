@@ -3,6 +3,7 @@ import logging
 import click
 
 from cromshell.metadata import command as metadata_command
+from cromshell.utilities import command_setup_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +48,9 @@ def main(
     # strip trailing comma from keys and split keys by comma
     key_param = [] if not keys else str(keys).strip(",").split(",")
 
-    metadata_command.check_cromwell_server(config=config, workflow_id=workflow_id)
+    command_setup_utils.resolve_workflow_id_and_server(
+        workflow_id=workflow_id, cromshell_config=config
+    )
 
     # Resolve and get metadata keys from cli, config file, or config default
     metadata_parameter = resolve_and_return_metadata_keys(
@@ -86,7 +89,6 @@ def resolve_and_return_metadata_keys(
     # If metadata_keys is specified in cromshell config file then use it for keys
     elif "slim_metadata_keys" in cromshell_config_options:
         LOGGER.info("Setting metadata key(s) from value in config file.")
-        # TODO: Turn to magic string in the config script once rebased with PR 156
         return cromshell_config_options["slim_metadata_keys"]
 
     # Return the default keys from config module constant

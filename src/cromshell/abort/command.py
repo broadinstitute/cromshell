@@ -3,7 +3,7 @@ import logging
 import click
 import requests
 
-from cromshell.utilities import cromshellconfig, http_utils, io_utils
+from cromshell.utilities import command_setup_utils, http_utils, io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,25 +25,24 @@ def main(config, workflow_ids):
 
     for wdl_id in workflow_ids:
 
-        cromshellconfig.resolve_cromwell_config_server_address(workflow_id=wdl_id)
-
-        http_utils.assert_can_communicate_with_server(config)
+        command_setup_utils.resolve_workflow_id_and_server(
+            workflow_id=wdl_id, cromshell_config=config
+        )
 
         requests_out = requests.post(
-            f"{config.cromwell_server}{config.CROMWELL_API_STRING}/{wdl_id}/abort",
+            f"{config.cromwell_api_workflow_id}/abort",
             headers=http_utils.generate_headers(config),
         )
 
         if requests_out.ok:
-            # Todo: Replace input with requests_out.json() once rebased with submit PR
-            io_utils.pretty_print_json(requests_out.json())
+            io_utils.pretty_print_json(format_json=requests_out.json())
         else:
             return_code = 1
 
             http_utils.check_http_request_status_code(
                 short_error_message="Failed to abort workflow.",
                 response=requests_out,
-                # Raising exception is set to false to allow
+                # Raising exception is set false to allow
                 # command to abort remaining workflows.
                 raise_exception=False,
             )
