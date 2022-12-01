@@ -4,7 +4,7 @@ from sys import argv
 import click
 
 from cromshell.utilities import cromshellconfig
-from cromshell.utilities.submissions_file_utils import update_submission_db
+from cromshell.utilities.submissions_file_utils import update_submission_db_format
 
 from .abort import command as abort
 from .alias import command as alias
@@ -111,13 +111,15 @@ def main_entry(
     log.configure_logging(verbosity)
     log.override_logo_display_setting(hide_logo)
 
-    # Log our command-line and log level so we can have it in the log file:
+    # Log our command-line and log level, so we can have it in the log file:
     LOGGER.info("Invoked by: %s", " ".join(argv))
     LOGGER.info("Log level set to: %s", logging.getLevelName(logging.getLogger().level))
 
     # Create an object to hold all cromwell configurations
     cromshell_config.obj = cromshellconfig
-    update_submission_db(submission_file_path=cromshellconfig.submission_file_path)
+    update_submission_db_format(
+        submission_file_path=cromshellconfig.submission_file_path
+    )
     cromshellconfig.resolve_cromwell_config_server_address(server_user=cromwell_url)
     cromshellconfig.override_requests_cert_parameters(skip_certs=requests_skip_certs)
     cromshellconfig.resolve_requests_connect_timeout(timeout_cli=requests_timeout)

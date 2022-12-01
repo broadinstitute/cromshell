@@ -6,7 +6,7 @@ import gcsfs
 from termcolor import colored
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import http_utils
+from cromshell.utilities import command_setup_utils, http_utils
 from cromshell.utilities.io_utils import get_color_for_status_key
 
 LOGGER = logging.getLogger(__name__)
@@ -57,7 +57,9 @@ def main(
         else str(status).strip(",").split(",")
     )
 
-    metadata_command.check_cromwell_server(config=config, workflow_id=workflow_id)
+    command_setup_utils.resolve_workflow_id_and_server(
+        workflow_id=workflow_id, cromshell_config=config
+    )
 
     LOGGER.info("Status keys set to %s", status_param)
 
@@ -85,7 +87,7 @@ def obtain_and_print_logs(
     print_logs: bool,
     status_params: list,
     dont_expand_subworkflows: bool,
-):
+) -> None:
     """Format metadata parameters and obtains metadata from cromwell server"""
 
     # Combine keys and flags into a dictionary
@@ -115,7 +117,8 @@ def obtain_and_print_logs(
 
     if not found_logs:
         print(
-            f"No logs with status {status_params} found for workflow, try adding the argument '-s ALL' to list logs with any status"
+            f"No logs with status {status_params} found for workflow, try adding "
+            f"the argument '-s ALL' to list logs with any status"
         )
 
 
@@ -131,7 +134,7 @@ def print_workflow_logs(
     call out to the helper in order to print found logs
     :param workflow_metadata: Metadata of the workflow to process
     :param indent: Indent string given as "\t", used to indent print out
-    :param expand_sub_workflows:  Boolean, whether or not to print subworkflows
+    :param expand_sub_workflows:  Boolean, whether to print subworkflows
     :return: true if any logs matching the parameters were found
     """
     did_print = False
@@ -166,7 +169,13 @@ def print_workflow_logs(
         # If no subworkflow is found then print status summary for the task
         else:
             did_print = (
-                print_task_logs(task, indent, workflow_metadata, status_keys, cat_logs)
+                print_task_logs(
+                    task=task,
+                    indent=indent,
+                    workflow_metadata=workflow_metadata,
+                    status_keys=status_keys,
+                    cat_logs=cat_logs,
+                )
                 or did_print
             )
 
@@ -183,8 +192,10 @@ def print_task_logs(
     """
     Prints the backend logs from the workflow
     :param task: Name of the task
-    :param indent: Indent string given as a string of "\t" characters, used to indent print out
+    :param indent: Indent string given as a string of "\t" characters,
+    used to indent print out
     :param workflow_metadata: Metadata of the workflow to process
+    :param status_keys: Determines what logs to show based on call status
     :param cat_logs: Will use GCS to attempt to print the logs
     :return: true if any logs were printed
     """
@@ -204,11 +215,13 @@ def print_task_logs(
             shardstring = (
                 "" if not sharded else "-shard-" + str(shard_list[i]["shardIndex"])
             )
-            logs = shard_list[i]["backendLogs"]["log"]
+
+            logs = get_backend_logs(shard_list[i])
+
             if cat_logs:
                 print(
                     colored(
-                        f"\n\n\n{'=' * os.get_terminal_size().columns }\n{indent}{task}{shardstring}:\t{status}\t {logs}\n{'=' * os.get_terminal_size().columns }",
+                        f"\n\n\n{'=' * os.get_terminal_size().columns}\n{indent}{task}{shardstring}:\t{status}\t {logs}\n{'=' * os.get_terminal_size().columns}",
                         color=task_status_font,
                     )
                 )
@@ -228,6 +241,25 @@ def print_task_logs(
                 )
             did_print = True
     return did_print
+
+
+def get_backend_logs(task_instance: dict) -> str:
+    """
+    Gets the backend log for an instance of a task call
+
+    :param task_instance: Metadata info of a task instance
+        e.g. (workflow_metadata['calls'][SomeWorkflow.SomeTask][0])
+    :return:
+    """
+    if task_instance.get("backend") == "Local":
+        backend_logs = {"log": "Backend Logs Not Available Due to Local Execution"}
+
+    else:
+        backend_logs = task_instance.get(
+            "backendLogs", {"log": "Backend Logs Not Found"}
+        )
+
+    return backend_logs.get("log")
 
 
 if __name__ == "__main__":

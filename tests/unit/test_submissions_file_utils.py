@@ -1,7 +1,7 @@
 import os
 
 from cromshell.utilities import submissions_file_utils as sfu
-from cromshell.utilities.submissions_file_utils import update_submission_db
+from cromshell.utilities.submissions_file_utils import update_submission_db_format
 
 
 class TestSubmissionsFileUtils:
@@ -28,7 +28,7 @@ class TestSubmissionsFileUtils:
                 "DATE\tCROMWELL_SERVER\tRUN_ID\tWDL_NAME\tSTATUS\tALIAS\ndate\tserver\trun\twdl\tstatus\talias"
             )
 
-        old_format = update_submission_db(
+        old_format = update_submission_db_format(
             submission_file_path=database_path,
         )
         assert (
@@ -45,7 +45,7 @@ class TestSubmissionsFileUtils:
             )
 
         # ensure that the function identifies the old database format and attempts a fix
-        old_format = update_submission_db(
+        old_format = update_submission_db_format(
             submission_file_path=database_path,
         )
         assert (
@@ -53,7 +53,7 @@ class TestSubmissionsFileUtils:
         ), "cromshellconfig.__ensure_correct_submission_database_format failed to identify an incorrect database"
 
         # see if it's actually fixed
-        old_format = update_submission_db(
+        old_format = update_submission_db_format(
             submission_file_path=database_path,
         )
         assert (

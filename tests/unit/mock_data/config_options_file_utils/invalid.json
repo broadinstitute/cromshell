@@ -1,0 +1,5 @@
+{
+  "cromwell_server": "http://localhost:8000",
+  "requests_timeout": 5,
+  "foo":
+}

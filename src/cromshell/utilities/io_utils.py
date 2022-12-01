@@ -1,5 +1,3 @@
-import csv
-import fileinput
 import json
 import logging
 import re
@@ -13,8 +11,6 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from pygments import formatters, highlight, lexers
 from termcolor import colored
 
-from cromshell.utilities import submissions_file_utils
-
 LOGGER = logging.getLogger(__name__)
 
 workflow_id_pattern = re.compile(
@@ -22,7 +18,7 @@ workflow_id_pattern = re.compile(
 )
 
 
-def dead_turtle():
+def dead_turtle() -> None:
     """Print Dead Turtle"""
 
     print(
@@ -40,7 +36,7 @@ def dead_turtle():
     )
 
 
-def turtle():
+def turtle() -> None:
     """Print Alive Turtle"""
 
     print(
@@ -58,7 +54,7 @@ def turtle():
     )
 
 
-def doomed_logo():
+def doomed_logo() -> None:
     """Print Doom"""
 
     print(
@@ -89,7 +85,7 @@ def doomed_logo():
     )
 
 
-def assert_path_is_not_empty(path: Union[str, Path], description: str):
+def assert_path_is_not_empty(path: Union[str, Path], description: str) -> None:
     """Confirm the provided file or directory exist and is not empty."""
 
     if not Path(path).exists():
@@ -158,10 +154,15 @@ def is_workflow_id_valid(workflow_id: str):
 
 
 def color_json(formatted_json: str) -> str:
+    """
+    Returns json with highlights
+    :param formatted_json:
+    :return:
+    """
     return highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
 
 
-def pretty_print_json(format_json: str or dict, add_color: bool = False):
+def pretty_print_json(format_json: str or dict, add_color: bool = False) -> None:
     """Prints JSON String in a fancy way
 
     - json_text: valid json string or dictionary, NOT json file path"""
@@ -179,7 +180,7 @@ def pretty_print_json(format_json: str or dict, add_color: bool = False):
 
 def create_directory(
     dir_path: str or Path, parents: bool = True, exist_ok: bool = False
-):
+) -> None:
     """Creates a Directory
     - dir_path: full path to directory being created
     - parents: whether the new directory will need to be nested
@@ -199,7 +200,7 @@ def create_directory(
 def copy_files_to_directory(
     directory: Union[str, Path],
     inputs: Union[List[Union[str, Path, None]], Union[str, Path, None]],
-):
+) -> None:
     """Copies files to specified directory"""
 
     # check dir exists
@@ -220,44 +221,6 @@ def copy_files_to_directory(
         shutil.copy(inputs, directory)
 
 
-def update_all_workflow_database_tsv(
-    workflow_database_path: str,
-    workflow_id: str,
-    column_to_update: str,
-    update_value: str,
-) -> None:
-    """
-    Updates the all_workflow_database_tsv for a given workflow_id and column
-    :param workflow_database_path: Path to all_workflow_database tsv file
-    :param workflow_id: Hexadecimal identifier of workflow submission
-    :param column_to_update:["STATUS", "ALIAS"]
-    :param update_value: Value of the cell to update
-    :return:
-    """
-
-    available_columns = [
-        column.value for column in submissions_file_utils.MutableSubmissionFileHeader
-    ]
-    if column_to_update not in available_columns:
-        raise ValueError(
-            f"Invalid column_to_update: '{column_to_update}'. "
-            f"Expected one of: '{available_columns}'"
-        )
-
-    # Update config.submission_file:
-    with fileinput.FileInput(
-        workflow_database_path, inplace=True, backup=".bak"
-    ) as csv_file:
-        reader = csv.DictReader(csv_file, delimiter="\t")
-        print("\t".join(reader.fieldnames))  # print statement rewrites file header
-        for row in reader:
-            if row["RUN_ID"] == workflow_id:
-                row[column_to_update] = update_value
-                print("\t".join(x for x in row.values() if x))  # writes row with update
-            else:
-                print("\t".join(x for x in row.values() if x))  # rewrites row
-
-
 class TextStatusesColor:
     """Holds stdout formatting per workflow status"""
 
@@ -275,9 +238,14 @@ class TextStatusesColor:
     TASK_COLOR_FAILED = "red"
 
 
-def get_color_for_status_key(status):
-    """Helper method for getting the correct font color for a given execution status for a job (or none for
-    unrecognized statuses)"""
+def get_color_for_status_key(status: str) -> str:
+    """
+    Helper method for getting the correct font color for
+    a given execution status for a job (or none for unrecognized statuses)
+    """
+
+    task_status_font = None
+
     if "Done" in status:
         task_status_font = TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif "Running" in status:
@@ -286,6 +254,5 @@ def get_color_for_status_key(status):
         task_status_font = TextStatusesColor.TASK_COLOR_FAILING
     elif "Failed":
         task_status_font = TextStatusesColor.TASK_COLOR_FAILED
-    else:
-        task_status_font = None
+
     return task_status_font
