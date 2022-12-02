@@ -45,6 +45,13 @@ class TestIOUtilities:
                 path=empty_temp_file_path, description="Io Utils"
             ), "Provided a fake file path, function is fail"
 
+        if len(os.listdir(tmp_path)) == 0:
+            with pytest.raises(EOFError):
+                io_utils.assert_path_is_not_empty(
+                    path=tmp_path, description="Io Utils"
+                ), "Provided an empty dir, function fails"
+
+
     @pytest.mark.parametrize(
         "workflow_id, validity, assert_msg",
         [
