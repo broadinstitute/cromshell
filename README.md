@@ -14,6 +14,14 @@ requires `column`, `curl`, `mail`, and [jq](https://stedolan.github.io/jq/)
 
 Current version: 2.0.0 
 
+Cromshell 2 is the next step in the evolution Cromshell. It offers many of the same
+functions as Cromshell 1 but has been rebuilt in python with many added benefits such as:
+- Added integration and unit tests to insure reliability 
+- Multiple way of installation (source, brew tap, and pypi)
+- Moduler code architecture that makes easy to understand so users are encouraged 
+to submit features they'd like to see in the tool.
+- Developer documentation showing how to add new features and commands to the tool.
+
 ## Examples:
 
 ```
@@ -104,6 +112,9 @@ From brew
     brew tap broadinstitute/dsp
     brew install cromshell@2.0.0.alpha.1
 
+From pypi
+
+    pip install -i https://test.pypi.org/simple/ cromshell-draft-release
 
 From source
 
@@ -119,7 +130,7 @@ From brew
 
     brew uninstall cromshell@2.0.0.alpha.1
 
-From source
+From pypi/source
 
     pip uninstall cromshell-alpha
 
