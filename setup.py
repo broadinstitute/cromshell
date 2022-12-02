@@ -5,6 +5,10 @@ from setuptools import find_packages, setup
 with open("requirements.txt") as fh:
     install_requires = fh.readlines()
 
+# PIPY needs a list of required packages from the test-requirements list. One of the
+# lines in this file is a reference to the requirements.txt file, because PYPI will
+# assume it's a package and fail; the line below will remove the requirements.txt line
+# and add the extracted packages from that file to the list of required test packages.
 with open("test-requirements.txt") as fh:
     test_install_requires = fh.readlines()
     test_install_requires.remove("-r requirements.txt")

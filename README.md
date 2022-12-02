@@ -8,16 +8,16 @@
 ```
 
 # cromshell
- A script for submitting workflows to a cromwell server and monitoring / querying their results.
+ A CLI for submitting workflows to a cromwell server and monitoring / querying their results.
 
 Current version: 2.0.0.beta 
 
 Cromshell 2 is the next step in the evolution Cromshell. It offers many of the same
 functions as Cromshell 1 but has been rebuilt in python with many added benefits such as:
+- Automatically zip dependencies when submitting a workflow.
 - Added integration and unit tests to insure reliability 
-- Multiple way of installation (source, brew tap, and pypi)
-- Moduler code architecture that makes easy to understand so users are encouraged 
-to submit features they'd like to see in the tool.
+- Multiple ways of installation (source, brew tap, and pypi).
+- Modular architecture making adding new functionalities easier.
 - Developer documentation showing how to add new features and commands to the tool.
 
 ## Examples:
@@ -29,7 +29,7 @@ to submit features they'd like to see in the tool.
          cromshell-beta logs -2
 ```
 
-## Supported Flags:
+## Supported Options:
   * `--no_turtle` or `--I_hate_turtles`
     * Hide turtle logo
   * `--cromwell_url` `TEXT`
@@ -37,7 +37,7 @@ to submit features they'd like to see in the tool.
   * `-t` `TIMEOUT`
     * Specify the server connection timeout in seconds. 
     * Default is 5 sec.
-    * `TIMEOUT` must be an integer.
+    * `TIMEOUT` must be a positive integer.
   * `--gcloud_token_email` `TEXT`
     * Call `gcloud auth print-access-token` with
     this email and add the token as an auth header to requests.
