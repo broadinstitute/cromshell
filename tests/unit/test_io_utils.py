@@ -30,9 +30,16 @@ class TestIOUtilities:
         with pytest.raises(FileExistsError):
             io_utils.assert_path_is_not_empty(
                 path="/fake/file/path", description="Io Utils"
-            ), "Provided a fake file path, function is fail"
+            ), "Provided path to an empty file, function expected to fail"
 
     def test_assert_path_is_not_empty(self, tmp_path):
+        # Check for empty directory
+        if len(os.listdir(tmp_path)) != 0:
+            with pytest.raises(EOFError):
+                io.utils.assert_path_is_not_empty(
+                    path=tmp_path, description="Io Utils"
+                ), "Provided an empty dir, function expected to fail"
+
         # Create temp file path
         empty_temp_file_path = tmp_path / "empty.text"
         # Check temp does not exits
@@ -43,7 +50,7 @@ class TestIOUtilities:
         with pytest.raises(EOFError):
             io_utils.assert_path_is_not_empty(
                 path=empty_temp_file_path, description="Io Utils"
-            ), "Provided a fake file path, function is fail"
+            ), "Provided a fake file path, function expected to fail"
 
     @pytest.mark.parametrize(
         "workflow_id, validity, assert_msg",
