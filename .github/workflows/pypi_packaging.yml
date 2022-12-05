@@ -45,6 +45,8 @@ jobs:
         run: |
           sed -iE "s/^\s*version\s*=\s*.*$/version = \"${{ inputs.version }}\"/" pyproject.toml
 
+      # PYPI_TOKEN is set in github secrets. It is used by the commands below
+      # to have permission to edit pypi repositories.
       - name: Publish to testPyPi using project 'cromshell-draft-release'
         if: ${{ inputs.PyPI_Repo  == 'testpypi' }}
         run: | 

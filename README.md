@@ -135,7 +135,7 @@ From source
 ## Uninstallation
 From brew
 
-    brew uninstall cromshell@2.0.0.beta
+    brew uninstall cromshell@2.0.0.beta.1
 
 From pypi/source
 
