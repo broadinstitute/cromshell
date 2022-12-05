@@ -3,6 +3,7 @@ graft src
 
 include README.md
 include requirements.txt
+include test-requirements.txt
 include LICENSE.txt
 include tox.ini .travis.yml
 

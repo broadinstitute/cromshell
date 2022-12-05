@@ -53,7 +53,8 @@ LOGGER = logging.getLogger(__name__)
     help="Highest level logging for debugging",
 )
 @click.option(
-    "--hide_logo",
+    "--no_turtle",
+    "--I_hate_turtles",
     flag_value=True,
     help="Hide turtle logo",
 )
@@ -90,7 +91,7 @@ LOGGER = logging.getLogger(__name__)
 def main_entry(
     cromshell_config,
     verbosity,
-    hide_logo,
+    no_turtle,
     cromwell_url,
     requests_timeout,
     requests_skip_certs,
@@ -109,7 +110,7 @@ def main_entry(
     from . import log  # pylint: disable=C0415
 
     log.configure_logging(verbosity)
-    log.override_logo_display_setting(hide_logo)
+    log.override_logo_display_setting(no_turtle)
 
     # Log our command-line and log level, so we can have it in the log file:
     LOGGER.info("Invoked by: %s", " ".join(argv))

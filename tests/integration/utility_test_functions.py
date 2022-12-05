@@ -121,7 +121,7 @@ def run_cromshell_submit(
             [
                 "--cromwell_url",
                 local_cromwell_url,
-                "--hide_logo",
+                "--no_turtle",
                 "submit",
                 absolute_wdl,
                 absolute_json,
