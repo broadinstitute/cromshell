@@ -7,12 +7,8 @@ import requests
 import cromshell.utilities.submissions_file_utils
 from cromshell import log
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import (
-    command_setup_utils,
-    cromshellconfig,
-    http_utils,
-    io_utils,
-)
+from cromshell.utilities import (command_setup_utils, cromshellconfig,
+                                 http_utils, io_utils)
 
 LOGGER = logging.getLogger(__name__)
 

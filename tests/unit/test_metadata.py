@@ -1,5 +1,4 @@
 import pytest
-
 from cromshell.metadata import command as metadata_command
 
 

@@ -3,3 +3,4 @@ termcolor>=1.1.0
 click>=8.0.0
 requests>=2.27.1
 pygments>=2.12.0
+tabulate>=0.8.9

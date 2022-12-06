@@ -3,7 +3,6 @@ import hashlib
 import shutil
 
 import pytest
-
 from cromshell.utilities import submissions_file_utils as sfu
 from tests.integration import utility_test_functions
 

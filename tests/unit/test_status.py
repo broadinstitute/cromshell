@@ -2,7 +2,6 @@ import json
 import os
 
 import pytest
-
 from cromshell.status import command as status_command
 
 

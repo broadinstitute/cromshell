@@ -4,11 +4,13 @@ from sys import argv
 import click
 
 from cromshell.utilities import cromshellconfig
-from cromshell.utilities.submissions_file_utils import update_submission_db_format
+from cromshell.utilities.submissions_file_utils import \
+    update_submission_db_format
 
 from .abort import command as abort
 from .alias import command as alias
 from .counts import command as counts
+from .list import command as list
 from .logs import command as logs
 from .metadata import command as metadata
 from .slim_metadata import command as slim_metadata
@@ -16,7 +18,6 @@ from .status import command as status
 from .submit import command as submit
 from .timing import command as timing
 from .update_server import command as update_server
-from .list import command as list
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:

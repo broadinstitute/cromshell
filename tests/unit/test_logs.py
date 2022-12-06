@@ -2,7 +2,6 @@ import json
 import os
 
 import pytest
-
 from cromshell.logs import command as logs_command
 
 

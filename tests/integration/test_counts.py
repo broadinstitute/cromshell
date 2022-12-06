@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from tests.integration import utility_test_functions
 
 workflows_path = Path(__file__).parents[1].joinpath("workflows/")

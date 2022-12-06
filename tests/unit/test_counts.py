@@ -2,7 +2,6 @@ import json
 import re
 
 import pytest
-
 from cromshell.counts import command as counts_command
 
 

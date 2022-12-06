@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from cromshell.submit import command as submit_command
 from cromshell.utilities import cromshellconfig
 from tests.integration.utility_test_functions import run_cromshell_submit

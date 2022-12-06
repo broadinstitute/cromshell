@@ -3,7 +3,6 @@ from importlib import reload
 from pathlib import Path
 
 import pytest
-
 from cromshell.utilities import cromshellconfig
 
 

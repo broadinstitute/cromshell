@@ -1,27 +1,35 @@
+import csv
 import json
 import logging
-import csv
-
-from tabulate import tabulate
 
 import click
 import requests
+from tabulate import tabulate
 
 import cromshell.utilities.submissions_file_utils
-from cromshell.utilities import (
-    command_setup_utils,
-    cromshellconfig,
-    http_utils,
-    io_utils,
-)
+from cromshell.utilities import (command_setup_utils, cromshellconfig,
+                                 http_utils, io_utils)
+
 from ..status import command as status
 
 LOGGER = logging.getLogger(__name__)
 
 
 @click.command(name="list")
-@click.option("-c", "--color", is_flag=True, default=False, help="Color the output by completion status.")
-@click.option("-u", "--update", is_flag=True, default=False, help="Check completion status of all unfinished jobs.")
+@click.option(
+    "-c",
+    "--color",
+    is_flag=True,
+    default=False,
+    help="Color the output by completion status.",
+)
+@click.option(
+    "-u",
+    "--update",
+    is_flag=True,
+    default=False,
+    help="Check completion status of all unfinished jobs.",
+)
 @click.pass_obj
 def main(config, color, update):
     """List the status of workflows."""
@@ -50,7 +58,11 @@ def update_submission_db(config):
     with open(cromshellconfig.submission_file_path, "r") as sub_f:
         reader = csv.reader(sub_f, delimiter="\t", lineterminator="\n")
         for table_row in reader:
-            if table_row[2] != 'RUN_ID' and table_row[4] in ['Submitted', 'Running', 'DOOMED']:
+            if table_row[2] != "RUN_ID" and table_row[4] in [
+                "Submitted",
+                "Running",
+                "DOOMED",
+            ]:
                 workflow_ids.append(table_row[2])
 
     for workflow_id in workflow_ids:
@@ -82,11 +94,11 @@ def update_submission_db(config):
 
 def format_status(table_row):
     colorful_status = {
-        'Failed':    '\033[1;37;41mFailed\033[0m',
-        'DOOMED':    '\033[1;31;47mDOOMED\033[0m',
-        'Succeeded': '\033[1;30;42mSucceeded\033[0m',
-        'Running':   '\033[0;30;46mRunning\033[0m',
-        'Aborted':   '\033[0;30;43mAborted\033[0m'
+        "Failed": "\033[1;37;41mFailed\033[0m",
+        "DOOMED": "\033[1;31;47mDOOMED\033[0m",
+        "Succeeded": "\033[1;30;42mSucceeded\033[0m",
+        "Running": "\033[0;30;46mRunning\033[0m",
+        "Aborted": "\033[0;30;43mAborted\033[0m",
     }
 
     status_column = -1 if table_row[-1] in colorful_status else -2

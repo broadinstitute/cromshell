@@ -1,7 +1,8 @@
 import os
 
 from cromshell.utilities import submissions_file_utils as sfu
-from cromshell.utilities.submissions_file_utils import update_submission_db_format
+from cromshell.utilities.submissions_file_utils import \
+    update_submission_db_format
 
 
 class TestSubmissionsFileUtils:

@@ -1,5 +1,4 @@
 import pytest
-
 from cromshell.slim_metadata import command as slim_metadata_command
 
 
