@@ -1,4 +1,5 @@
 import pytest
+
 from cromshell.utilities.cromshellconfig import WorkflowStatuses
 from tests.integration import utility_test_functions
 

@@ -1,6 +1,6 @@
+import pytest
 from requests.models import Response
 
-import pytest
 from cromshell.utilities import http_utils
 
 

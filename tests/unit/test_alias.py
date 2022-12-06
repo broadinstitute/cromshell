@@ -1,4 +1,5 @@
 import pytest
+
 from cromshell.alias import command as alias_command
 
 
