@@ -6,8 +6,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from zipfile import ZipFile
 
-import cromshell.utilities.submissions_file_utils
 import pytest
+
+import cromshell.utilities.submissions_file_utils
 from cromshell.utilities import io_utils, submissions_file_utils
 
 

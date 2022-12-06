@@ -4,8 +4,7 @@ from sys import argv
 import click
 
 from cromshell.utilities import cromshellconfig
-from cromshell.utilities.submissions_file_utils import \
-    update_submission_db_format
+from cromshell.utilities.submissions_file_utils import update_submission_db_format
 
 from .abort import command as abort
 from .alias import command as alias

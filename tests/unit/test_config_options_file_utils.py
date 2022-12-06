@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from cromshell.utilities import config_options_file_utils as cofu
 
 
