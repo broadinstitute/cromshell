@@ -101,6 +101,11 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
        Will remove all jobs from the local list that are in a completed state,
        where a completed state is one of: `Succeeded`, `Failed`, `Aborted`
      * *`-s STATUS`*     If provided, will only remove jobs with the given `STATUS` from the local list.
+
+   #### Update cromwell server
+   * `update-server`
+     * Change the cromwell server that new jobs will be submitted to.
+
   
 ## Features:
  * Running `submit` will create a new folder in the `~/.cromshell/${CROMWELL_URL}/` directory named with the cromwell job id of the newly submitted job.  
