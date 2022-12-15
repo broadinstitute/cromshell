@@ -41,11 +41,11 @@ def main(config, color, update):
     # Iterate over the submissions text database and print to screen in a pretty way
     with open(cromshellconfig.submission_file_path, "r") as sub_f:
         reader = csv.reader(sub_f, delimiter="\t", lineterminator="\n")
-        table_rows = []
-        for table_row in reader:
-            table_rows.append(format_status(table_row) if color else table_row)
+        all_table_rows = []
+        for single_table_row in reader:
+            all_table_rows.append(format_status(single_table_row) if color else single_table_row)
 
-        print(tabulate(table_rows, headers="firstrow", numalign="left"))
+        print(tabulate(all_table_rows, headers="firstrow", numalign="left"))
 
     return 0
 
