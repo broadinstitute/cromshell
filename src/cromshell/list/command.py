@@ -43,7 +43,9 @@ def main(config, color, update):
         reader = csv.reader(sub_f, delimiter="\t", lineterminator="\n")
         all_table_rows = []
         for single_table_row in reader:
-            all_table_rows.append(format_status(single_table_row) if color else single_table_row)
+            all_table_rows.append(
+                format_status(single_table_row) if color else single_table_row
+            )
 
         print(tabulate(all_table_rows, headers="firstrow", numalign="left"))
 
