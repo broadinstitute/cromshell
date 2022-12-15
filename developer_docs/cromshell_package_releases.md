@@ -1,7 +1,6 @@
 # Cromshell Package Releases
 
-Cromshell can be installed from a brew tap or through pypi. Having these sources
-updated to have the latest releases of Cromshell is important.
+Cromshell can be installed from a brew tap or through pypi. 
 
 ## Brew Tap
 
@@ -41,31 +40,6 @@ class CromshellAT200Alpha1 < Formula
     url "https://files.pythonhosted.org/packages/f4/09/ad003f1e3428017d1c3da4ccc9547591703ffea548626f47ec74509c5824/click-8.0.3.tar.gz"
     sha256 "410e932b050f5eed773c4cda94de75971c89cdb3155a72a0831139a79e5ecb5b"
   end
-  resource "pygments" do
-    url "https://files.pythonhosted.org/packages/b7/b3/5cba26637fe43500d4568d0ee7b7362de1fb29c0e158d50b4b69e9a40422/Pygments-2.10.0.tar.gz"
-    sha256 "f398865f7eb6874156579fdf36bc840a03cab64d1cde9e93d68f46a425ec52c6"
-  end
-  # below are dependencies of requests
-  resource "urllib3" do
-    url "https://files.pythonhosted.org/packages/80/be/3ee43b6c5757cabea19e75b8f46eaf05a2f5144107d7db48c7cf3a864f73/urllib3-1.26.7.tar.gz"
-    sha256 "4987c65554f7a2dbf30c18fd48778ef124af6fab771a377103da0585e2336ece"
-  end
-  resource "certifi" do
-    url "https://files.pythonhosted.org/packages/6c/ae/d26450834f0acc9e3d1f74508da6df1551ceab6c2ce0766a593362d6d57f/certifi-2021.10.8.tar.gz"
-    sha256 "78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872"
-  end
-  resource "charset-normalizer" do
-    url "https://files.pythonhosted.org/packages/9f/c5/334c019f92c26e59637bb42bd14a190428874b2b2de75a355da394cf16c1/charset-normalizer-2.0.7.tar.gz"
-    sha256 "e019de665e2bcf9c2b64e2e5aa025fa991da8720daa3c1138cadd2fd1856aed0"
-  end
-  resource "idna" do
-    url "https://files.pythonhosted.org/packages/62/08/e3fc7c8161090f742f504f40b1bccbfc544d4a4e09eb774bf40aafce5436/idna-3.3.tar.gz"
-    sha256 "9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d"
-  end
-  resource "requests" do
-    url "https://files.pythonhosted.org/packages/e7/01/3569e0b535fb2e4a6c384bdbed00c55b9d78b5084e0fb7f4d0bf523d7670/requests-2.26.0.tar.gz"
-    sha256 "b8aa58f8cf793ffd8782d3d8cb19e66ef36f7aba4353eec859e74678b01b07a7"
-  end
 
   def install
     virtualenv_install_with_resources
@@ -78,12 +52,65 @@ class CromshellAT200Alpha1 < Formula
 end
 ```
 
+Note: 
+1. All packages listed in the requirements.txt file should be listed in the formula.
+Sometimes packages in the file have their own dependencies, you can identify this
+by using a tool like `pipdeptree` to list whether it has dependencies. 
+   ```shell
+       >pipdeptree -p requests
+       requests==2.27.1
+       - certifi [required: >=2017.4.17, installed: 2020.12.5]
+       - charset-normalizer [required: ~=2.0.0, installed: 2.0.12]
+       - idna [required: >=2.5,<4, installed: 2.10]
+       - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.2]  
+   ```
+
+2. The package url and hash can be obtained from the package pypi site or using a tool like
+python hashin. 
+
+   ```
+   import hashin
+   hashin.get_package_hashes('requests', version='2.27.1')
+   ```
+
+   results to: 
+   
+   ```
+   {'package': 'requests', 'version': '2.27.1', 'hashes': [{'hash': '68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61'}, {'hash': 'f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d'}]}
+   ```
+### Test Install
+
+   ```
+   brew tap broadinstitute/dsp
+   brew install cromshell
+   ```
 
 ## Pypi
-Currently, Cromshell is available on testpypi, later it will be made available on 
-the main pypi site. 
+Use steps below to release on either PyPi or testPyPi, the latter is primarily used for 
+draft releases.
 
-A git action is available to help easily send a release to pypi. The action needs to be
+1. Install the following tools
+
+   `python3 -m pip install --upgrade pip twine build`
+
+2. In the root repository directory build cromshell
+
+   `python3 -m build`
+
+3. Update the version tag and project name in pyproject.toml. If creating a release in 
+`testPyPi` use project name `cromshell-draft-release`, if creating a release in `PyPi`
+use project name `cromshell`. 
+       
+4. Publish build using twine. The [PYPI Token](https://pypi.org/help/#apitoken) is obtained from your pypi account, your
+   account will need access permission to the cromwell project in pypi.
+
+   `python3 -m twine upload --username __token__ --password <test/PYPI_TOKEN> --repository pypi dist/*`
+
+### Pypi git action [Not Available]
+*Because this git yml is only initiated through `workflow dispatch`, the action will not be
+functional until the `cromshell2` branch is merged to `main`.*  
+
+A git action has been created to help easily send a release to pypi. The action needs to be
 executed manually with `PyPI_Repo` (by default set to "testpypi" for now) and `version` inputs.
 
 Once a release version is created in the pypi repository, it is not possible rewrite over it
