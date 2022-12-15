@@ -9,7 +9,6 @@ from tabulate import tabulate
 import cromshell.utilities.submissions_file_utils
 from cromshell.utilities import command_setup_utils, cromshellconfig, http_utils
 
-# from ..status import command as status
 
 LOGGER = logging.getLogger(__name__)
 
