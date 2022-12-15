@@ -94,7 +94,7 @@ def format_status(table_row):
     colorful_status = {
         "Failed": "\033[1;37;41mFailed\033[0m",
         "DOOMED": "\033[1;31;47mDOOMED\033[0m",
-        "Succeeded": "\033[1;30;42mSucceeded\033[0m",
+        "Succeeded": "\033[1;37;42mSucceeded\033[0m",
         "Running": "\033[0;30;46mRunning\033[0m",
         "Aborted": "\033[0;30;43mAborted\033[0m",
     }
