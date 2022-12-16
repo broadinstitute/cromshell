@@ -9,6 +9,7 @@ from cromshell.utilities.submissions_file_utils import update_submission_db_form
 from .abort import command as abort
 from .alias import command as alias
 from .counts import command as counts
+from .list import command as list
 from .logs import command as logs
 from .metadata import command as metadata
 from .slim_metadata import command as slim_metadata
@@ -145,6 +146,7 @@ main_entry.add_command(slim_metadata.main)
 main_entry.add_command(metadata.main)
 main_entry.add_command(update_server.main)
 main_entry.add_command(timing.main)
+main_entry.add_command(list.main)
 
 
 if __name__ == "__main__":
