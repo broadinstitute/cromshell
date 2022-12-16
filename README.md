@@ -91,7 +91,7 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
      * *`daemon-server`*  server to run the notification daemon on
 
    #### Display a list jobs submitted through cromshell
-   * [COMING SOON] `list` *`[-c]` `[-u]`*                                            
+   * `list` *`[-c]` `[-u]`*                                            
      * *`-c`*    Color the output by completion status
      * *`-u`*    Check completion status of all unfinished jobs
 
