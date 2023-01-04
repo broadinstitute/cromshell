@@ -16,8 +16,8 @@ The name of the formula file should have the following structure:
 
 
 The following should be updated regularly in a new formula file:
-- Git release tag url
-- Git release tag hash
+- Git release tar file url
+- Git release tar file hash (e.g. `shasum -a 256 /path/to/tar/cromshell-2.0.0.beta.1.tar.gz`)
 - List of required python package url and their hash
 
 Here is an example of the content of the Formula file.
