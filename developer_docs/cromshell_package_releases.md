@@ -107,18 +107,18 @@ draft releases.
 
    `python3 -m pip install --upgrade pip twine build`
 
-2. In the root repository directory build cromshell
-
-   `python3 -m build`
-
-3. Update the version tag and project name in pyproject.toml. If creating a release in 
+2. Update the version tag and project name in pyproject.toml. If creating a release in 
 `testPyPi` use project name `cromshell-draft-release`, if creating a release in `PyPi`
 use project name `cromshell`. 
+
+3. In the root repository directory build cromshell. This will create a folder called `/dist` with tar files of the cromshell build.
+
+   `python3 -m build`
        
 4. Publish build using twine. The [PYPI Token](https://pypi.org/help/#apitoken) is obtained from your pypi account, your
-   account will need access permission to the cromwell project in pypi.
+   account will need access permission to the cromwell project in pypi (you will have different tokens for testpypi and pypi repos).
 
-   `python3 -m twine upload --username __token__ --password <test/PYPI_TOKEN> --repository pypi dist/*`
+   `python3 -m twine upload --username __token__ --password <PYPI_TOKEN> --repository <testpypi/pypi> dist/*`
 
 ### Pypi git action [Not Available]
 *Because this git yml is only initiated through `workflow dispatch`, the action will not be
