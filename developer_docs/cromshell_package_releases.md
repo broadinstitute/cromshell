@@ -66,20 +66,34 @@ by using a tool like `pipdeptree` to list whether it has dependencies.
    ```
 
 2. The package url and hash can be obtained from the package pypi site or using a tool like
-python hashin. 
+homebrew-pypi-poet. 
 
    ```
-   import hashin
-   hashin.get_package_hashes('requests', version='2.27.1')
+   poet requests
    ```
 
    results to: 
    
    ```
-   {'package': 'requests', 'version': '2.27.1', 'hashes': [{'hash': '68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61'}, {'hash': 'f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d'}]}
+   resource "certifi" do
+    url "https://files.pythonhosted.org/packages/6c/ae/d26450834f0acc9e3d1f74508da6df1551ceab6c2ce0766a593362d6d57f/certifi-2021.10.8.tar.gz"
+    sha256 "78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872"
+     end
+   
+     resource "charset-normalizer" do
+       url "https://files.pythonhosted.org/packages/56/31/7bcaf657fafb3c6db8c787a865434290b726653c912085fbd371e9b92e1c/charset-normalizer-2.0.12.tar.gz"
+       sha256 "2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597"
+     end
+   ...
    ```
 ### Test Install
 
+Test installation using formula.
+   ```
+   brew install --build-from-source cromshell@2.0.0.beta.1.rb
+   ```
+
+Test installation using brew tap
    ```
    brew tap broadinstitute/dsp
    brew install cromshell
