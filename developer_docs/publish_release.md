@@ -130,7 +130,7 @@ use project name `cromshell`.
    `python3 -m build`
        
 4. Publish build using twine. The [PYPI Token](https://pypi.org/help/#apitoken) is obtained from your pypi account, your
-   account will need access permission to the cromwell project in pypi (you will have different tokens for testpypi and pypi repos).
+   account will need access permission to the cromshell project in pypi (you will have different tokens for testpypi and pypi repos).
 
    `python3 -m twine upload --username __token__ --password <PYPI_TOKEN> --repository <testpypi/pypi> dist/*`
 
