@@ -8,6 +8,7 @@ from cromshell.utilities.submissions_file_utils import update_submission_db_form
 
 from .abort import command as abort
 from .alias import command as alias
+from .cost import command as cost
 from .counts import command as counts
 from .list import command as list
 from .logs import command as logs
@@ -138,6 +139,7 @@ def version():
 # Update with new sub-commands:
 main_entry.add_command(abort.main)
 main_entry.add_command(alias.main)
+main_entry.add_command(cost.main)
 main_entry.add_command(counts.main)
 main_entry.add_command(status.main)
 main_entry.add_command(logs.main)

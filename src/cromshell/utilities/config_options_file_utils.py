@@ -10,6 +10,7 @@ CONFIG_FILE_TEMPLATE = {
     "requests_timeout": "int",
     "gcloud_token_email": "str",
     "referer_header_url": "str",
+    "bq_cost_table": "str"
 }
 
 
