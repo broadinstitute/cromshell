@@ -67,14 +67,20 @@ class TestConfigOptionsFileUtils:
             # bad key
             [
                 {"foo": "http://localhost:8000", "requests_timeout": 5},
-                False,
-                KeyError,
+                True,
+                None,
             ],
-            # bad key and value
+            # bad value for bad key
             [
                 {"foo": 0, "requests_timeout": 5},
+                True,
+                None,
+            ],
+            # bad value for good key but other key bad
+            [
+                {"foo": 0, "requests_timeout": "stringme"},
                 False,
-                KeyError,
+                ValueError,
             ],
         ],
     )

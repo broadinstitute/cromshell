@@ -32,7 +32,11 @@ def valid_json(json_to_validate: str or Path, json_is_file_path: bool = True) ->
 
 
 def validate_json_schema(loaded_json: dict, json_schema: dict) -> None:
+
     """
+    Check if the keys provided in Cromshell's configurations file match the
+    template schema, if not warn the user. Also check if the type of the key value
+    matches the expected value type.
 
     :param loaded_json:
     :param json_schema:
@@ -55,28 +59,25 @@ def validate_json_schema(loaded_json: dict, json_schema: dict) -> None:
 
     for key in loaded_json:
         if key not in json_schema:
-            LOGGER.error(
-                "JSON key: '%s' is not an accepted option. "
-                "The available options are: %s",
+            LOGGER.warning(
+                "JSON key: '%s' is not an accepted option and will NOT be used "
+                "by Cromshell. The available options are: %s",
                 key,
                 list(json_schema.keys()),
             )
-            raise KeyError(
-                f"ERROR: key: '{key}' is not found in the provided JSON schema"
-            )
-
-        if not isinstance(loaded_json[key], json_value_types[json_schema[key]]):
-            LOGGER.error(
-                "The expected value type for option '%s' is '%s', but %s was provided.",
-                key,
-                json_schema[key],
-                type(loaded_json[key]),
-            )
-            raise ValueError(
-                f"The expected value type for option '{key}' is "
-                f"'{json_schema[key]}', but {type(loaded_json[key])} "
-                f"was provided."
-            )
+        else:
+            if not isinstance(loaded_json[key], json_value_types[json_schema[key]]):
+                LOGGER.error(
+                    "Expected value type for option '%s' is '%s', but %s was provided.",
+                    key,
+                    json_schema[key],
+                    type(loaded_json[key]),
+                )
+                raise ValueError(
+                    f"Expected value type for option '{key}' is "
+                    f"'{json_schema[key]}', but {type(loaded_json[key])} "
+                    f"was provided."
+                )
 
 
 def validate_cromshell_config_options_file(config_options_file: Path) -> None:
