@@ -60,7 +60,7 @@ def validate_json_schema(loaded_json: dict, json_schema: dict) -> None:
     for key in loaded_json:
         if key not in json_schema:
             LOGGER.warning(
-                "JSON key: '%s' is not an accepted option and will be used "
+                "JSON key: '%s' is not an accepted option and will NOT be used "
                 "by Cromshell. The available options are: %s",
                 key,
                 list(json_schema.keys()),
