@@ -5,7 +5,12 @@ from pathlib import Path
 LOGGER = logging.getLogger(__name__)
 
 
-CONFIG_FILE_TEMPLATE = {"cromwell_server": "str", "requests_timeout": "int"}
+CONFIG_FILE_TEMPLATE = {
+    "cromwell_server": "str",
+    "requests_timeout": "int",
+    "gcloud_token_email": "str",
+    "referer_header_url": "str",
+}
 
 
 def valid_json(json_to_validate: str or Path, json_is_file_path: bool = True) -> bool:
