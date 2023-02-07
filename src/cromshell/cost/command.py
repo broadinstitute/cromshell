@@ -6,6 +6,7 @@ import cromshell.utilities.workflow_id_utils as workflow_id_utils
 
 from datetime import datetime, timezone, timedelta
 from tempfile import NamedTemporaryFile
+from google.cloud import bigquery
 from tabulate import tabulate
 
 LOGGER = logging.getLogger(__name__)
@@ -44,8 +45,8 @@ def main(config, workflow_id: str or int, detailed: bool):
 
     # Get time workflow finished using metadata command (error if not finished)
     LOGGER.info("Retrieving workflow metadata")
-    workflow_metadata = get_metadata(config=config)
-    start_time, end_time = get_submission_start_end_time(workflow_metadata=workflow_metadata)
+    workflow_metadata = get_metadata(config)
+    start_time, end_time = get_submission_start_end_time(workflow_metadata)
 
     LOGGER.info("Checking workflow completed and finished past 24hrs")
     checks_before_query(end_time=end_time, workflow_id=resolved_workflow_id)
@@ -77,23 +78,7 @@ def main(config, workflow_id: str or int, detailed: bool):
 
     with open(temp_query_result_csv_rounded.name, 'r') as f:
         print(f.read())
-        print("Costs rounded to nearest cent (approximately).")
-
-
-def print_query_results(query_results, detailed: bool) -> None:
-    # performing a step like getting the first row from the table would require to convert
-    # the table to datafram or CSV. Instead, this loop will get the first row and break.
-
-    if detailed:
-        for row in query_results:
-            print("{}\t{}\t{}\t{}".format(row.value, row.description, row.task_name,
-                                              row.cost))
-
-    else:
-        for row in query_results:
-            total_cost = round(float(row.cost), 2)
-            print(f"${total_cost}")
-            print("Costs rounded to nearest cent (approximately).")
+        print("Costs rounded to nearest cent.")
 
 
 def query_bigquery(
@@ -106,44 +91,59 @@ def query_bigquery(
     """
         Query bigqueury for cost
 
+    :param detailed:
     :param workflow_id:
     :param bq_database:
     :param start_date:
     :param end_date:
     :return:
     """
-    from google.cloud import bigquery
+
     client = bigquery.Client()
 
     # Todo: remove LIMIT in query
     if detailed:
-        query_job = client.query(
-            f"""
+        query = f"""
                 SELECT wfid.value, service.description, task.value as task_name, sum(cost) as cost
-                FROM `{bq_database}` as billing, UNNEST(labels) as wfid, UNNEST(labels) as task
+                FROM {bq_database} as billing, UNNEST(labels) as wfid, UNNEST(labels) as task
                 WHERE cost > 0
                 AND task.key LIKE "wdl-task-name"
                 AND wfid.key LIKE "cromwell-workflow-id"
-                AND wfid.value like "%{workflow_id}"
-                AND partition_time BETWEEN "{start_date}" AND "{end_date}"
+                AND wfid.value like @workflow_id
+                AND partition_time BETWEEN @start_date AND @end_date
                 GROUP BY 1,2,3
                 ORDER BY 4 DESC
                 LIMIT 100
             """
-        )
     else:
-        query_job = client.query(
-            f"""
+        query = f"""
                 SELECT sum(cost) as cost
-                FROM `{bq_database}`, UNNEST(labels)
-                WHERE value = "cromwell-{workflow_id}" AND partition_time BETWEEN "{start_date}" AND "{end_date}"
+                FROM {bq_database}, UNNEST(labels)
+                WHERE value LIKE @workflow_id AND partition_time BETWEEN @start_date AND @end_date
                 LIMIT 100
             """
-        )
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("workflow_id", "STRING", "%" + workflow_id),
+            bigquery.ScalarQueryParameter("start_date", "STRING", start_date),
+            bigquery.ScalarQueryParameter("end_date", "STRING", end_date),
+        ]
+    )
+    query_job = client.query(query, job_config=job_config)
+
+    if query_job.errors:
+        LOGGER.error(f"Somthing went wrong with query. Message: {query_job.errors}")
+        raise Exception(f"Somthing went wrong with query. Message: {query_job.errors}")
 
     query_results = query_job.result()
 
-    if query_results.total_rows == 0:
+    # First condition applies to a 'detailed' query to confirm results were obtained,
+    # zero rows in the results indicates the failure to obtain cost for a workflow.
+    # Second condition applies to 'non-detailed' query, because the results are
+    # aggregated there will always be one row minimum, so this condition will confirm
+    # the results for that row is not 'None'.
+    if query_results.total_rows == 0 or (query_results.total_rows == 1 and next(query_job.result()).get("cost") is None):
         LOGGER.error("Could not retrieve cost - no cost entries found.")
         raise ValueError("Could not retrieve cost - no cost entries found.")
     else:
