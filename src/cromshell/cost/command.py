@@ -23,11 +23,10 @@ LOGGER = logging.getLogger(__name__)
 @click.pass_obj
 def main(config, workflow_id: str or int, detailed: bool):
     """
-    Get the cost for a workflow."
-    Only works for workflows that completed more than 8 hours ago on GCS."
-    Requires the 'gcp_bq_cost_table.config' configuration file to exist and contain"
-    the big query cost table for your organization."
-
+    Get the cost for a workflow.
+    Only works for workflows that completed more than 24 hours ago on GCS.
+    Requires the 'bq_cost_table' key in the cromshell configuration file to be
+    set to the big query cost table for your organization.
     """
 
     LOGGER.info("cost")
@@ -37,16 +36,10 @@ def main(config, workflow_id: str or int, detailed: bool):
         cromshell_config=config,
     )
 
-    # check if workflow id exists
-    if not workflow_id_utils.workflow_id_exists(
+    workflow_id_utils.check_workflow_id_in_submission_file(
         workflow_id=resolved_workflow_id, submission_file=config.submission_file_path
-    ):
-        LOGGER.error("Could not find workflow id %s in submission file.", resolved_workflow_id)
-        raise ValueError(
-            f"Could not find workflow id {resolved_workflow_id} in submission file."
-        )
+    )
 
-    # check that bq setting in json config
     check_cost_table_is_configured(config_options=config.cromshell_config_options)
 
     # Get time workflow finished using metadata command (error if not finished)

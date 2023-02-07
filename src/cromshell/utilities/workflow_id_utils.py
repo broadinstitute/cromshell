@@ -111,3 +111,22 @@ def workflow_id_exists(workflow_id: str, submission_file: str) -> bool:
             ):
                 return True
         return False
+
+
+def check_workflow_id_in_submission_file(
+    workflow_id: str, submission_file: str
+) -> None:
+    """
+    Check if workflow ID exists in submission file.
+    :param workflow_id: Hexadecimal identifier of workflow
+    :param submission_file: Path to cromshell submission file
+    :return: None
+    """
+
+    if not workflow_id_exists(
+        workflow_id=workflow_id, submission_file=submission_file
+    ):
+        LOGGER.error("Could not find workflow id %s in submission file.", workflow_id)
+        raise ValueError(
+            f"Could not find workflow id {workflow_id} in submission file."
+        )
