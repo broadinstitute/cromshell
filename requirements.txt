@@ -1,4 +1,5 @@
 gcsfs>=2022.3.0
+google-cloud-bigquery>=3.5.0
 termcolor>=1.1.0
 click>=8.0.0
 requests>=2.27.1

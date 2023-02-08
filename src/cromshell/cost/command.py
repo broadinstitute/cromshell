@@ -55,7 +55,9 @@ def main(config, workflow_id: str or int, detailed: bool):
     start_time, end_time = get_submission_start_end_time(workflow_metadata)
 
     LOGGER.info("Checking workflow completed and finished past 24hrs")
-    checks_before_query(end_time=end_time, workflow_id=resolved_workflow_id)
+    checks_before_query(
+        start_time=start_time, end_time=end_time, workflow_id=resolved_workflow_id
+    )
 
     LOGGER.info("Querying BQ")
     # Create start and end time for query, plus/minus a day from start and finish
@@ -186,8 +188,8 @@ def get_metadata(config: object) -> dict:
     from cromshell.utilities import http_utils
 
     formatted_metadata_parameter = metadata_command.format_metadata_params(
-        list_of_keys=config.METADATA_KEYS_TO_OMIT,
-        exclude_keys=True,
+        list_of_keys=["start", "status", "id", "end", "calls", "workflowProcessingEvents"],
+        exclude_keys=False,
         expand_subworkflows=False,
     )
 
@@ -201,6 +203,14 @@ def get_metadata(config: object) -> dict:
 
 
 def get_submission_start_end_time(workflow_metadata: dict) -> (str, str):
+    """
+    Gets the start and end time from the workflow metadata
+    :param workflow_metadata:
+    :return:
+    """
+
+    # If server was restarted multiple start/end times can be present, here we use
+    # the earliest value.
     events = workflow_metadata['workflowProcessingEvents']
     try:
         end_time = \
@@ -208,28 +218,38 @@ def get_submission_start_end_time(workflow_metadata: dict) -> (str, str):
     except IndexError:
         end_time = None
 
-    start_time = \
-    [i.get("timestamp") for i in events if i.get("description") == "PickedUp"][0]
+    try:
+        start_time = \
+            [i.get("timestamp") for i in events if i.get("description") == "PickedUp"][0]
+    except IndexError:
+        start_time = None
 
     return start_time, end_time
 
 
-def checks_before_query(end_time: str, workflow_id: str) -> None:
+def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> None:
     """
     Check that workflow has finished, and it has finished at least 24 hours from the
     execution of this script.
 
+    :param start_time:
     :param end_time:
     :param workflow_id:
     :return:
     """
 
+    if not start_time:
+        LOGGER.error("Start time was not found for workflow id: %s , which may"
+                     "indicate the workflow was recently submitted and has not "
+                     "started yet. Cost can only be obtained 24hrs after workflow"
+                     "completion.", workflow_id)
+        exit()
+
     if not end_time:
-        LOGGER.error("Finished time was not found. Workflow %s is not finished yet.",
+        LOGGER.error("Finished time was not found. Workflow %s is likely running and "
+                     "is not finished yet.",
                      workflow_id)
-        raise ValueError(
-            f"Finished time was not found. Workflow {workflow_id} is not finished yet."
-        )
+        exit()
 
     minimum_time_passed, workflow_time_delta = minimum_time_passed_since_workflow_completion(
         end_time=end_time)
@@ -243,10 +263,6 @@ def checks_before_query(end_time: str, workflow_id: str) -> None:
                      "Please wait %sh:%sm:%ss and try again.", wait_hours, wait_minutes,
                      wait_seconds
                      )
-        print(
-            f"Workflow finished less than 24 hours ago.  Cannot check cost. "
-            f"Please wait {wait_hours}h:{wait_minutes}m:{wait_seconds}s and try again."
-        )
         exit()
 
 
@@ -260,21 +276,15 @@ def write_bq_results_to_temp_csv(tempfile, results, detailed: bool):
             writer = csv.DictWriter(tempfile_tsv, delimiter="\t",
                                     fieldnames=["value", "description", "task_name",
                                                 "cost"])
-
-            writer.writeheader()
-
-            for row in results:
-                writer.writerow(row)
-
         else:
             writer = csv.DictWriter(
                 tempfile_tsv, delimiter="\t", fieldnames=["cost"]
             )
 
-            writer.writeheader()
+        writer.writeheader()
 
-            for row in results:
-                writer.writerow(row)
+        for row in results:
+            writer.writerow(row)
 
 
 def round_cost_values(query_result_csv, query_result_csv_rounded, detailed):
@@ -293,9 +303,6 @@ def round_cost_values(query_result_csv, query_result_csv_rounded, detailed):
             if row["cost"] is not None:
                 if row["cost"] != "cost":
                     cost = round(float(row["cost"]), 2)
-                    if cost >= .01:
-                        row["cost"] = cost
-                    else:
-                        row["cost"] = .01
+                    row["cost"] = max(cost, .01)
 
                     writer.writerow(row)
