@@ -2,6 +2,7 @@ import logging
 
 import click
 import cromshell.utilities.command_setup_utils as command_setup_utils
+import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.workflow_id_utils as workflow_id_utils
 
 from datetime import datetime, timezone, timedelta
@@ -41,7 +42,12 @@ def main(config, workflow_id: str or int, detailed: bool):
         workflow_id=resolved_workflow_id, submission_file=config.submission_file_path
     )
 
-    check_cost_table_is_configured(config_options=config.cromshell_config_options)
+    cofu.check_key_is_configured(
+        key_to_check="bq_cost_table",
+        config_options=config.cromshell_config_options,
+        config_file_path=config.cromshell_config_path
+    )
+    LOGGER.info("Using cost table: %s", config.cromshell_config_options["bq_cost_table"])
 
     # Get time workflow finished using metadata command (error if not finished)
     LOGGER.info("Retrieving workflow metadata")
@@ -53,8 +59,10 @@ def main(config, workflow_id: str or int, detailed: bool):
 
     LOGGER.info("Querying BQ")
     # Create start and end time for query, plus/minus a day from start and finish
-    query_start_time = str(datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z") - timedelta(days=1))
-    query_end_time = str(datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z") + timedelta(days=1))
+    query_start_time = str(
+        datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z") - timedelta(days=1))
+    query_end_time = str(
+        datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z") + timedelta(days=1))
 
     query_results = query_bigquery(
         workflow_id=resolved_workflow_id,
@@ -143,7 +151,9 @@ def query_bigquery(
     # Second condition applies to 'non-detailed' query, because the results are
     # aggregated there will always be one row minimum, so this condition will confirm
     # the results for that row is not 'None'.
-    if query_results.total_rows == 0 or (query_results.total_rows == 1 and next(query_job.result()).get("cost") is None):
+    if query_results.total_rows == 0 or (
+            query_results.total_rows == 1 and next(query_job.result()).get(
+            "cost") is None):
         LOGGER.error("Could not retrieve cost - no cost entries found.")
         raise ValueError("Could not retrieve cost - no cost entries found.")
     else:
@@ -171,13 +181,6 @@ def minimum_time_passed_since_workflow_completion(
     return (True, delta) if delta > mindelta else (False, delta)
 
 
-def check_cost_table_is_configured(config_options: dict) -> None:
-    if "bq_cost_table" not in config_options:
-        raise KeyError('Cromshell config file is missing "bq_cost_table" Key')
-
-    LOGGER.info("Using cost table: %s", config_options["bq_cost_table"])
-
-
 def get_metadata(config: object) -> dict:
     import cromshell.metadata.command as metadata_command
     from cromshell.utilities import http_utils
@@ -198,14 +201,15 @@ def get_metadata(config: object) -> dict:
 
 
 def get_submission_start_end_time(workflow_metadata: dict) -> (str, str):
-
     events = workflow_metadata['workflowProcessingEvents']
     try:
-        end_time = [i.get("timestamp") for i in events if i.get("description") == "Finished"][0]
+        end_time = \
+        [i.get("timestamp") for i in events if i.get("description") == "Finished"][0]
     except IndexError:
         end_time = None
 
-    start_time = [i.get("timestamp") for i in events if i.get("description") == "PickedUp"][0]
+    start_time = \
+    [i.get("timestamp") for i in events if i.get("description") == "PickedUp"][0]
 
     return start_time, end_time
 
@@ -227,7 +231,8 @@ def checks_before_query(end_time: str, workflow_id: str) -> None:
             f"Finished time was not found. Workflow {workflow_id} is not finished yet."
         )
 
-    minimum_time_passed, workflow_time_delta = minimum_time_passed_since_workflow_completion(end_time=end_time)
+    minimum_time_passed, workflow_time_delta = minimum_time_passed_since_workflow_completion(
+        end_time=end_time)
 
     if not minimum_time_passed:
         wait_time: timedelta = (timedelta(hours=24) - workflow_time_delta)
@@ -235,7 +240,8 @@ def checks_before_query(end_time: str, workflow_id: str) -> None:
         wait_minutes, wait_seconds = divmod(remainder, 60)
 
         LOGGER.error("Workflow finished less than 24 hours ago.  Cannot check cost.  "
-                     "Please wait %sh:%sm:%ss and try again.", wait_hours, wait_minutes, wait_seconds
+                     "Please wait %sh:%sm:%ss and try again.", wait_hours, wait_minutes,
+                     wait_seconds
                      )
         print(
             f"Workflow finished less than 24 hours ago.  Cannot check cost. "
@@ -245,7 +251,6 @@ def checks_before_query(end_time: str, workflow_id: str) -> None:
 
 
 def write_bq_results_to_temp_csv(tempfile, results, detailed: bool):
-
     import csv
 
     with open(tempfile.name, 'w') as tempfile_tsv:
@@ -273,12 +278,13 @@ def write_bq_results_to_temp_csv(tempfile, results, detailed: bool):
 
 
 def round_cost_values(query_result_csv, query_result_csv_rounded, detailed):
-
     import csv
 
-    field_names = ["value", "description", "task_name", "cost"] if detailed else ["cost"]
+    field_names = ["value", "description", "task_name", "cost"] if detailed else [
+        "cost"]
 
-    with open(query_result_csv.name, 'r') as tempfile_1, open(query_result_csv_rounded.name, 'w') as tempfile_2:
+    with open(query_result_csv.name, 'r') as tempfile_1, open(
+            query_result_csv_rounded.name, 'w') as tempfile_2:
 
         writer = csv.DictWriter(tempfile_2, delimiter="\t", fieldnames=field_names)
         reader = csv.DictReader(tempfile_1, delimiter="\t", fieldnames=field_names)
