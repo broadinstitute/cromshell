@@ -74,21 +74,13 @@ def main(config, workflow_id: str or int, detailed: bool):
         detailed=detailed
     )
 
-    temp_query_result_csv = NamedTemporaryFile()
-    write_bq_results_to_temp_csv(
-        tempfile=temp_query_result_csv, results=query_results, detailed=detailed
-    )
+    query_rows: list = [dict(row) for row in query_results]
+    query_rows_cost_rounded: list = round_cost_values(query_rows=query_rows)
 
-    temp_query_result_csv_rounded = NamedTemporaryFile()
-    round_cost_values(
-        query_result_csv=temp_query_result_csv,
-        query_result_csv_rounded=temp_query_result_csv_rounded,
-        detailed=detailed
-    )
 
-    with open(temp_query_result_csv_rounded.name, 'r') as f:
-        print(f.read())
-        print("Costs rounded to nearest cent.")
+    print(tabulate(query_rows_cost_rounded, headers="keys"))
+    print("Costs rounded to nearest cent.")
+
 
 
 def query_bigquery(
@@ -114,7 +106,7 @@ def query_bigquery(
     # Todo: remove LIMIT in query
     if detailed:
         query = f"""
-                SELECT wfid.value, service.description, task.value as task_name, sum(cost) as cost
+                SELECT wfid.value as cromwell_workflow_id, service.description, task.value as task_name, sum(cost) as cost
                 FROM {bq_database} as billing, UNNEST(labels) as wfid, UNNEST(labels) as task
                 WHERE cost > 0
                 AND task.key LIKE "wdl-task-name"
@@ -266,43 +258,14 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
         exit()
 
 
-def write_bq_results_to_temp_csv(tempfile, results, detailed: bool):
-    import csv
+def round_cost_values(query_rows: list) -> list:
 
-    with open(tempfile.name, 'w') as tempfile_tsv:
+    cost_rounded: list = []
 
-        if detailed:
-            # create the csv writer
-            writer = csv.DictWriter(tempfile_tsv, delimiter="\t",
-                                    fieldnames=["value", "description", "task_name",
-                                                "cost"])
-        else:
-            writer = csv.DictWriter(
-                tempfile_tsv, delimiter="\t", fieldnames=["cost"]
-            )
+    for row in query_rows:
+        if row["cost"] is not None:
+            cost = round(float(row["cost"]), 2)
+            row["cost"] = max(cost, .01)
+            cost_rounded.append(row)
 
-        writer.writeheader()
-
-        for row in results:
-            writer.writerow(row)
-
-
-def round_cost_values(query_result_csv, query_result_csv_rounded, detailed):
-    import csv
-
-    field_names = ["value", "description", "task_name", "cost"] if detailed else [
-        "cost"]
-
-    with open(query_result_csv.name, 'r') as tempfile_1, open(
-            query_result_csv_rounded.name, 'w') as tempfile_2:
-
-        writer = csv.DictWriter(tempfile_2, delimiter="\t", fieldnames=field_names)
-        reader = csv.DictReader(tempfile_1, delimiter="\t", fieldnames=field_names)
-        writer.writeheader()
-        for row in reader:
-            if row["cost"] is not None:
-                if row["cost"] != "cost":
-                    cost = round(float(row["cost"]), 2)
-                    row["cost"] = max(cost, .01)
-
-                    writer.writerow(row)
+    return cost_rounded
