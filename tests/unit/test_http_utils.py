@@ -10,7 +10,6 @@ class TestHTTPUtilities:
     def test_check_http_request_status_code(
         self, mock_failed_response, mock_pass_response
     ):
-
         # asserts that an exception is raised by the function
         http_utils.check_http_request_status_code(
             short_error_message="TEST", response=mock_pass_response

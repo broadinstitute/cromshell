@@ -48,7 +48,6 @@ def test_update_server():
     # The test is being run in temp directory created by CliRunner, and
     # so its modification of the default server only happens in this context
     with runner.isolated_filesystem():
-
         # the current default server
         current_cromwell_server = get_current_cromwell_server()
         print(f"Initial Cromwell server: {current_cromwell_server}")

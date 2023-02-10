@@ -24,7 +24,6 @@ def main(config, workflow_ids):
     return_code = 0
 
     for wdl_id in workflow_ids:
-
         command_setup_utils.resolve_workflow_id_and_server(
             workflow_id=wdl_id, cromshell_config=config
         )

@@ -283,7 +283,6 @@ def resolve_requests_connect_timeout(timeout_cli: int) -> None:
 
 
 def resolve_referer_header_url(url: str) -> None:
-
     global referer_header_url
 
     if url:
@@ -298,7 +297,6 @@ def resolve_referer_header_url(url: str) -> None:
 
 
 def resolve_gcloud_token_email(email: str):
-
     global gcloud_token_email
 
     if email:

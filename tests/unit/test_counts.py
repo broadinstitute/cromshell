@@ -104,7 +104,6 @@ class TestCounts:
     def test_print_task_status_summary(
         self, mock_data_path, metadata_name, task_summary, capsys
     ):
-
         with open(mock_data_path.joinpath(metadata_name), "r") as f:
             workflow_metadata = json.load(f)
 
@@ -225,7 +224,6 @@ class TestCounts:
         ],
     )
     def test_get_unknown_status(self, shard_status_count):
-
         known_statuses: list = ["Done", "Failed", "RetryableFailure", "Running"]
         unknown_shard_status: list = []
         shards_unknown: int = 0

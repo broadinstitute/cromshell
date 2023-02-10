@@ -21,7 +21,6 @@ class TestSubmit:
     """Test the submit command functions"""
 
     def test_update_submission_file(self, mock_data_path, tmp_path):
-
         submission_file_path = mock_data_path.joinpath(
             "submit/submission_file_template.text"
         )

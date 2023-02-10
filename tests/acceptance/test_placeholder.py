@@ -9,7 +9,6 @@ class TestPlaceholder:
     """
 
     def test_trivial(self):
-
         x = 1
         y = 1
 
@@ -17,6 +16,5 @@ class TestPlaceholder:
 
     @pytest.mark.parametrize("value", ["atgcX", "L:", "3", "AUGC~", ":gagagag"])
     def test_trivial_with_parameters(self, value):
-
         with pytest.raises(AssertionError):
             assert value == 1

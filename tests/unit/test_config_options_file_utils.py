@@ -32,7 +32,6 @@ class TestConfigOptionsFileUtils:
         json_is_file_path: bool,
         mock_data_path: Path,
     ) -> None:
-
         if json_is_file_path:
             assert (
                 cofu.valid_json(
@@ -87,7 +86,6 @@ class TestConfigOptionsFileUtils:
     def test_validate_json_schema(
         self, config_file_args: dict, validity: bool, error_type
     ):
-
         if validity:
             cofu.validate_json_schema(
                 loaded_json=config_file_args, json_schema=cofu.CONFIG_FILE_TEMPLATE

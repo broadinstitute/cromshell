@@ -23,7 +23,6 @@ class TestWorkflowIdUtils:
         resolved_workflow_id: str,
         tmp_submission_file: str,
     ):
-
         assert (
             workflow_id_utils.resolve_workflow_id(
                 cromshell_input=cromshell_input,
@@ -48,7 +47,6 @@ class TestWorkflowIdUtils:
         tmp_submission_file: str,
         should_fail,
     ):
-
         if should_fail:
             with pytest.raises(ValueError):
                 workflow_id_utils.obtain_workflow_id_using_digit(

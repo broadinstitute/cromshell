@@ -193,8 +193,7 @@ def submit_workflow_to_server(
     # handler, which avoids errors if optional files are NONE.
     with open(wdl, "rb") as wdl_file, open(wdl_json, "rb") as wdl_json_file, (
         open(options_json, "rb") if options_json is not None else none_context
-    ) as options_file, (io_utils.open_or_zip(dependencies_zip)) as dependencies_file:
-
+    ) as options_file, io_utils.open_or_zip(dependencies_zip) as dependencies_file:
         submission_params = {
             "workflowSource": wdl_file,
             "workflowInputs": wdl_json_file,
