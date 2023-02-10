@@ -128,7 +128,6 @@ def workflow_failed(metadata: dict) -> bool:
     # value in search of a nested dictionary (indicating subworkflows)
     # or a list which holds the task statuses.
     for value in metadata.values():
-
         # If a dictionary value is encountered then Depth First Search recursion
         # is used to traverse the dictionary by iterating through the given dictionary
         # and reporting whether it found a failure. The reason for this is due to the
@@ -147,7 +146,6 @@ def workflow_failed(metadata: dict) -> bool:
         # We'll want to check each shard to determine whether it's status has "Failed".
         elif isinstance(value, list):
             for shard in value:
-
                 # If a key in the shard is labeled "subWorkflowMetadata", then this
                 # will contain another dictionary layer of subworkflow tasks that will
                 # require traversal.

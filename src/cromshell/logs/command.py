@@ -207,7 +207,6 @@ def print_task_logs(
     sharded = workflow_metadata["calls"][task][0]["shardIndex"] != -1
 
     for i in range(len(shard_list)):
-
         status = shard_list[i]["executionStatus"]
         if "ALL" in status_keys or status in status_keys:
             task_status_font = get_color_for_status_key(status)

@@ -37,7 +37,6 @@ def valid_json(json_to_validate: str or Path, json_is_file_path: bool = True) ->
 
 
 def validate_json_schema(loaded_json: dict, json_schema: dict) -> None:
-
     """
     Check if the keys provided in Cromshell's configurations file match the
     template schema, if not warn the user. Also check if the type of the key value

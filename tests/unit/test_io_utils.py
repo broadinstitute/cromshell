@@ -103,7 +103,6 @@ class TestIOUtilities:
         ],
     )
     def test_pretty_print_json(self, testing_input, test_output):
-
         # Here the function is being run and allows us to redirect the stdout which
         # would be what the function prints to the screen to file like object
         func_stdout = io.StringIO()
@@ -290,7 +289,6 @@ class TestIOUtilities:
         should_fail: bool,
         tmp_path,
     ) -> None:
-
         temp_submission_file = str(tmp_path) + "/submission_file.text"
 
         # Copy submission file template to temp dir

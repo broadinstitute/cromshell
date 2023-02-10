@@ -19,7 +19,6 @@ def workflow_id_in_txt_db(result, local_workflow_database_tsv: Path):
 
     # check if workflow id is in database tsv
     with open(local_workflow_database_tsv, "r") as file1:
-
         # read file content
         readfile = file1.read()
         # checking condition for string found or not
@@ -123,7 +122,6 @@ class TestSubmit:
     def test_womtool_validate_not_valid_wdl_and_json(
         self, test_wdl_path, test_json_path
     ):
-
         # asserts that an exception is raised by the function
         with pytest.raises(submit_command.ValidationError):
             submit_command.womtool_validate_wdl_and_json(

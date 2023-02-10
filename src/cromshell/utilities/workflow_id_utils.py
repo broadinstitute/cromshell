@@ -44,7 +44,6 @@ def obtain_workflow_id_using_digit(relative_id: int, submission_file_path: str) 
         raise ValueError("Relative workflow id must be a non zero integer")
 
     with open(submission_file_path, "r") as csv_file:
-
         reader = csv.DictReader(csv_file, delimiter="\t")
         mycsv = list(reader)
         total_rows = len(mycsv)
