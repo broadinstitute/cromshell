@@ -3,7 +3,7 @@ import logging
 import click
 
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import command_setup_utils
+from cromshell.utilities import command_setup_utils, io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,12 +62,14 @@ def main(
     key_action = "include" if not exclude_keys else "exclude"
     LOGGER.info("Metadata keys set to %s: %s", key_action, metadata_parameter)
 
-    metadata_command.obtain_and_print_metadata(
+    workflow_metadata_json = metadata_command.format_metadata_params_and_get_metadata(
         config=config,
         metadata_param=metadata_parameter,
         exclude_keys=exclude_keys,
         dont_expand_subworkflows=dont_expand_subworkflows,
     )
+
+    io_utils.pretty_print_json(format_json=workflow_metadata_json, add_color=True)
 
     return 0
 
