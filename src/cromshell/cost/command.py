@@ -1,16 +1,15 @@
 import logging
 import statistics
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import click
 from google.cloud import bigquery
 from tabulate import tabulate
 
+import cromshell.metadata.command as metadata
 import cromshell.utilities.command_setup_utils as command_setup_utils
 import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.workflow_id_utils as workflow_id_utils
-import cromshell.metadata.command as metadata
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,39 +53,41 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
     cofu.check_key_is_configured(
         key_to_check="bq_cost_table",
         config_options=config.cromshell_config_options,
-        config_file_path=config.cromshell_config_path
+        config_file_path=config.cromshell_config_path,
     )
-    LOGGER.info("Using cost table: %s", config.cromshell_config_options["bq_cost_table"])
+    LOGGER.info(
+        "Using cost table: %s", config.cromshell_config_options["bq_cost_table"]
+    )
 
     # Get time workflow finished using metadata command (error if not finished)
     LOGGER.info("Retrieving workflow metadata")
     workflow_metadata = metadata.format_metadata_params_and_get_metadata(
         config=config,
         exclude_keys=False,
-        metadata_param=["start", "status", "id", "end", "workflowProcessingEvents"]
+        metadata_param=["start", "status", "id", "end", "workflowProcessingEvents"],
     )
     start_time, end_time = get_submission_start_end_time(workflow_metadata)
 
     LOGGER.info("Checking workflow completed and finished past 24hrs")
     checks_before_query(
-        start_time=start_time,
-        end_time=end_time,
-        workflow_id=resolved_workflow_id
+        start_time=start_time, end_time=end_time, workflow_id=resolved_workflow_id
     )
 
     LOGGER.info("Querying BQ")
     # Create start and end time for query, plus/minus a day from start and finish
     query_start_time = str(
-        datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z") - timedelta(days=1))
+        datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z") - timedelta(days=1)
+    )
     query_end_time = str(
-        datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z") + timedelta(days=1))
+        datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z") + timedelta(days=1)
+    )
 
     query_results = query_bigquery(
         workflow_id=resolved_workflow_id,
         bq_database=config.cromshell_config_options["bq_cost_table"],
         start_date=query_start_time,
         end_date=query_end_time,
-        detailed=detailed
+        detailed=detailed,
     )
 
     query_rows: list[dict] = [dict(row) for row in query_results]
@@ -96,7 +97,7 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
         print(
             tabulate(
                 color_cost_outliers(query_rows_cost_rounded=query_rows_cost_rounded),
-                headers="keys"
+                headers="keys",
             )
         )
     else:
@@ -106,11 +107,7 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
 
 
 def query_bigquery(
-    workflow_id: str,
-    bq_database: str,
-    start_date: str,
-    end_date: str,
-    detailed: bool
+    workflow_id: str, bq_database: str, start_date: str, end_date: str, detailed: bool
 ):
     """
     Query BigQuery for workflow cost.
@@ -165,8 +162,8 @@ def query_bigquery(
     # aggregated there will always be one row minimum, so this condition will confirm
     # the results for that row is not 'None'.
     if query_results.total_rows == 0 or (
-            query_results.total_rows == 1 and next(query_job.result()).get(
-            "cost") is None):
+        query_results.total_rows == 1 and next(query_job.result()).get("cost") is None
+    ):
         LOGGER.error("Could not retrieve cost - no cost entries found.")
         raise ValueError("Could not retrieve cost - no cost entries found.")
     else:
@@ -204,16 +201,18 @@ def get_submission_start_end_time(workflow_metadata: dict) -> (str, str):
 
     # If server was restarted multiple start/end times can be present, here we use
     # the earliest value.
-    events = workflow_metadata['workflowProcessingEvents']
+    events = workflow_metadata["workflowProcessingEvents"]
     try:
-        end_time = \
-        [i.get("timestamp") for i in events if i.get("description") == "Finished"][0]
+        end_time = [
+            i.get("timestamp") for i in events if i.get("description") == "Finished"
+        ][0]
     except IndexError:
         end_time = None
 
     try:
-        start_time = \
-            [i.get("timestamp") for i in events if i.get("description") == "PickedUp"][0]
+        start_time = [
+            i.get("timestamp") for i in events if i.get("description") == "PickedUp"
+        ][0]
     except IndexError:
         start_time = None
 
@@ -232,30 +231,39 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
     """
 
     if not start_time:
-        LOGGER.error("Start time was not found for workflow id: %s , which may"
-                     "indicate the workflow was recently submitted and has not "
-                     "started yet. Cost can only be obtained 24hrs after workflow"
-                     "completion.", workflow_id)
+        LOGGER.error(
+            "Start time was not found for workflow id: %s , which may "
+            "indicate the workflow was recently submitted and has not started yet. "
+            "Cost can only be obtained 24hrs after workflow completion.",
+            workflow_id,
+        )
         exit()
 
     if not end_time:
-        LOGGER.error("Finished time was not found. Workflow %s is likely running and "
-                     "is not finished yet.",
-                     workflow_id)
+        LOGGER.error(
+            "Finished time was not found. Workflow %s is "
+            "likely running and is not finished yet.",
+            workflow_id,
+        )
         exit()
 
-    minimum_time_passed, workflow_time_delta = minimum_time_passed_since_workflow_completion(
-        end_time=end_time)
+    (
+        minimum_time_passed,
+        workflow_time_delta,
+    ) = minimum_time_passed_since_workflow_completion(end_time=end_time)
 
     if not minimum_time_passed:
-        wait_time: timedelta = (timedelta(hours=24) - workflow_time_delta)
+        wait_time: timedelta = timedelta(hours=24) - workflow_time_delta
         wait_hours, remainder = divmod(wait_time.seconds, 3600)
         wait_minutes, wait_seconds = divmod(remainder, 60)
 
-        LOGGER.error("Workflow finished less than 24 hours ago.  Cannot check cost.  "
-                     "Please wait %sh:%sm:%ss and try again.", wait_hours, wait_minutes,
-                     wait_seconds
-                     )
+        LOGGER.error(
+            "Workflow finished less than 24 hours ago.  Cannot check cost.  "
+            "Please wait %sh:%sm:%ss and try again.",
+            wait_hours,
+            wait_minutes,
+            wait_seconds,
+        )
         exit()
 
 
@@ -272,7 +280,7 @@ def round_cost_values(query_rows: list[dict]) -> list[dict]:
     for row in query_rows:
         if row["cost"] is not None:
             cost = round(float(row["cost"]), 2)
-            row["cost"] = max(cost, .01)
+            row["cost"] = max(cost, 0.01)
             cost_rounded.append(row)
 
     return cost_rounded

@@ -11,12 +11,13 @@ CONFIG_FILE_TEMPLATE = {
     "requests_timeout": "int",
     "gcloud_token_email": "str",
     "referer_header_url": "str",
-    "bq_cost_table": "str"
+    "bq_cost_table": "str",
 }
 
 
 class MissingConfigParametersException(Exception):
     """Raised when Cromshell Config file is missing required parameters"""
+
     pass
 
 
@@ -119,11 +120,12 @@ def check_key_is_configured(
     key_to_check: str, config_options: dict, config_file_path: str
 ) -> Union[str, int, dict, list]:
     if key_to_check not in config_options:
-        LOGGER.error(f"Cromshell config file is missing Key '{key_to_check}'. "
-                     f"Add Key and value to config file: {config_file_path}"
-                     )
-        raise MissingConfigParametersException("Cromshell config file is missing Key "
-                                               f"'{key_to_check}'. Add Key and value "
-                                               f"to config file: {config_file_path}"
-                                               )
+        LOGGER.error(
+            f"Cromshell config file is missing Key '{key_to_check}'. "
+            f"Add Key and value to config file: {config_file_path}"
+        )
+        raise MissingConfigParametersException(
+            f"Cromshell config file is missing Key '{key_to_check}'. "
+            f"Add Key and value to config file: {config_file_path}"
+        )
     return config_options.get(key_to_check)

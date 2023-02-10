@@ -3,7 +3,12 @@ import logging
 import click
 import requests
 
-from cromshell.utilities import command_setup_utils, http_utils, io_utils, cromshellconfig
+from cromshell.utilities import (
+    command_setup_utils,
+    cromshellconfig,
+    http_utils,
+    io_utils,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -93,7 +98,7 @@ def format_metadata_params_and_get_metadata(
     config: object,
     exclude_keys: bool,
     metadata_param: list[str] = cromshellconfig.METADATA_KEYS_TO_OMIT,
-    dont_expand_subworkflows: bool = False
+    dont_expand_subworkflows: bool = False,
 ) -> dict:
     """
     Format metadata parameters and obtains metadata from cromwell server

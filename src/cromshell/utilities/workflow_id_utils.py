@@ -123,9 +123,7 @@ def check_workflow_id_in_submission_file(
     :return: None
     """
 
-    if not workflow_id_exists(
-        workflow_id=workflow_id, submission_file=submission_file
-    ):
+    if not workflow_id_exists(workflow_id=workflow_id, submission_file=submission_file):
         LOGGER.error("Could not find workflow id %s in submission file.", workflow_id)
         raise ValueError(
             f"Could not find workflow id {workflow_id} in submission file."
