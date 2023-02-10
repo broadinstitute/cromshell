@@ -1,20 +1,29 @@
 import logging
+import statistics
+from datetime import datetime, timezone, timedelta
 
 import click
+from google.cloud import bigquery
+from tabulate import tabulate
+
 import cromshell.utilities.command_setup_utils as command_setup_utils
 import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.workflow_id_utils as workflow_id_utils
+import cromshell.metadata.command as metadata
 
-from datetime import datetime, timezone, timedelta
-from tempfile import NamedTemporaryFile
-from google.cloud import bigquery
-from tabulate import tabulate
 
 LOGGER = logging.getLogger(__name__)
 
 
 @click.command(name="cost")
 @click.argument("workflow_id", required=True)
+@click.option(
+    "-c",
+    "--color",
+    is_flag=True,
+    default=False,
+    help="Color cost outliers.",
+)
 @click.option(
     "-d",
     "--detailed",
@@ -23,7 +32,7 @@ LOGGER = logging.getLogger(__name__)
     help="Get the cost for a workflow at the task level",
 )
 @click.pass_obj
-def main(config, workflow_id: str or int, detailed: bool):
+def main(config, workflow_id: str or int, detailed: bool, color: bool):
     """
     Get the cost for a workflow.
     Only works for workflows that completed more than 24 hours ago on GCS.
@@ -51,12 +60,18 @@ def main(config, workflow_id: str or int, detailed: bool):
 
     # Get time workflow finished using metadata command (error if not finished)
     LOGGER.info("Retrieving workflow metadata")
-    workflow_metadata = get_metadata(config)
+    workflow_metadata = metadata.format_metadata_params_and_get_metadata(
+        config=config,
+        exclude_keys=False,
+        metadata_param=["start", "status", "id", "end", "workflowProcessingEvents"]
+    )
     start_time, end_time = get_submission_start_end_time(workflow_metadata)
 
     LOGGER.info("Checking workflow completed and finished past 24hrs")
     checks_before_query(
-        start_time=start_time, end_time=end_time, workflow_id=resolved_workflow_id
+        start_time=start_time,
+        end_time=end_time,
+        workflow_id=resolved_workflow_id
     )
 
     LOGGER.info("Querying BQ")
@@ -74,13 +89,20 @@ def main(config, workflow_id: str or int, detailed: bool):
         detailed=detailed
     )
 
-    query_rows: list = [dict(row) for row in query_results]
-    query_rows_cost_rounded: list = round_cost_values(query_rows=query_rows)
+    query_rows: list[dict] = [dict(row) for row in query_results]
+    query_rows_cost_rounded: list[dict] = round_cost_values(query_rows)
 
+    if detailed and color:
+        print(
+            tabulate(
+                color_cost_outliers(query_rows_cost_rounded=query_rows_cost_rounded),
+                headers="keys"
+            )
+        )
+    else:
+        print(tabulate(query_rows_cost_rounded, headers="keys"))
 
-    print(tabulate(query_rows_cost_rounded, headers="keys"))
     print("Costs rounded to nearest cent.")
-
 
 
 def query_bigquery(
@@ -91,19 +113,18 @@ def query_bigquery(
     detailed: bool
 ):
     """
-        Query bigqueury for cost
+    Query BigQuery for workflow cost.
 
-    :param detailed:
+    :param detailed: Whether to query cost sum or cost per task
     :param workflow_id:
-    :param bq_database:
-    :param start_date:
-    :param end_date:
+    :param bq_database: The bq database table name being queried for workflow cost.
+    :param start_date: Date workflow started
+    :param end_date: Date workflow finished
     :return:
     """
 
     client = bigquery.Client()
 
-    # Todo: remove LIMIT in query
     if detailed:
         query = f"""
                 SELECT wfid.value as cromwell_workflow_id, service.description, task.value as task_name, sum(cost) as cost
@@ -115,14 +136,12 @@ def query_bigquery(
                 AND partition_time BETWEEN @start_date AND @end_date
                 GROUP BY 1,2,3
                 ORDER BY 4 DESC
-                LIMIT 100
             """
     else:
         query = f"""
                 SELECT sum(cost) as cost
                 FROM {bq_database}, UNNEST(labels)
                 WHERE value LIKE @workflow_id AND partition_time BETWEEN @start_date AND @end_date
-                LIMIT 100
             """
 
     job_config = bigquery.QueryJobConfig(
@@ -161,8 +180,8 @@ def minimum_time_passed_since_workflow_completion(
     Make sure 24 hours have passed between job finish time and executing this command
     (finished time minus current time).
 
-    :param end_time: workflow completion time obtained from cromwell job metadata
-    :param min_hours:
+    :param end_time: Workflow completion time obtained from cromwell job metadata
+    :param min_hours: Minimum hours after workflow finished in order to perform query
     :return:
     """
 
@@ -175,28 +194,10 @@ def minimum_time_passed_since_workflow_completion(
     return (True, delta) if delta > mindelta else (False, delta)
 
 
-def get_metadata(config: object) -> dict:
-    import cromshell.metadata.command as metadata_command
-    from cromshell.utilities import http_utils
-
-    formatted_metadata_parameter = metadata_command.format_metadata_params(
-        list_of_keys=["start", "status", "id", "end", "calls", "workflowProcessingEvents"],
-        exclude_keys=False,
-        expand_subworkflows=False,
-    )
-
-    return metadata_command.get_workflow_metadata(
-        meta_params=formatted_metadata_parameter,
-        api_workflow_id=config.cromwell_api_workflow_id,
-        timeout=config.requests_connect_timeout,
-        verify_certs=config.requests_verify_certs,
-        headers=http_utils.generate_headers(config),
-    )
-
-
 def get_submission_start_end_time(workflow_metadata: dict) -> (str, str):
     """
-    Gets the start and end time from the workflow metadata
+    Gets the start and end time from the workflow metadata.
+
     :param workflow_metadata:
     :return:
     """
@@ -224,8 +225,8 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
     Check that workflow has finished, and it has finished at least 24 hours from the
     execution of this script.
 
-    :param start_time:
-    :param end_time:
+    :param start_time: Time workflow started
+    :param end_time: Time workflow finished
     :param workflow_id:
     :return:
     """
@@ -258,7 +259,13 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
         exit()
 
 
-def round_cost_values(query_rows: list) -> list:
+def round_cost_values(query_rows: list[dict]) -> list[dict]:
+    """
+    Round the cost value to 2 decimal points and set minimum cost values to .01
+
+    :param query_rows: [dict{"cost"},dict{"cost"},...]
+    :return: [dict{"cost"},dict{"cost"},...]
+    """
 
     cost_rounded: list = []
 
@@ -269,3 +276,32 @@ def round_cost_values(query_rows: list) -> list:
             cost_rounded.append(row)
 
     return cost_rounded
+
+
+def color_cost_outliers(query_rows_cost_rounded: list[dict]) -> list[dict]:
+    """
+    Colors cost outliers red. Outliers are defined as cost values
+    with a z score that fall outside of 1 standard deviation.
+
+    :param query_rows_cost_rounded: [dict{"cost"},dict{"cost"},...]
+    :return: [dict{"cost"},dict{"cost"},...]
+    """
+
+    all_task_cost = [row.get("cost") for row in query_rows_cost_rounded]
+    mean_cost = statistics.mean(all_task_cost)
+    std_cost = statistics.stdev(all_task_cost)
+
+    threshold = 1
+    highlighted_query_rows_cost_rounded = []
+
+    for y in query_rows_cost_rounded:
+        row_cost = y.get("cost")
+        z_score = (row_cost - mean_cost) / std_cost
+        if abs(z_score) > threshold:
+            highlighted_row = y
+            highlighted_row["cost"] = "\033[91m" + str(row_cost) + "\033[0m"
+            highlighted_query_rows_cost_rounded.append(highlighted_row)
+        else:
+            highlighted_query_rows_cost_rounded.append(y)
+
+    return highlighted_query_rows_cost_rounded
