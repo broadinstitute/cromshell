@@ -317,14 +317,14 @@ def resolve_gcloud_token_email(email: str):
 
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
-submission_file_path: str = __get_submission_file(
+submission_file_path = __get_submission_file(
     config_directory=config_dir, sub_file_name=SUBMISSION_FILE_NAME
 )
 # TODO: Validate cromshell_config_options keys
-cromshell_config_options: dict = __load_cromshell_config_file(
+cromshell_config_options = __load_cromshell_config_file(
     config_directory=config_dir,
     config_file_name=CROMSHELL_CONFIG_FILE_NAME,
     config_file_template=CROMSHELL_CONFIG_OPTIONS_TEMPLATE,
 )
-cromwell_server: str = __get_cromwell_server(cromshell_config_options)
+cromwell_server = __get_cromwell_server(cromshell_config_options)
 cromshell_config_path: Path = Path(os.path.join(config_dir, CROMSHELL_CONFIG_FILE_NAME))

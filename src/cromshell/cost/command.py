@@ -267,7 +267,7 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
         exit()
 
 
-def round_cost_values(query_rows: list[dict]) -> list[dict]:
+def round_cost_values(query_rows: list) -> list:
     """
     Round the cost value to 2 decimal points and set minimum cost values to .01
 
@@ -286,7 +286,7 @@ def round_cost_values(query_rows: list[dict]) -> list[dict]:
     return cost_rounded
 
 
-def color_cost_outliers(query_rows_cost_rounded: list[dict]) -> list[dict]:
+def color_cost_outliers(query_rows_cost_rounded: list) -> list:
     """
     Colors cost outliers red. Outliers are defined as cost values
     with a z score that fall outside of 1 standard deviation.
