@@ -97,7 +97,7 @@ def get_workflow_metadata(
 def format_metadata_params_and_get_metadata(
     config: object,
     exclude_keys: bool,
-    metadata_param: list[str] = cromshellconfig.METADATA_KEYS_TO_OMIT,
+    metadata_param: list = cromshellconfig.METADATA_KEYS_TO_OMIT,
     dont_expand_subworkflows: bool = False,
 ) -> dict:
     """
