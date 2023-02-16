@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
     "--color",
     is_flag=True,
     default=False,
-    help="Color cost outliers.",
+    help="Color outliers in task level cost results.",
 )
 @click.option(
     "-d",
@@ -84,7 +84,7 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
 
     query_results = query_bigquery(
         workflow_id=resolved_workflow_id,
-        bq_database=config.cromshell_config_options["bq_cost_table"],
+        bq_cost_table=config.cromshell_config_options["bq_cost_table"],
         start_date=query_start_time,
         end_date=query_end_time,
         detailed=detailed,
@@ -93,28 +93,22 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
     query_rows: list[dict] = [dict(row) for row in query_results]
     query_rows_cost_rounded: list[dict] = round_cost_values(query_rows)
 
-    if detailed and color:
-        print(
-            tabulate(
-                color_cost_outliers(query_rows_cost_rounded=query_rows_cost_rounded),
-                headers="keys",
-            )
-        )
-    else:
-        print(tabulate(query_rows_cost_rounded, headers="keys"))
+    print_query_results(
+        color=color, detailed=detailed, query_rows_cost_rounded=query_rows_cost_rounded
+    )
 
     print("Costs rounded to nearest cent.")
 
 
 def query_bigquery(
-    workflow_id: str, bq_database: str, start_date: str, end_date: str, detailed: bool
+    workflow_id: str, bq_cost_table: str, start_date: str, end_date: str, detailed: bool
 ):
     """
     Query BigQuery for workflow cost.
 
     :param detailed: Whether to query cost sum or cost per task
     :param workflow_id:
-    :param bq_database: The bq database table name being queried for workflow cost.
+    :param bq_cost_table: The bq cost table name being queried for workflow cost.
     :param start_date: Date workflow started
     :param end_date: Date workflow finished
     :return:
@@ -122,10 +116,34 @@ def query_bigquery(
 
     client = bigquery.Client()
 
+    query = create_bq_query(detailed=detailed, bq_cost_table=bq_cost_table)
+
+    job_config = create_bq_query_job_config(
+        workflow_id=workflow_id, start_date=start_date, end_date=end_date
+    )
+
+    query_job = client.query(query, job_config=job_config)
+
+    check_bq_query_for_errors(query_job=query_job)
+    check_bq_query_results(query_job=query_job)
+    query_results = query_job.result()
+
+    return query_results
+
+
+def create_bq_query(detailed: bool, bq_cost_table: str) -> str:
+    """
+    Create an SQL query to be executed in BQ to retrieve workflow cost summary or
+    cost breakdown per workflow task.
+
+    :param detailed: Bool to determine whether to get cost summary or breakdown
+    :param bq_cost_table: Bigquery cost table to query
+    :return:
+    """
     if detailed:
-        query = f"""
+        return f"""
                 SELECT wfid.value as cromwell_workflow_id, service.description, task.value as task_name, sum(cost) as cost
-                FROM {bq_database} as billing, UNNEST(labels) as wfid, UNNEST(labels) as task
+                FROM {bq_cost_table} as billing, UNNEST(labels) as wfid, UNNEST(labels) as task
                 WHERE cost > 0
                 AND task.key LIKE "wdl-task-name"
                 AND wfid.key LIKE "cromwell-workflow-id"
@@ -135,27 +153,39 @@ def query_bigquery(
                 ORDER BY 4 DESC
             """
     else:
-        query = f"""
+        return f"""
                 SELECT sum(cost) as cost
-                FROM {bq_database}, UNNEST(labels)
+                FROM {bq_cost_table}, UNNEST(labels)
                 WHERE value LIKE @workflow_id AND partition_time BETWEEN @start_date AND @end_date
             """
 
-    job_config = bigquery.QueryJobConfig(
+
+def create_bq_query_job_config(
+    workflow_id, start_date, end_date
+) -> bigquery.QueryJobConfig:
+    """
+    Create BQ Job config to be used while executing query.
+    :param workflow_id:
+    :param start_date:
+    :param end_date:
+    :return:
+    """
+    return bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("workflow_id", "STRING", "%" + workflow_id),
             bigquery.ScalarQueryParameter("start_date", "STRING", start_date),
             bigquery.ScalarQueryParameter("end_date", "STRING", end_date),
         ]
     )
-    query_job = client.query(query, job_config=job_config)
 
-    if query_job.errors:
-        LOGGER.error(f"Somthing went wrong with query. Message: {query_job.errors}")
-        raise Exception(f"Somthing went wrong with query. Message: {query_job.errors}")
 
+def check_bq_query_results(query_job: bigquery.QueryJob) -> None:
+    """
+    Checks the contents of the query result
+    :param query_job: Response from the BQ query execution
+    :return:
+    """
     query_results = query_job.result()
-
     # First condition applies to a 'detailed' query to confirm results were obtained,
     # zero rows in the results indicates the failure to obtain cost for a workflow.
     # Second condition applies to 'non-detailed' query, because the results are
@@ -166,8 +196,17 @@ def query_bigquery(
     ):
         LOGGER.error("Could not retrieve cost - no cost entries found.")
         raise ValueError("Could not retrieve cost - no cost entries found.")
-    else:
-        return query_results
+
+
+def check_bq_query_for_errors(query_job) -> None:
+    """
+    Checks query response for errors
+    :param query_job: Response from the BQ query execution
+    :return:
+    """
+    if query_job.errors:
+        LOGGER.error(f"Something went wrong with query. Message: {query_job.errors}")
+        raise Exception(f"Something went wrong with query. Message: {query_job.errors}")
 
 
 def minimum_time_passed_since_workflow_completion(
@@ -186,9 +225,9 @@ def minimum_time_passed_since_workflow_completion(
         end_time, "%Y-%m-%dT%H:%M:%S.%f%z"
     )
 
-    mindelta = timedelta(hours=min_hours)
+    min_delta = timedelta(hours=min_hours)
 
-    return (True, delta) if delta > mindelta else (False, delta)
+    return (True, delta) if delta > min_delta else (False, delta)
 
 
 def get_submission_start_end_time(workflow_metadata: dict) -> (str, str):
@@ -290,10 +329,15 @@ def color_cost_outliers(query_rows_cost_rounded: list) -> list:
     """
     Colors cost outliers red. Outliers are defined as cost values
     with a z score that fall outside of 1 standard deviation.
+    Query rows must have more than 1 row.
 
     :param query_rows_cost_rounded: [dict{"cost"},dict{"cost"},...]
     :return: [dict{"cost"},dict{"cost"},...]
     """
+
+    if len(query_rows_cost_rounded) < 2:
+        LOGGER.error("Expecting more than one row for 'query_rows_cost_rounded'")
+        raise ValueError("Expecting more than one row for 'query_rows_cost_rounded'")
 
     all_task_cost = [row.get("cost") for row in query_rows_cost_rounded]
     mean_cost = statistics.mean(all_task_cost)
@@ -313,3 +357,24 @@ def color_cost_outliers(query_rows_cost_rounded: list) -> list:
             highlighted_query_rows_cost_rounded.append(y)
 
     return highlighted_query_rows_cost_rounded
+
+
+def print_query_results(color: bool, detailed: bool, query_rows_cost_rounded: list):
+    """
+
+    :param color: Bool to determine whether to highlight cost outliers
+    :param detailed: Bool to  whether to get cost summary or cost breakdown
+    :param query_rows_cost_rounded:
+    :return:
+    """
+    # Coloring outliers requires more than one row, thus can only be performed
+    # on 'detailed' (workflow cost breakdown) results.
+    if detailed and color:
+        print(
+            tabulate(
+                color_cost_outliers(query_rows_cost_rounded=query_rows_cost_rounded),
+                headers="keys",
+            )
+        )
+    else:
+        print(tabulate(query_rows_cost_rounded, headers="keys"))
