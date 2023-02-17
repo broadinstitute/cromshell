@@ -10,6 +10,7 @@ import cromshell.metadata.command as metadata
 import cromshell.utilities.command_setup_utils as command_setup_utils
 import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.workflow_id_utils as workflow_id_utils
+import cromshell.utilities.workflow_status_utils as workflow_status_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +38,10 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
     Only works for workflows that completed more than 24 hours ago on GCS.
     Requires the 'bq_cost_table' key in the cromshell configuration file to be
     set to the big query cost table for your organization.
+
+    Costs here DO NOT include any call cached tasks.
+    Costs rounded to nearest cent (approximately).
+
     """
 
     LOGGER.info("cost")
@@ -66,6 +71,11 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
         exclude_keys=False,
         metadata_param=["start", "status", "id", "end", "workflowProcessingEvents"],
     )
+
+    workflow_status_utils.confirm_workflow_in_terminal_status(
+        workflow_status=workflow_metadata.get("status")
+    )
+
     start_time, end_time = get_submission_start_end_time(workflow_metadata)
 
     LOGGER.info("Checking workflow completed and finished past 24hrs")
@@ -90,14 +100,18 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
         detailed=detailed,
     )
 
-    query_rows: list[dict] = [dict(row) for row in query_results]
-    query_rows_cost_rounded: list[dict] = round_cost_values(query_rows)
+    query_rows: list = [dict(row) for row in query_results]
+    # Remove cromwell_workflow_id, description
+    query_rows_cost_rounded: list = round_cost_values(query_rows)
+    formatted_rounded_rows: list = format_query_results(query_rows_cost_rounded)
+    total_cost: float = get_detailed_query_total_cost(formatted_rounded_rows)
 
     print_query_results(
-        color=color, detailed=detailed, query_rows_cost_rounded=query_rows_cost_rounded
+        color=color, detailed=detailed, query_rows_cost_rounded=formatted_rounded_rows
     )
 
-    print("Costs rounded to nearest cent.")
+    if detailed:
+        print("Total Cost: $", total_cost)
 
 
 def query_bigquery(
@@ -359,6 +373,23 @@ def color_cost_outliers(query_rows_cost_rounded: list) -> list:
     return highlighted_query_rows_cost_rounded
 
 
+def get_detailed_query_total_cost(query_rows: list) -> float:
+    total = 0
+    for r in query_rows:
+        total = total + float(r.get("cost"))
+    return round(total, 2)
+
+
+def format_query_results(query_rows) -> list:
+    formatted_query_rows = []
+    for row in query_rows:
+        formatted_query_rows.append(
+            {"task_name": row.get("task_name"), "cost": row.get("cost")}
+        )
+
+    return formatted_query_rows
+
+
 def print_query_results(color: bool, detailed: bool, query_rows_cost_rounded: list):
     """
 
@@ -374,7 +405,8 @@ def print_query_results(color: bool, detailed: bool, query_rows_cost_rounded: li
             tabulate(
                 color_cost_outliers(query_rows_cost_rounded=query_rows_cost_rounded),
                 headers="keys",
+                tablefmt="rst",
             )
         )
     else:
-        print(tabulate(query_rows_cost_rounded, headers="keys"))
+        print(tabulate(query_rows_cost_rounded, headers="keys", tablefmt="rst"))

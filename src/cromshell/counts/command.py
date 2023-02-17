@@ -8,7 +8,7 @@ from termcolor import colored
 from cromshell.log import DelayedLogMessage
 from cromshell.metadata import command as metadata_command
 from cromshell.utilities import command_setup_utils, http_utils, io_utils
-from cromshell.utilities.cromshellconfig import TaskStatus
+from cromshell.utilities.workflow_status_utils import TaskStatus
 
 LOGGER = logging.getLogger(__name__)
 

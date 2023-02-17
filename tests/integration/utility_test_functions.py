@@ -5,6 +5,7 @@ from traceback import print_exception
 
 from click.testing import CliRunner
 
+import cromshell.utilities.workflow_status_utils as wsu
 from cromshell.__main__ import main_entry as cromshell
 from cromshell.utilities import cromshellconfig
 
@@ -51,8 +52,7 @@ def wait_for_workflow_completion(
 
     if status_to_reach is None:
         status_to_reach = (
-            cromshellconfig.WorkflowStatuses.SUCCEEDED.value
-            + cromshellconfig.WorkflowStatuses.FAILED.value
+            wsu.WorkflowStatuses.SUCCEEDED.value + wsu.WorkflowStatuses.FAILED.value
         )
 
     import time

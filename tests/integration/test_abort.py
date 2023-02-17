@@ -1,6 +1,6 @@
 import pytest
 
-from cromshell.utilities.cromshellconfig import WorkflowStatuses
+from cromshell.utilities.workflow_status_utils import WorkflowStatuses
 from tests.integration import utility_test_functions
 
 

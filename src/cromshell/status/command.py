@@ -5,14 +5,10 @@ import click
 import requests
 
 import cromshell.utilities.submissions_file_utils
+import cromshell.utilities.workflow_status_utils as wsu
 from cromshell import log
 from cromshell.metadata import command as metadata_command
-from cromshell.utilities import (
-    command_setup_utils,
-    cromshellconfig,
-    http_utils,
-    io_utils,
-)
+from cromshell.utilities import command_setup_utils, http_utils, io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,8 +44,7 @@ def main(config, workflow_id):
     # Set return value based on workflow status
     if (
         workflow_status
-        in cromshellconfig.WorkflowStatuses.FAILED.value
-        + cromshellconfig.WorkflowStatuses.ABORTED.value
+        in wsu.WorkflowStatuses.FAILED.value + wsu.WorkflowStatuses.ABORTED.value
     ):
         ret_val = 1
         log.display_logo(io_utils.dead_turtle)
@@ -81,7 +76,7 @@ def main(config, workflow_id):
             log.display_logo(io_utils.turtle)
         else:
             log.display_logo(io_utils.doomed_logo)
-            workflow_status = cromshellconfig.WorkflowStatuses.DOOMED.value[0]
+            workflow_status = wsu.WorkflowStatuses.DOOMED.value[0]
 
             requested_status_json = (
                 f'{{"status":"{workflow_status}","id":"{workflow_id}"}}'
@@ -120,7 +115,7 @@ def workflow_failed(metadata: dict) -> bool:
 
     # If the given dictionary contains a 'status' key and has value of "Failed"
     # then exit the function returning "True" to indicate workflow has failed
-    if metadata.get("status") == cromshellconfig.WorkflowStatuses.FAILED.value[0]:
+    if metadata.get("status") == wsu.WorkflowStatuses.FAILED.value[0]:
         return True
 
     # If the dictionary does not contain a failed value for its status key or
@@ -153,10 +148,7 @@ def workflow_failed(metadata: dict) -> bool:
                     if workflow_failed(shard["subWorkflowMetadata"]):
                         return True
                 else:
-                    if (
-                        shard["executionStatus"]
-                        == cromshellconfig.WorkflowStatuses.FAILED.value[0]
-                    ):
+                    if shard["executionStatus"] == wsu.WorkflowStatuses.FAILED.value[0]:
                         return True
     return False
 

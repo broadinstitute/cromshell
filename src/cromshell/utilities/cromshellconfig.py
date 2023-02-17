@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import warnings
-from enum import Enum
 from pathlib import Path
 from typing import Dict, Union
 
@@ -63,32 +62,6 @@ def override_requests_cert_parameters(skip_certs: bool) -> None:
         warnings.filterwarnings(
             "ignore", message="Unverified HTTPS request is being made to"
         )
-
-
-class WorkflowStatuses(Enum):
-    """Enum to hold all possible status of workflow"""
-
-    # States listed here: https://github.com/broadinstitute/cromwell/blob/32d5d0cbf07e46f56d3d070f457eaff0138478d5/core/src/main/scala/cromwell/core/WorkflowState.scala
-
-    SUBMITTED = ["Submitted"]
-    FAILED = ["Failed", "fail"]
-    ABORTED = ["Aborted", "Aborting", "abort"]
-    RUNNING = ["Running"]
-    SUCCEEDED = ["Succeeded"]
-    DOOMED = ["DOOMED"]
-
-
-class TaskStatus(Enum):
-    """Enum to hold all possible status of workflow"""
-
-    FAILED = "Failed"
-    RUNNING = "Running"
-    DONE = "Done"
-    RETRYABLEFAILURE = "RetryableFailure"
-
-    @classmethod
-    def list(cls):
-        return [key.value for key in cls]
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None) -> None:

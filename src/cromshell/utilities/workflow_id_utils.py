@@ -128,3 +128,4 @@ def check_workflow_id_in_submission_file(
         raise ValueError(
             f"Could not find workflow id {workflow_id} in submission file."
         )
+    # Todo: check with jonn on the reason for this check
