@@ -100,18 +100,29 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
         detailed=detailed,
     )
 
-    query_rows: list = [dict(row) for row in query_results]
-    # Remove cromwell_workflow_id, description
-    query_rows_cost_rounded: list = round_cost_values(query_rows)
-    formatted_rounded_rows: list = format_query_results(query_rows_cost_rounded)
-    total_cost: float = get_detailed_query_total_cost(formatted_rounded_rows)
-
-    print_query_results(
-        color=color, detailed=detailed, query_rows_cost_rounded=formatted_rounded_rows
+    LOGGER.info("Formatting Query Results")
+    TASK_HEADER: str = "TASK"
+    COST_HEADER: str = "$ COST"
+    formatted_query_rows: list = format_bq_query_results(
+        query_results=query_results,
+        cost_header=COST_HEADER,
+        task_header=TASK_HEADER,
     )
 
+    total_cost: float = get_query_total_cost(
+        query_rows=formatted_query_rows, cost_header=COST_HEADER
+    )
     if detailed:
-        print("Total Cost: $", total_cost)
+        formatted_rounded_rows: list = round_cost_values(
+            query_rows=formatted_query_rows, cost_header=COST_HEADER
+        )
+        print_detailed_query_results(
+            color=color,
+            detailed_query_rows=formatted_rounded_rows,
+            cost_header=COST_HEADER
+        )
+
+    print(f"Total Cost: ${total_cost}")
 
 
 def query_bigquery(
@@ -320,10 +331,11 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
         exit()
 
 
-def round_cost_values(query_rows: list) -> list:
+def round_cost_values(query_rows: list, cost_header: str) -> list:
     """
     Round the cost value to 2 decimal points and set minimum cost values to .01
 
+    :param cost_header: Name of key in dictionary representing cost
     :param query_rows: [dict{"cost"},dict{"cost"},...]
     :return: [dict{"cost"},dict{"cost"},...]
     """
@@ -331,41 +343,42 @@ def round_cost_values(query_rows: list) -> list:
     cost_rounded: list = []
 
     for row in query_rows:
-        if row["cost"] is not None:
-            cost = round(float(row["cost"]), 2)
-            row["cost"] = max(cost, 0.01)
+        if row[cost_header] is not None:
+            cost = round(float(row[cost_header]), 2)
+            row[cost_header] = max(cost, 0.01)
             cost_rounded.append(row)
 
     return cost_rounded
 
 
-def color_cost_outliers(query_rows_cost_rounded: list) -> list:
+def color_cost_outliers(detailed_query_rows: list, cost_header: str) -> list:
     """
     Colors cost outliers red. Outliers are defined as cost values
     with a z score that fall outside of 1 standard deviation.
     Query rows must have more than 1 row.
 
-    :param query_rows_cost_rounded: [dict{"cost"},dict{"cost"},...]
+    :param cost_header: Name of key in dictionary representing cost
+    :param detailed_query_rows: [dict{"cost"},dict{"cost"},...]
     :return: [dict{"cost"},dict{"cost"},...]
     """
 
-    if len(query_rows_cost_rounded) < 2:
+    if len(detailed_query_rows) < 2:
         LOGGER.error("Expecting more than one row for 'query_rows_cost_rounded'")
         raise ValueError("Expecting more than one row for 'query_rows_cost_rounded'")
 
-    all_task_cost = [row.get("cost") for row in query_rows_cost_rounded]
+    all_task_cost = [row.get(cost_header) for row in detailed_query_rows]
     mean_cost = statistics.mean(all_task_cost)
     std_cost = statistics.stdev(all_task_cost)
 
     threshold = 1
     highlighted_query_rows_cost_rounded = []
 
-    for y in query_rows_cost_rounded:
-        row_cost = y.get("cost")
+    for y in detailed_query_rows:
+        row_cost = y.get(cost_header)
         z_score = (row_cost - mean_cost) / std_cost
         if abs(z_score) > threshold:
             highlighted_row = y
-            highlighted_row["cost"] = "\033[91m" + str(row_cost) + "\033[0m"
+            highlighted_row[cost_header] = "\033[91m" + str(row_cost) + "\033[0m"
             highlighted_query_rows_cost_rounded.append(highlighted_row)
         else:
             highlighted_query_rows_cost_rounded.append(y)
@@ -373,40 +386,56 @@ def color_cost_outliers(query_rows_cost_rounded: list) -> list:
     return highlighted_query_rows_cost_rounded
 
 
-def get_detailed_query_total_cost(query_rows: list) -> float:
+def get_query_total_cost(query_rows: list, cost_header: str) -> float:
+    """
+    Gets Sum of cost column
+    :param query_rows: List with each item being a dictionary containing cost key
+    :param cost_header: Name of key in dictionary representing cost
+    :return:
+    """
     total = 0
     for r in query_rows:
-        total = total + float(r.get("cost"))
+        total = total + float(r.get(cost_header))
     return round(total, 2)
 
 
-def format_query_results(query_rows) -> list:
+def format_bq_query_results(query_results, task_header: str, cost_header: str) -> list:
+    """
+    Turns bq query result object into list[dict], with each item being a dictionary
+    representing tasks and their cost of a workflow. Returns only task and cost columns
+    :param query_results: Query result from BQ
+    :param task_header: What to name new column to holding task names
+    :param cost_header: What to name new column to holding task cost
+    :return:
+    """
+    query_rows: list = [dict(row) for row in query_results]
     formatted_query_rows = []
     for row in query_rows:
         formatted_query_rows.append(
-            {"task_name": row.get("task_name"), "cost": row.get("cost")}
+            {task_header: row.get("task_name"), cost_header: row.get("cost")}
         )
 
     return formatted_query_rows
 
 
-def print_query_results(color: bool, detailed: bool, query_rows_cost_rounded: list):
+def print_detailed_query_results(
+        color: bool, detailed_query_rows: list, cost_header: str
+) -> None:
     """
-
+    Prints the detailed query results.
+    :param cost_header: The name of the key holding cost info in query list[dict]
     :param color: Bool to determine whether to highlight cost outliers
-    :param detailed: Bool to  whether to get cost summary or cost breakdown
-    :param query_rows_cost_rounded:
+    :param detailed_query_rows: List with each item being a dictionary representing
+    tasks and their cost of a workflow
     :return:
     """
-    # Coloring outliers requires more than one row, thus can only be performed
-    # on 'detailed' (workflow cost breakdown) results.
-    if detailed and color:
-        print(
-            tabulate(
-                color_cost_outliers(query_rows_cost_rounded=query_rows_cost_rounded),
-                headers="keys",
-                tablefmt="rst",
-            )
+
+    print_ready_rows: list
+    if color:
+        print_ready_rows = color_cost_outliers(
+            detailed_query_rows=detailed_query_rows, cost_header=cost_header
         )
     else:
-        print(tabulate(query_rows_cost_rounded, headers="keys", tablefmt="rst"))
+        print_ready_rows = detailed_query_rows
+
+    print(tabulate(print_ready_rows, headers="keys", tablefmt="rst"))

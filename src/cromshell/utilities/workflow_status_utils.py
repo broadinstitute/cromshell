@@ -38,7 +38,7 @@ def confirm_workflow_in_terminal_status(workflow_status: str) -> None:
     """
     non_terminal_statuses = [
         WorkflowStatuses.SUBMITTED.value,
-        WorkflowStatuses.RUNNING.valu,
+        WorkflowStatuses.RUNNING.value,
     ]
 
     if workflow_status in non_terminal_statuses:
