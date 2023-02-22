@@ -176,13 +176,13 @@ def create_bq_query(detailed: bool, bq_cost_table: str) -> str:
                 AND partition_time BETWEEN @start_date AND @end_date
                 GROUP BY 1,2,3
                 ORDER BY 4 DESC
-            """
+                """
     else:
         return f"""
                 SELECT sum(cost) as cost
                 FROM {bq_cost_table}, UNNEST(labels)
                 WHERE value LIKE @workflow_id AND partition_time BETWEEN @start_date AND @end_date
-            """
+                """
 
 
 def create_bq_query_job_config(
@@ -265,7 +265,14 @@ def get_submission_start_end_time(workflow_metadata: dict) -> (str, str):
 
     # If server was restarted multiple start/end times can be present, here we use
     # the earliest value.
-    events = workflow_metadata["workflowProcessingEvents"]
+
+    # In the case where workflow was just started, 'workflowProcessingEvents' will not
+    # be available so function will return None for both start and end time.
+    try:
+        events = workflow_metadata["workflowProcessingEvents"]
+    except KeyError:
+        return None, None
+
     try:
         end_time = [
             i.get("timestamp") for i in events if i.get("description") == "Finished"
