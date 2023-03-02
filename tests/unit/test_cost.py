@@ -1,8 +1,8 @@
 import json
-from google.cloud import bigquery
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from google.cloud import bigquery
 
 from cromshell.cost import command as cost_command
 
@@ -18,7 +18,7 @@ class TestCost:
             [
                 True,
                 "cost:table:1",
-                f"""
+                """
                 SELECT wfid.value as cromwell_workflow_id, service.description, task.value as task_name, sum(cost) as cost
                 FROM cost:table:1 as billing, UNNEST(labels) as wfid, UNNEST(labels) as task
                 WHERE cost > 0
@@ -33,7 +33,7 @@ class TestCost:
             [
                 False,
                 "cost:table1",
-                f"""
+                """
                 SELECT sum(cost) as cost
                 FROM cost:table1, UNNEST(labels)
                 WHERE value LIKE @workflow_id AND partition_time BETWEEN @start_date AND @end_date
@@ -51,17 +51,22 @@ class TestCost:
         start_date = "startdate"
         end_date = "enddate"
 
-        assert cost_command.create_bq_query_job_config(
-            workflow_id=workflow_id,
-            start_date=start_date,
-            end_date=end_date
-        ).query_parameters == bigquery.QueryJobConfig(
-            query_parameters=[
-                bigquery.ScalarQueryParameter("workflow_id", "STRING", "%" + workflow_id),
-                bigquery.ScalarQueryParameter("start_date", "STRING", start_date),
-                bigquery.ScalarQueryParameter("end_date", "STRING", end_date),
-            ]
-        ).query_parameters
+        assert (
+            cost_command.create_bq_query_job_config(
+                workflow_id=workflow_id,
+                start_date=start_date,
+                end_date=end_date,
+            ).query_parameters
+            == bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter(
+                        "workflow_id", "STRING", "%" + workflow_id
+                    ),
+                    bigquery.ScalarQueryParameter("start_date", "STRING", start_date),
+                    bigquery.ScalarQueryParameter("end_date", "STRING", end_date),
+                ]
+            ).query_parameters
+        )
 
     # def test_check_bq_query_results(self):
 
@@ -77,17 +82,26 @@ class TestCost:
         ],
     )
     def test_minimum_time_passed_since_workflow_completion(
-            self,
-            hours_passed,
-            min_hours_needed_to_be_passed,
-            expected_minimum_time_passed,
+        self,
+        hours_passed,
+        min_hours_needed_to_be_passed,
+        expected_minimum_time_passed,
     ):
         end_time = datetime.now(timezone.utc) - timedelta(hours=hours_passed)
         expected_workflow_time_delta = datetime.now(timezone.utc) - end_time
 
-        (minimum_time_passed, workflow_time_delta) = cost_command.minimum_time_passed_since_workflow_completion(end_time=str(datetime.strftime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z")), min_hours=min_hours_needed_to_be_passed)
+        (
+            minimum_time_passed,
+            workflow_time_delta,
+        ) = cost_command.minimum_time_passed_since_workflow_completion(
+            end_time=str(datetime.strftime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z")),
+            min_hours=min_hours_needed_to_be_passed,
+        )
 
-        assert (minimum_time_passed, workflow_time_delta.seconds) == (expected_minimum_time_passed, expected_workflow_time_delta.seconds)
+        assert (minimum_time_passed, workflow_time_delta.seconds) == (
+            expected_minimum_time_passed,
+            expected_workflow_time_delta.seconds,
+        )
 
     @pytest.mark.parametrize(
         "metadata_name, expected_start_time, expected_end_time",
@@ -111,20 +125,20 @@ class TestCost:
                 "submitted_helloworld_metadata.json",
                 None,
                 None,
-            ]
+            ],
         ],
     )
     def test_get_submission_start_end_time(
         self, mock_data_path, metadata_name, expected_start_time, expected_end_time
     ):
-
         with open(mock_data_path.joinpath(metadata_name), "r") as f:
             workflow_metadata = json.load(f)
 
-        (start_time, end_time) = cost_command.get_submission_start_end_time(workflow_metadata)
+        (start_time, end_time) = cost_command.get_submission_start_end_time(
+            workflow_metadata
+        )
 
         assert (start_time, end_time) == (expected_start_time, expected_end_time)
-
 
     # def test_checks_before_query(self):
 
@@ -151,7 +165,6 @@ class TestCost:
     def test_round_cost_values(
         self, query_rows: list, cost_header: str, expected_rounded_rows: list
     ):
-
         assert expected_rounded_rows == cost_command.round_cost_values(
             query_rows=query_rows, cost_header=cost_header
         )
@@ -159,29 +172,20 @@ class TestCost:
     @pytest.mark.parametrize(
         "query_rows, cost_header, expected_rounded_rows",
         [
-            [
-                [{"cost": 0.3215}, {"cost": 0.15615}],
-                "cost",
-                0.48
-            ],
-            [
-                [{"COST": 0.3215}, {"COST": 0.15615}],
-                "COST",
-                0.48,
-            ],
-            [
-                [{"COST": 0.3215}, {"COST": 0.15615}],
-                "cost",
-                0.0,
-            ],
+            [[{"cost": 0.3215}, {"cost": 0.15615}], "cost", 0.48],
+            [[{"COST": 0.3215}, {"COST": 0.15615}], "COST", 0.48],
+            [[{"COST": 0.3215}, {"COST": 0.15615}], "cost", 0.0],
         ],
     )
     def test_get_query_total_cost(
         self, query_rows: list, cost_header: str, expected_rounded_rows: list
     ):
-        assert cost_command.get_query_total_cost(
-            query_rows=query_rows, cost_header=cost_header
-        ) == expected_rounded_rows
+        assert (
+            cost_command.get_query_total_cost(
+                query_rows=query_rows, cost_header=cost_header
+            )
+            == expected_rounded_rows
+        )
 
     @pytest.mark.parametrize(
         "query_rows, cost_header, expected_rows_with_color",
@@ -189,7 +193,7 @@ class TestCost:
             [
                 [{"cost": 0.3215}, {"cost": 0.15615}],
                 "cost",
-                [{"cost": 0.3215}, {"cost": 0.15615}]
+                [{"cost": 0.3215}, {"cost": 0.15615}],
             ],
             [
                 [{"COST": 0.3215}, {"COST": 0.15615}],
@@ -201,9 +205,12 @@ class TestCost:
     def test_color_cost_outliers(
         self, query_rows: list, cost_header: str, expected_rows_with_color: list
     ):
-        assert cost_command.color_cost_outliers(
-            detailed_query_rows=query_rows, cost_header=cost_header
-        ) == expected_rows_with_color
+        assert (
+            cost_command.color_cost_outliers(
+                detailed_query_rows=query_rows, cost_header=cost_header
+            )
+            == expected_rows_with_color
+        )
 
     @pytest.mark.parametrize(
         "query_rows, cost_header",
@@ -223,7 +230,6 @@ class TestCost:
             cost_command.color_cost_outliers(
                 detailed_query_rows=query_rows, cost_header=cost_header
             )
-
 
     # def test_format_bq_query_results():
 

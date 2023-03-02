@@ -119,7 +119,7 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
         print_detailed_query_results(
             color=color,
             detailed_query_rows=formatted_rounded_rows,
-            cost_header=COST_HEADER
+            cost_header=COST_HEADER,
         )
 
     print(f"Total Cost: ${total_cost}")
@@ -355,8 +355,10 @@ def round_cost_values(query_rows: list, cost_header: str) -> list:
             row[cost_header] = max(cost, 0.01)
             cost_rounded.append(row)
         else:
-            LOGGER.warning(f"Expected cost column header: {cost_header} "
-                           f"was not found in row: {row}. Excluding row from rounding.")
+            LOGGER.warning(
+                f"Expected cost column header: {cost_header} "
+                f"was not found in row: {row}. Excluding row from rounding."
+            )
             cost_rounded.append(row)
 
     return cost_rounded
@@ -378,10 +380,14 @@ def color_cost_outliers(detailed_query_rows: list, cost_header: str) -> list:
         raise Exception("Expecting more than one row for 'query_rows_cost_rounded'")
 
     if any(row.get(cost_header) is None for row in detailed_query_rows):
-        LOGGER.error(f"Expected cost column header: '{cost_header}'. Unable to "
-                     "highlight outliers without column")
-        raise Exception(f"Expected cost column header: '{cost_header}'. Unable to "
-                        "highlight outliers without column")
+        LOGGER.error(
+            f"Expected cost column header: '{cost_header}'. Unable to "
+            "highlight outliers without column"
+        )
+        raise Exception(
+            f"Expected cost column header: '{cost_header}'. Unable to "
+            "highlight outliers without column"
+        )
 
     all_task_cost = [row.get(cost_header) for row in detailed_query_rows]
     mean_cost = statistics.mean(all_task_cost)
@@ -415,8 +421,10 @@ def get_query_total_cost(query_rows: list, cost_header: str) -> float:
         if row.get(cost_header) is not None:
             total = total + float(row.get(cost_header))
         else:
-            LOGGER.warning(f"Expected cost column header: {cost_header} "
-                           f"was not found in row: {row}. Excluding row from total.")
+            LOGGER.warning(
+                f"Expected cost column header: {cost_header} "
+                f"was not found in row: {row}. Excluding row from total."
+            )
     return round(total, 2)
 
 
