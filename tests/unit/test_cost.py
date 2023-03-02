@@ -1,5 +1,4 @@
 import json
-import re
 from google.cloud import bigquery
 from datetime import datetime, timedelta, timezone
 
@@ -127,9 +126,105 @@ class TestCost:
         assert (start_time, end_time) == (expected_start_time, expected_end_time)
 
 
-# def test_checks_before_query(self):
-# def test_round_cost_values(self):
-# def test_get_query_total_cost(self):
-# def test_format_bq_query_results(self):
-# def test_color_cost_outliers(self):
-# def test_print_detailed_query_results(self):
+    # def test_checks_before_query(self):
+
+    @pytest.mark.parametrize(
+        "query_rows, cost_header, expected_rounded_rows",
+        [
+            [
+                [{"cost": 0.3215}, {"cost": 0.15615}],
+                "cost",
+                [{"cost": 0.32}, {"cost": 0.16}],
+            ],
+            [
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+                "COST",
+                [{"COST": 0.32}, {"COST": 0.16}],
+            ],
+            [
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+                "cost",
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+            ],
+        ],
+    )
+    def test_round_cost_values(
+        self, query_rows: list, cost_header: str, expected_rounded_rows: list
+    ):
+
+        assert expected_rounded_rows == cost_command.round_cost_values(
+            query_rows=query_rows, cost_header=cost_header
+        )
+
+    @pytest.mark.parametrize(
+        "query_rows, cost_header, expected_rounded_rows",
+        [
+            [
+                [{"cost": 0.3215}, {"cost": 0.15615}],
+                "cost",
+                0.48
+            ],
+            [
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+                "COST",
+                0.48,
+            ],
+            [
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+                "cost",
+                0.0,
+            ],
+        ],
+    )
+    def test_get_query_total_cost(
+        self, query_rows: list, cost_header: str, expected_rounded_rows: list
+    ):
+        assert cost_command.get_query_total_cost(
+            query_rows=query_rows, cost_header=cost_header
+        ) == expected_rounded_rows
+
+    @pytest.mark.parametrize(
+        "query_rows, cost_header, expected_rows_with_color",
+        [
+            [
+                [{"cost": 0.3215}, {"cost": 0.15615}],
+                "cost",
+                [{"cost": 0.3215}, {"cost": 0.15615}]
+            ],
+            [
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+                "COST",
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+            ],
+        ],
+    )
+    def test_color_cost_outliers(
+        self, query_rows: list, cost_header: str, expected_rows_with_color: list
+    ):
+        assert cost_command.color_cost_outliers(
+            detailed_query_rows=query_rows, cost_header=cost_header
+        ) == expected_rows_with_color
+
+    @pytest.mark.parametrize(
+        "query_rows, cost_header",
+        [
+            [
+                [{"cost": 0.3215}],
+                "cost",
+            ],
+            [
+                [{"COST": 0.3215}, {"COST": 0.15615}],
+                "cost",
+            ],
+        ],
+    )
+    def test_failure_color_cost_outliers(self, query_rows: list, cost_header: str):
+        with pytest.raises(Exception):
+            cost_command.color_cost_outliers(
+                detailed_query_rows=query_rows, cost_header=cost_header
+            )
+
+
+    # def test_format_bq_query_results():
+
+    # def test_print_detailed_query_results(self):

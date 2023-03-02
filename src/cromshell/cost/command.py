@@ -350,9 +350,13 @@ def round_cost_values(query_rows: list, cost_header: str) -> list:
     cost_rounded: list = []
 
     for row in query_rows:
-        if row[cost_header] is not None:
-            cost = round(float(row[cost_header]), 2)
+        if row.get(cost_header) is not None:
+            cost = round(float(row.get(cost_header)), 2)
             row[cost_header] = max(cost, 0.01)
+            cost_rounded.append(row)
+        else:
+            LOGGER.warning(f"Expected cost column header: {cost_header} "
+                           f"was not found in row: {row}. Excluding row from rounding.")
             cost_rounded.append(row)
 
     return cost_rounded
@@ -371,7 +375,13 @@ def color_cost_outliers(detailed_query_rows: list, cost_header: str) -> list:
 
     if len(detailed_query_rows) < 2:
         LOGGER.error("Expecting more than one row for 'query_rows_cost_rounded'")
-        raise ValueError("Expecting more than one row for 'query_rows_cost_rounded'")
+        raise Exception("Expecting more than one row for 'query_rows_cost_rounded'")
+
+    if any(row.get(cost_header) is None for row in detailed_query_rows):
+        LOGGER.error(f"Expected cost column header: '{cost_header}'. Unable to "
+                     "highlight outliers without column")
+        raise Exception(f"Expected cost column header: '{cost_header}'. Unable to "
+                        "highlight outliers without column")
 
     all_task_cost = [row.get(cost_header) for row in detailed_query_rows]
     mean_cost = statistics.mean(all_task_cost)
@@ -380,15 +390,15 @@ def color_cost_outliers(detailed_query_rows: list, cost_header: str) -> list:
     threshold = 1
     highlighted_query_rows_cost_rounded = []
 
-    for y in detailed_query_rows:
-        row_cost = y.get(cost_header)
+    for row in detailed_query_rows:
+        row_cost = row.get(cost_header)
         z_score = (row_cost - mean_cost) / std_cost
         if abs(z_score) > threshold:
-            highlighted_row = y
+            highlighted_row = row
             highlighted_row[cost_header] = "\033[91m" + str(row_cost) + "\033[0m"
             highlighted_query_rows_cost_rounded.append(highlighted_row)
         else:
-            highlighted_query_rows_cost_rounded.append(y)
+            highlighted_query_rows_cost_rounded.append(row)
 
     return highlighted_query_rows_cost_rounded
 
@@ -401,8 +411,12 @@ def get_query_total_cost(query_rows: list, cost_header: str) -> float:
     :return:
     """
     total = 0
-    for r in query_rows:
-        total = total + float(r.get(cost_header))
+    for row in query_rows:
+        if row.get(cost_header) is not None:
+            total = total + float(row.get(cost_header))
+        else:
+            LOGGER.warning(f"Expected cost column header: {cost_header} "
+                           f"was not found in row: {row}. Excluding row from total.")
     return round(total, 2)
 
 
@@ -426,7 +440,7 @@ def format_bq_query_results(query_results, task_header: str, cost_header: str) -
 
 
 def print_detailed_query_results(
-        color: bool, detailed_query_rows: list, cost_header: str
+    color: bool, detailed_query_rows: list, cost_header: str
 ) -> None:
     """
     Prints the detailed query results.
