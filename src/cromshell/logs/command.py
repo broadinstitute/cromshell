@@ -72,6 +72,7 @@ def main(
             "backendLogs",
             "subWorkflowMetadata",
             "subWorkflowId",
+            "failures",
         ],
         status_params=status_param,
         dont_expand_subworkflows=dont_expand_subworkflows,
@@ -79,6 +80,36 @@ def main(
     )
 
     return 0
+
+
+def check_workflow_for_calls(workflow_status_json: dict) -> None:
+    """Check if the workflow has any calls"""
+
+    if not workflow_status_json.get("calls"):
+        if workflow_status_json.get("failures"):
+            LOGGER.error(
+                "Empty 'calls' key found in workflow metadata. "
+                "Workflow failed with the following error(s): %s",
+                workflow_status_json["failures"],
+            )
+            raise KeyError(
+                "Empty 'calls' key found in workflow metadata. "
+                "Workflow failed with the following error(s): %s"
+                % workflow_status_json["failures"]
+            )
+        else:
+            LOGGER.error(
+                "Empty 'calls' key found in workflow metadata. "
+                "This may indicate no tasks were run by the workflow, "
+                "the workflow has yet to run any tasks, or "
+                "a failure occurred before the workflow started."
+            )
+            raise KeyError(
+                "Empty 'calls' key found in workflow metadata."
+                "This may indicate no tasks were run by the workflow, "
+                "the workflow has yet to run any tasks, or "
+                "a failure occurred before the workflow started."
+            )
 
 
 def obtain_and_print_logs(
@@ -105,6 +136,8 @@ def obtain_and_print_logs(
         verify_certs=config.requests_verify_certs,
         headers=http_utils.generate_headers(config),
     )
+
+    check_workflow_for_calls(workflow_status_json=workflow_status_json)
 
     # Parse the metadata for logs and print them to the output
     found_logs = print_workflow_logs(
