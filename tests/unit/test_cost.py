@@ -10,7 +10,6 @@ from cromshell.cost import command as cost_command
 class TestCost:
     """Test the execution of cost command functions"""
 
-    # def test_query_bigquery(self):
 
     @pytest.mark.parametrize(
         "detailed, bq_cost_table, query",
@@ -200,6 +199,11 @@ class TestCost:
                 "COST",
                 [{"COST": 0.3215}, {"COST": 0.15615}],
             ],
+            [
+                [{"cost": 0.3215}, {"cost": 0.15615}, {"cost": 10.15}],
+                "cost",
+                [{"cost": 0.3215}, {"cost": 0.15615}, {"cost": "\x1b[91m10.15\x1b[0m"}],
+            ],
         ],
     )
     def test_color_cost_outliers(
@@ -232,5 +236,47 @@ class TestCost:
             )
 
     # def test_format_bq_query_results():
-
-    # def test_print_detailed_query_results(self):
+    @pytest.mark.parametrize(
+        "color, query_rows, cost_header, expected_rows_with_color",
+        [
+            [
+                False,
+                [{"cost": 0.3215}, {"cost": 0.15615}, {"cost": 10.15}],
+                "cost",
+                """========
+    cost
+========
+ 0.3215
+ 0.15615
+10.15
+========
+""",
+            ],
+            [
+                True,
+                [{"cost": 0.3215}, {"cost": 0.15615}, {"cost": 10.15}],
+                "cost",
+                """========
+    cost
+========
+ 0.3215
+ 0.15615
+\x1b[91m10.15\x1b[0m
+========
+""",
+            ],
+        ],
+    )
+    def test_print_detailed_query_results(
+            self,
+            color: bool,
+            query_rows: list,
+            cost_header: str,
+            expected_rows_with_color: list,
+            capsys,
+    ):
+        cost_command.print_detailed_query_results(
+            color=color, detailed_query_rows=query_rows, cost_header=cost_header
+        )
+        captured = capsys.readouterr()
+        assert captured.out == expected_rows_with_color

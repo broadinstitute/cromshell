@@ -16,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @click.command(name="cost")
-@click.argument("workflow_id", required=True)
+@click.argument("workflow_ids", required=True, nargs=-1)
 @click.option(
     "-c",
     "--color",
@@ -32,7 +32,7 @@ LOGGER = logging.getLogger(__name__)
     help="Get the cost for a workflow at the task level",
 )
 @click.pass_obj
-def main(config, workflow_id: str or int, detailed: bool, color: bool):
+def main(config, workflow_ids: str or int, detailed: bool, color: bool):
     """
     Get the cost for a workflow.
     Only works for workflows that completed more than 24 hours ago on GCS.
@@ -40,89 +40,90 @@ def main(config, workflow_id: str or int, detailed: bool, color: bool):
     set to the big query cost table for your organization.
 
     Costs here DO NOT include any call cached tasks.
-    Costs rounded to nearest cent (approximately).
+    Costs rounded to the nearest cent (approximately).
 
     """
 
     LOGGER.info("cost")
+    for workflow_id in workflow_ids:
+        resolved_workflow_id = command_setup_utils.resolve_workflow_id_and_server(
+            workflow_id=workflow_id,
+            cromshell_config=config,
+        )
 
-    resolved_workflow_id = command_setup_utils.resolve_workflow_id_and_server(
-        workflow_id=workflow_id,
-        cromshell_config=config,
-    )
+        workflow_id_utils.check_workflow_id_in_submission_file(
+            workflow_id=resolved_workflow_id,
+            submission_file=config.submission_file_path,
+        )
 
-    workflow_id_utils.check_workflow_id_in_submission_file(
-        workflow_id=resolved_workflow_id, submission_file=config.submission_file_path
-    )
+        cofu.check_key_is_configured(
+            key_to_check="bq_cost_table",
+            config_options=config.cromshell_config_options,
+            config_file_path=config.cromshell_config_path,
+        )
+        LOGGER.info(
+            "Using cost table: %s", config.cromshell_config_options["bq_cost_table"]
+        )
 
-    cofu.check_key_is_configured(
-        key_to_check="bq_cost_table",
-        config_options=config.cromshell_config_options,
-        config_file_path=config.cromshell_config_path,
-    )
-    LOGGER.info(
-        "Using cost table: %s", config.cromshell_config_options["bq_cost_table"]
-    )
+        # Get time workflow finished using metadata command (error if not finished)
+        LOGGER.info("Retrieving workflow metadata")
+        workflow_metadata = metadata.format_metadata_params_and_get_metadata(
+            config=config,
+            exclude_keys=False,
+            metadata_param=["start", "status", "id", "end", "workflowProcessingEvents"],
+        )
 
-    # Get time workflow finished using metadata command (error if not finished)
-    LOGGER.info("Retrieving workflow metadata")
-    workflow_metadata = metadata.format_metadata_params_and_get_metadata(
-        config=config,
-        exclude_keys=False,
-        metadata_param=["start", "status", "id", "end", "workflowProcessingEvents"],
-    )
+        workflow_status_utils.confirm_workflow_in_terminal_status(
+            workflow_status=workflow_metadata.get("status")
+        )
 
-    workflow_status_utils.confirm_workflow_in_terminal_status(
-        workflow_status=workflow_metadata.get("status")
-    )
+        start_time, end_time = get_submission_start_end_time(workflow_metadata)
 
-    start_time, end_time = get_submission_start_end_time(workflow_metadata)
+        LOGGER.info("Checking workflow completed and finished past 24hrs")
+        checks_before_query(
+            start_time=start_time, end_time=end_time, workflow_id=resolved_workflow_id
+        )
 
-    LOGGER.info("Checking workflow completed and finished past 24hrs")
-    checks_before_query(
-        start_time=start_time, end_time=end_time, workflow_id=resolved_workflow_id
-    )
+        LOGGER.info("Querying BQ")
+        # Create start and end time for query, plus/minus a day from start and finish
+        query_start_time = str(
+            datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z") - timedelta(days=1)
+        )
+        query_end_time = str(
+            datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z") + timedelta(days=1)
+        )
 
-    LOGGER.info("Querying BQ")
-    # Create start and end time for query, plus/minus a day from start and finish
-    query_start_time = str(
-        datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z") - timedelta(days=1)
-    )
-    query_end_time = str(
-        datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f%z") + timedelta(days=1)
-    )
+        query_results = query_bigquery(
+            workflow_id=resolved_workflow_id,
+            bq_cost_table=config.cromshell_config_options["bq_cost_table"],
+            start_date=query_start_time,
+            end_date=query_end_time,
+            detailed=detailed,
+        )
 
-    query_results = query_bigquery(
-        workflow_id=resolved_workflow_id,
-        bq_cost_table=config.cromshell_config_options["bq_cost_table"],
-        start_date=query_start_time,
-        end_date=query_end_time,
-        detailed=detailed,
-    )
+        LOGGER.info("Formatting Query Results")
+        TASK_HEADER: str = "TASK"
+        COST_HEADER: str = "$ COST"
+        formatted_query_rows: list = format_bq_query_results(
+            query_results=query_results,
+            cost_header=COST_HEADER,
+            task_header=TASK_HEADER,
+        )
 
-    LOGGER.info("Formatting Query Results")
-    TASK_HEADER: str = "TASK"
-    COST_HEADER: str = "$ COST"
-    formatted_query_rows: list = format_bq_query_results(
-        query_results=query_results,
-        cost_header=COST_HEADER,
-        task_header=TASK_HEADER,
-    )
-
-    total_cost: float = get_query_total_cost(
-        query_rows=formatted_query_rows, cost_header=COST_HEADER
-    )
-    if detailed:
-        formatted_rounded_rows: list = round_cost_values(
+        total_cost: float = get_query_total_cost(
             query_rows=formatted_query_rows, cost_header=COST_HEADER
         )
-        print_detailed_query_results(
-            color=color,
-            detailed_query_rows=formatted_rounded_rows,
-            cost_header=COST_HEADER,
-        )
+        if detailed:
+            formatted_rounded_rows: list = round_cost_values(
+                query_rows=formatted_query_rows, cost_header=COST_HEADER
+            )
+            print_detailed_query_results(
+                color=color,
+                detailed_query_rows=formatted_rounded_rows,
+                cost_header=COST_HEADER,
+            )
 
-    print(f"Total Cost: ${total_cost}")
+        print(f"Total Cost: ${total_cost}")
 
 
 def query_bigquery(
@@ -223,7 +224,7 @@ def check_bq_query_results(query_job: bigquery.QueryJob) -> None:
         raise ValueError("Could not retrieve cost - no cost entries found.")
 
 
-def check_bq_query_for_errors(query_job) -> None:
+def check_bq_query_for_errors(query_job: bigquery.QueryJob) -> None:
     """
     Checks query response for errors
     :param query_job: Response from the BQ query execution
