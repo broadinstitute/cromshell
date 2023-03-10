@@ -68,21 +68,21 @@ class TestLogs:
             {
                 "backend": "Local",
                 "calls": {},
-                "failures": [{'message': 'Runtime validation failed'}],
+                "failures": [{"message": "Runtime validation failed"}],
             },
             {
                 "backend": "Local",
                 "calls": {"blah": "blah"},
-                "failures": [{'message': 'Runtime validation failed'}],
+                "failures": [{"message": "Runtime validation failed"}],
             },
         ],
     )
     def test_check_workflow_for_calls(self, metadata_json):
         if not metadata_json.get("calls"):
             with pytest.raises(KeyError):
-                logs_command.check_workflow_for_calls(workflow_status_json=metadata_json)
+                logs_command.check_workflow_for_calls(metadata_json)
         else:
-            logs_command.check_workflow_for_calls(workflow_status_json=metadata_json)
+            logs_command.check_workflow_for_calls(metadata_json)
 
     @pytest.fixture
     def mock_data_path(self):
