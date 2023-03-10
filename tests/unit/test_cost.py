@@ -10,7 +10,6 @@ from cromshell.cost import command as cost_command
 class TestCost:
     """Test the execution of cost command functions"""
 
-
     @pytest.mark.parametrize(
         "detailed, bq_cost_table, query",
         [
@@ -268,12 +267,12 @@ class TestCost:
         ],
     )
     def test_print_detailed_query_results(
-            self,
-            color: bool,
-            query_rows: list,
-            cost_header: str,
-            expected_rows_with_color: list,
-            capsys,
+        self,
+        color: bool,
+        query_rows: list,
+        cost_header: str,
+        expected_rows_with_color: list,
+        capsys,
     ):
         cost_command.print_detailed_query_results(
             color=color, detailed_query_rows=query_rows, cost_header=cost_header
