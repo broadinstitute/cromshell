@@ -137,7 +137,7 @@ def obtain_and_print_logs(
         headers=http_utils.generate_headers(config),
     )
 
-    check_workflow_for_calls(workflow_status_json=workflow_status_json)
+    check_workflow_for_calls(workflow_status_json)
 
     # Parse the metadata for logs and print them to the output
     found_logs = print_workflow_logs(
