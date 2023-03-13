@@ -89,13 +89,13 @@ def check_workflow_for_calls(workflow_status_json: dict) -> None:
         if workflow_status_json.get("failures"):
             LOGGER.error(
                 "Empty 'calls' key found in workflow metadata. "
-                "Workflow failed with the following error(s): %s",
-                workflow_status_json["failures"],
+                "Workflow failed with the following error(s): %s"
+                % workflow_status_json["failures"],
             )
             raise KeyError(
                 "Empty 'calls' key found in workflow metadata. "
                 "Workflow failed with the following error(s): %s"
-                % workflow_status_json["failures"]
+                % workflow_status_json["failures"],
             )
         else:
             LOGGER.error(
