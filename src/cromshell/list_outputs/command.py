@@ -20,8 +20,15 @@ LOGGER = logging.getLogger(__name__)
     default=False,
     help="Get the output for a workflow at the task level",
 )
+@click.option(
+    "-j",
+    "--json-summary",
+    is_flag=True,
+    default=False,
+    help="Print a json summary of the task outputs, including non file types.",
+)
 @click.pass_obj
-def main(config, workflow_ids, detailed):
+def main(config, workflow_ids, detailed, json_summary):
     """List workflow outputs."""
 
     LOGGER.info("list-outputs")
@@ -34,9 +41,15 @@ def main(config, workflow_ids, detailed):
         )
 
         if not detailed:
-            io_utils.pretty_print_json(format_json=get_workflow_level_outputs(config))
+            if json_summary:
+                io_utils.pretty_print_json(format_json=get_workflow_level_outputs(config).get("outputs"))
+            else:
+                print_workflow_level_outputs(get_workflow_level_outputs(config))
         else:
-            print_task_level_outputs(get_task_level_outputs(config))
+            if json_summary:
+                io_utils.pretty_print_json(format_json=get_task_level_outputs(config))
+            else:
+                print_task_level_outputs(get_task_level_outputs(config))
 
     return return_code
 
@@ -85,10 +98,10 @@ def get_task_level_outputs(config):
         headers=http_utils.generate_headers(config),
     )
 
-    return get_outputs(workflow_metadata)
+    return filer_outputs_from_workflow_metadata(workflow_metadata)
 
 
-def get_outputs(workflow_metadata: dict):
+def filer_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
     """Get the outputs from the workflow metadata
 
     Args:
@@ -103,7 +116,7 @@ def get_outputs(workflow_metadata: dict):
             output_metadata[call] = []
             for scatter in calls_metadata[call]:
                 output_metadata[call].append(
-                    get_outputs(scatter["subWorkflowMetadata"]))
+                    filer_outputs_from_workflow_metadata(scatter["subWorkflowMetadata"]))
         else:
             output_metadata[call] = []
             for index in index_list:
@@ -112,14 +125,54 @@ def get_outputs(workflow_metadata: dict):
     return output_metadata
 
 
-def print_task_level_outputs(output_metadata: dict):
+def print_task_level_outputs(output_metadata: dict) -> None:
     """Print the outputs from the workflow metadata
+    output_metadata: {call_name:[index1{output_name: outputvalue}, index2{...}, ...], call_name:[], ...}
 
     Args:
         output_metadata (dict): The output metadata from the workflow
         """
     for call, index_list in output_metadata.items():
         print(call)
-        for index in index_list:
-            if index is not None:
-                io_utils.pretty_print_json(format_json=index)
+        for call_index in index_list:
+            if call_index is not None:
+                for task_output_name, task_output_value in call_index.items():
+                    if isinstance(task_output_value, str):
+                        print_task_name_and_file(task_output_name, task_output_value)
+                    elif isinstance(task_output_value, list):
+                        for task_value in task_output_value:
+                            print_task_name_and_file(task_output_name, task_value)
+
+
+def print_workflow_level_outputs(workflow_outputs_json: dict) -> None:
+    """Print the workflow level outputs from the workflow outputs"""
+    workflow_outputs = workflow_outputs_json["outputs"]
+
+    for workflow_output_name, workflow_output_value in workflow_outputs.items():
+        if isinstance(workflow_output_value, str):
+            print_task_name_and_file(workflow_output_name, workflow_output_value, indent=False)
+        elif isinstance(workflow_output_value, list):
+            for task_value in workflow_output_value:
+                print_task_name_and_file(workflow_output_name, task_value, indent=False)
+
+
+def print_task_name_and_file(
+        task_output_name: str, task_output_value: str, indent: bool = True
+) -> None:
+    """Print the task name and the file name"""
+
+    i = "\t" if indent else ""
+
+    if isinstance(task_output_value, str):
+        if is_path_or_url_like(task_output_value):
+            print(f"{i}{task_output_name}: {task_output_value}")
+
+
+def is_path_or_url_like(in_string: str) -> bool:
+    """Check if the string is a path or url"""
+
+    if in_string.startswith("gs://") or in_string.startswith(
+            "/") or in_string.startswith("http://") or in_string.startswith("https://"):
+        return True
+    else:
+        return False
