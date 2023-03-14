@@ -42,9 +42,14 @@ def main(config, workflow_ids, detailed, json_summary):
 
         if not detailed:
             if json_summary:
-                io_utils.pretty_print_json(format_json=get_workflow_level_outputs(config).get("outputs"))
+                io_utils.pretty_print_json(
+                    format_json=get_workflow_level_outputs(config).get("outputs")
+                )
             else:
-                print_workflow_level_outputs(get_workflow_level_outputs(config))
+                print_output_metadata(
+                    outputs_metadata=get_workflow_level_outputs(config).get("outputs"),
+                    indent=False,
+                )
         else:
             if json_summary:
                 io_utils.pretty_print_json(format_json=get_task_level_outputs(config))
@@ -55,7 +60,10 @@ def main(config, workflow_ids, detailed, json_summary):
 
 
 def get_workflow_level_outputs(config) -> dict:
-    """Get the workflow level outputs from the workflow outputs"""
+    """Get the workflow level outputs from the workflow outputs
+
+    Args:
+        config (dict): The cromshell config object"""
 
     requests_out = requests.get(
         f"{config.cromwell_api_workflow_id}/outputs",
@@ -116,7 +124,9 @@ def filer_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
             output_metadata[call] = []
             for scatter in calls_metadata[call]:
                 output_metadata[call].append(
-                    filer_outputs_from_workflow_metadata(scatter["subWorkflowMetadata"]))
+                    filer_outputs_from_workflow_metadata(
+                        scatter["subWorkflowMetadata"])
+                )
         else:
             output_metadata[call] = []
             for index in index_list:
@@ -136,30 +146,38 @@ def print_task_level_outputs(output_metadata: dict) -> None:
         print(call)
         for call_index in index_list:
             if call_index is not None:
-                for task_output_name, task_output_value in call_index.items():
-                    if isinstance(task_output_value, str):
-                        print_task_name_and_file(task_output_name, task_output_value)
-                    elif isinstance(task_output_value, list):
-                        for task_value in task_output_value:
-                            print_task_name_and_file(task_output_name, task_value)
+                print_output_metadata(outputs_metadata=call_index, indent=True)
 
 
-def print_workflow_level_outputs(workflow_outputs_json: dict) -> None:
-    """Print the workflow level outputs from the workflow outputs"""
-    workflow_outputs = workflow_outputs_json["outputs"]
+def print_output_metadata(outputs_metadata: dict, indent: bool) -> None:
+    """Print the output metadata
 
-    for workflow_output_name, workflow_output_value in workflow_outputs.items():
-        if isinstance(workflow_output_value, str):
-            print_task_name_and_file(workflow_output_name, workflow_output_value, indent=False)
-        elif isinstance(workflow_output_value, list):
-            for task_value in workflow_output_value:
-                print_task_name_and_file(workflow_output_name, task_value, indent=False)
+    Args:
+        outputs_metadata (dict): The output metadata
+        indent (bool): Whether to indent the output
+        """
+
+    for output_name, output_value in outputs_metadata.items():
+        if isinstance(output_value, str):
+            print_output_name_and_file(
+                output_name, output_value, indent=indent
+            )
+        elif isinstance(output_value, list):
+            for output_value_item in output_value:
+                print_output_name_and_file(
+                    output_name, output_value_item, indent=indent
+                )
 
 
-def print_task_name_and_file(
+def print_output_name_and_file(
         task_output_name: str, task_output_value: str, indent: bool = True
 ) -> None:
-    """Print the task name and the file name"""
+    """Print the task name and the file name
+
+    Args:
+        task_output_name (str): The task output name
+        task_output_value (str): The task output value
+        indent (bool): Whether to indent the output"""
 
     i = "\t" if indent else ""
 
@@ -169,7 +187,11 @@ def print_task_name_and_file(
 
 
 def is_path_or_url_like(in_string: str) -> bool:
-    """Check if the string is a path or url"""
+    """Check if the string is a path or url
+
+    Args:
+        in_string (str): The string to check for path or url like-ness
+        """
 
     if in_string.startswith("gs://") or in_string.startswith(
             "/") or in_string.startswith("http://") or in_string.startswith("https://"):
