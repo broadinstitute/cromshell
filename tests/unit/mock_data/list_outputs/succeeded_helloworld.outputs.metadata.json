@@ -1,1 +1,9 @@
-{'HelloWorld.HelloWorldTask': [{'bam_subset_file_index': 'gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/shard-1/m64020_190210_035026.subreads.ccs.uncorrected.aligned.merged.chr2.bai', 'bam_subset_file': 'gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/shard-1/m64020_190210_035026.subreads.ccs.uncorrected.aligned.merged.chr2.bam', 'timing_info': 'gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/shard-1/m64020_190210_035026.subreads.ccs.uncorrected.aligned.merged.timingInformation.txt'}]}
+{
+  "HelloWorld.HelloWorldTask": [
+    {
+      "bam_subset_file_index": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/shard-1/m64020_190210_035026.subreads.ccs.uncorrected.aligned.merged.chr2.bai",
+      "bam_subset_file": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/shard-1/m64020_190210_035026.subreads.ccs.uncorrected.aligned.merged.chr2.bam",
+      "timing_info": "gs://broad-dsp-lrma-cromwell-central/HelloWorld/9ee4aa2e-7ac5-4c61-88b2-88a4d10f168b/call-HelloWorldTask/shard-1/m64020_190210_035026.subreads.ccs.uncorrected.aligned.merged.timingInformation.txt"
+    }
+  ]
+}

@@ -1,5 +1,4 @@
 import json
-import re
 
 import pytest
 
@@ -9,24 +8,6 @@ from cromshell.list_outputs import command as list_outputs_command
 class TestListOutputs:
     """Test the execution list-outputs command functions"""
 
-    @pytest.mark.parametrize(
-        "metadata_name, metadata_summary",
-        [
-            [
-                "failed_helloworld_metadata.json",
-                "counts/test_workflow_status_failed_helloword_metadata.txt",
-            ],
-            [
-                "succeeded_workflow_slim_metadata.json",
-                "counts/test_workflow_status_succeded_workflow_slim_metadata.txt",
-            ],
-        ],
-    )
-    def test_workflow_status(
-        self, mock_data_path, metadata_name, metadata_summary, ansi_escape, capsys
-    ):
-        """Note doesn't test for color of print out"""
-
 
 # def get_workflow_level_outputs(config) -> dict:
 
@@ -34,7 +15,7 @@ class TestListOutputs:
 # def test_get_task_level_outputs(config) -> dict:
 
     @pytest.mark.parametrize(
-        "workflow_metadata, outputs_metadata",
+        "workflow_metadata_file, outputs_metadata_file_path",
         [
             [
                 "succeeded_helloworld.metadata.json",
@@ -43,29 +24,156 @@ class TestListOutputs:
         ],
     )
     def test_filer_outputs_from_workflow_metadata(
-        self, mock_data_path, tests_metadata_path, workflow_metadata, outputs_metadata, capsys
+        self,
+        mock_data_path,
+        tests_metadata_path,
+        workflow_metadata_file,
+        outputs_metadata_file_path,
     ):
-        with open(tests_metadata_path.joinpath(workflow_metadata), "r") as f:
+        with open(tests_metadata_path.joinpath(workflow_metadata_file), "r") as f:
             workflow_metadata = json.load(f)
 
-        with open(mock_data_path.joinpath(outputs_metadata), "r") as f:
-            outputs_metadata = f.read()
-        print("\n")
-        print(list_outputs_command.filer_outputs_from_workflow_metadata(workflow_metadata))
+        with open(mock_data_path.joinpath(outputs_metadata_file_path), "r") as f:
+            outputs_metadata = json.load(f)
 
-        assert list_outputs_command.filer_outputs_from_workflow_metadata(workflow_metadata) == outputs_metadata
+        assert list_outputs_command.filer_outputs_from_workflow_metadata(
+            workflow_metadata
+        ) == outputs_metadata
 
 
-#
-#
-# def print_task_level_outputs(output_metadata: dict) -> None:
-#
-#
-# def print_output_metadata(outputs_metadata: dict, indent: bool) -> None:
-#
-#
-# def print_output_name_and_file(
-#         task_output_name: str, task_output_value: str, indent: bool = True
-# ) -> None:
-#
-# def is_path_or_url_like(in_string: str) -> bool:
+    @pytest.mark.parametrize(
+        "outputs_metadata_file_path, expected_task_level_outputs_file_path",
+        [
+            [
+                "list_outputs/succeeded_helloworld.outputs.metadata.json",
+                "list_outputs/helloworld_task_level_outputs.txt",
+            ],
+        ],
+    )
+    def test_print_task_level_outputs(
+        self,
+        outputs_metadata_file_path: dict,
+        mock_data_path,
+        expected_task_level_outputs_file_path,
+        capsys,
+    ) -> None:
+        """Test the print_task_level_outputs function"""
+
+        with open(mock_data_path.joinpath(outputs_metadata_file_path), "r") as f:
+            outputs_metadata = json.load(f)
+        with open(mock_data_path.joinpath(expected_task_level_outputs_file_path), "r") as f:
+            expected_task_level_outputs = f.read()
+
+        list_outputs_command.print_task_level_outputs(outputs_metadata)
+
+        captured = capsys.readouterr()
+        assert captured.out == expected_task_level_outputs
+
+
+    @pytest.mark.parametrize(
+        "outputs_api_example_file, expected_workflow_level_outputs_file_path, indent",
+        [
+            [
+                "list_outputs/helloworld_dict_of_outputs.json",
+                "list_outputs/print_file_like_value_in_dict_example.txt",
+                True,
+            ],
+            [
+                "list_outputs/helloworld_dict_of_outputs.json",
+                "list_outputs/print_file_like_value_in_dict_no_indent_example.txt",
+                False,
+            ],
+        ],
+    )
+    def test_print_output_metadata(
+        self,
+        outputs_api_example_file,
+        tests_metadata_path,
+        mock_data_path,
+        expected_workflow_level_outputs_file_path,
+        indent,
+        capsys,
+    ) -> None:
+
+        with open(mock_data_path.joinpath(outputs_api_example_file), "r") as f:
+            outputs_metadata = json.load(f)
+        with open(
+                mock_data_path.joinpath(expected_workflow_level_outputs_file_path), "r"
+        ) as f:
+            expected_workflow_level_outputs = f.read()
+
+        list_outputs_command.print_file_like_value_in_dict(
+            outputs_metadata, indent=indent
+        )
+
+        captured = capsys.readouterr()
+        assert captured.out == expected_workflow_level_outputs
+
+    @pytest.mark.parametrize(
+        "output_name, output_value, indent, expected_function_print",
+        [
+            [
+                "task_name",
+                "/taskoutputfile",
+                True,
+                "\ttask_name: /taskoutputfile\n",
+            ],
+            [
+                "task_name",
+                "taskoutputfile",
+                True,
+                "",
+            ],
+            [
+                "task_name",
+                "gs://taskoutputfile",
+                True,
+                "\ttask_name: gs://taskoutputfile\n",
+            ],
+        ],
+    )
+    def test_print_output_name_and_file(
+        self,
+        output_name,
+        output_value,
+        indent,
+        expected_function_print,
+        capsys,
+    ) -> None:
+
+        list_outputs_command.print_output_name_and_file(
+            output_name=output_name,
+            output_value=output_value,
+            indent=indent,
+        )
+
+        captured = capsys.readouterr()
+        assert captured.out == expected_function_print
+
+    @pytest.mark.parametrize(
+        "value, expected_bool",
+        [
+            [
+                "task_value",
+                False,
+            ],
+            [
+                "/task_value",
+                True,
+            ],
+            [
+                "gs://task_value",
+                True,
+            ],
+            [
+                "task_value/",
+                False,
+            ],
+            [
+                "http://task_value",
+                True,
+            ],
+        ],
+    )
+    def test_is_path_or_url_like(self, value, expected_bool):
+        assert list_outputs_command.is_path_or_url_like(value) == expected_bool

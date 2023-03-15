@@ -25,11 +25,11 @@ LOGGER = logging.getLogger(__name__)
     "--json-summary",
     is_flag=True,
     default=False,
-    help="Print a json summary of the task outputs, including non file types.",
+    help="Print a json summary of outputs, including non-file types.",
 )
 @click.pass_obj
 def main(config, workflow_ids, detailed, json_summary):
-    """List workflow outputs."""
+    """List all output files produced by a workflow."""
 
     LOGGER.info("list-outputs")
 
@@ -46,7 +46,7 @@ def main(config, workflow_ids, detailed, json_summary):
                     format_json=get_workflow_level_outputs(config).get("outputs")
                 )
             else:
-                print_output_metadata(
+                print_file_like_value_in_dict(
                     outputs_metadata=get_workflow_level_outputs(config).get("outputs"),
                     indent=False,
                 )
@@ -146,11 +146,11 @@ def print_task_level_outputs(output_metadata: dict) -> None:
         print(call)
         for call_index in index_list:
             if call_index is not None:
-                print_output_metadata(outputs_metadata=call_index, indent=True)
+                print_file_like_value_in_dict(outputs_metadata=call_index, indent=True)
 
 
-def print_output_metadata(outputs_metadata: dict, indent: bool) -> None:
-    """Print the output metadata
+def print_file_like_value_in_dict(outputs_metadata: dict, indent: bool) -> None:
+    """Print the file like values in the output metadata dictionary
 
     Args:
         outputs_metadata (dict): The output metadata
@@ -170,20 +170,20 @@ def print_output_metadata(outputs_metadata: dict, indent: bool) -> None:
 
 
 def print_output_name_and_file(
-        task_output_name: str, task_output_value: str, indent: bool = True
+    output_name: str, output_value: str, indent: bool = True
 ) -> None:
     """Print the task name and the file name
 
     Args:
-        task_output_name (str): The task output name
-        task_output_value (str): The task output value
+        output_name (str): The task output name
+        output_value (str): The task output value
         indent (bool): Whether to indent the output"""
 
     i = "\t" if indent else ""
 
-    if isinstance(task_output_value, str):
-        if is_path_or_url_like(task_output_value):
-            print(f"{i}{task_output_name}: {task_output_value}")
+    if isinstance(output_value, str):
+        if is_path_or_url_like(output_value):
+            print(f"{i}{output_name}: {output_value}")
 
 
 def is_path_or_url_like(in_string: str) -> bool:
