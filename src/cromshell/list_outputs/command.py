@@ -85,7 +85,7 @@ def get_workflow_level_outputs(config) -> dict:
         )
 
 
-def get_task_level_outputs(config):
+def get_task_level_outputs(config) -> dict:
     """Get the task level outputs from the workflow metadata
 
     Args:
