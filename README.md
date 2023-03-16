@@ -32,16 +32,17 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
 ## Supported Options:
   * `--no_turtle` or `--I_hate_turtles`
     * Hide turtle logo
-  * `--cromwell_url` `TEXT`
-    * Specify Cromwell URL used
-  * `-t` `TIMEOUT`
+  * `--cromwell_url [TEXT]`
+    * Specify Cromwell URL used. 
+    * `TEXT` Example: `http://65.61.654.8:8000`` 
+  * `-t [TIMEOUT]`
     * Specify the server connection timeout in seconds. 
     * Default is 5 sec.
     * `TIMEOUT` must be a positive integer.
-  * `--gcloud_token_email` `TEXT`
+  * `--gcloud_token_email [TEXT]`
     * Call `gcloud auth print-access-token` with
     this email and add the token as an auth header to requests.
-  * `--referer_header_url` `TEXT`
+  * `--referer_header_url [TEXT]`
     * For servers that require a referer, supply
     this URL in the `Referer:` header.
 
