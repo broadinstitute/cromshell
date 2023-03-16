@@ -34,7 +34,7 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
     * Hide turtle logo
   * `--cromwell_url [TEXT]`
     * Specify Cromwell URL used. 
-    * `TEXT` Example: `http://65.61.654.8:8000`` 
+    * `TEXT` Example: `http://65.61.654.8:8000`
   * `-t [TIMEOUT]`
     * Specify the server connection timeout in seconds. 
     * Default is 5 sec.
