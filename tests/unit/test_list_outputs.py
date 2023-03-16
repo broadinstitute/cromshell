@@ -8,11 +8,8 @@ from cromshell.list_outputs import command as list_outputs_command
 class TestListOutputs:
     """Test the execution list-outputs command functions"""
 
-
-# def get_workflow_level_outputs(config) -> dict:
-
-
-# def test_get_task_level_outputs(config) -> dict:
+    # def get_workflow_level_outputs(config) -> dict:
+    # def test_get_task_level_outputs(config) -> dict:
 
     @pytest.mark.parametrize(
         "workflow_metadata_file, outputs_metadata_file_path",
@@ -36,10 +33,10 @@ class TestListOutputs:
         with open(mock_data_path.joinpath(outputs_metadata_file_path), "r") as f:
             outputs_metadata = json.load(f)
 
-        assert list_outputs_command.filer_outputs_from_workflow_metadata(
-            workflow_metadata
-        ) == outputs_metadata
-
+        assert (
+            list_outputs_command.filer_outputs_from_workflow_metadata(workflow_metadata)
+            == outputs_metadata
+        )
 
     @pytest.mark.parametrize(
         "outputs_metadata_file_path, expected_task_level_outputs_file_path",
@@ -61,14 +58,15 @@ class TestListOutputs:
 
         with open(mock_data_path.joinpath(outputs_metadata_file_path), "r") as f:
             outputs_metadata = json.load(f)
-        with open(mock_data_path.joinpath(expected_task_level_outputs_file_path), "r") as f:
+        with open(
+            mock_data_path.joinpath(expected_task_level_outputs_file_path), "r"
+        ) as f:
             expected_task_level_outputs = f.read()
 
         list_outputs_command.print_task_level_outputs(outputs_metadata)
 
         captured = capsys.readouterr()
         assert captured.out == expected_task_level_outputs
-
 
     @pytest.mark.parametrize(
         "outputs_api_example_file, expected_workflow_level_outputs_file_path, indent",
@@ -94,11 +92,10 @@ class TestListOutputs:
         indent,
         capsys,
     ) -> None:
-
         with open(mock_data_path.joinpath(outputs_api_example_file), "r") as f:
             outputs_metadata = json.load(f)
         with open(
-                mock_data_path.joinpath(expected_workflow_level_outputs_file_path), "r"
+            mock_data_path.joinpath(expected_workflow_level_outputs_file_path), "r"
         ) as f:
             expected_workflow_level_outputs = f.read()
 
@@ -140,7 +137,6 @@ class TestListOutputs:
         expected_function_print,
         capsys,
     ) -> None:
-
         list_outputs_command.print_output_name_and_file(
             output_name=output_name,
             output_value=output_value,

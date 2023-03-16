@@ -5,8 +5,8 @@ import requests
 
 import cromshell.utilities.http_utils as http_utils
 import cromshell.utilities.io_utils as io_utils
-from cromshell.utilities import command_setup_utils
 from cromshell.metadata import command as metadata_command
+from cromshell.utilities import command_setup_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +63,8 @@ def get_workflow_level_outputs(config) -> dict:
     """Get the workflow level outputs from the workflow outputs
 
     Args:
-        config (dict): The cromshell config object"""
+        config (dict): The cromshell config object
+    """
 
     requests_out = requests.get(
         f"{config.cromwell_api_workflow_id}/outputs",
@@ -75,7 +76,6 @@ def get_workflow_level_outputs(config) -> dict:
     if requests_out.ok:
         return requests_out.json()
     else:
-
         http_utils.check_http_request_status_code(
             short_error_message="Failed to retrieve workflow outputs.",
             response=requests_out,
@@ -90,7 +90,7 @@ def get_task_level_outputs(config) -> dict:
 
     Args:
         config (dict): The cromshell config object
-        """
+    """
     # Get metadata
     formatted_metadata_parameter = metadata_command.format_metadata_params(
         list_of_keys=config.METADATA_KEYS_TO_OMIT,
@@ -114,7 +114,7 @@ def filer_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
 
     Args:
         workflow_metadata (dict): The workflow metadata
-        """
+    """
     calls_metadata = workflow_metadata["calls"]
     output_metadata = {}
     extract_task_key = "outputs"
@@ -124,8 +124,7 @@ def filer_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
             output_metadata[call] = []
             for scatter in calls_metadata[call]:
                 output_metadata[call].append(
-                    filer_outputs_from_workflow_metadata(
-                        scatter["subWorkflowMetadata"])
+                    filer_outputs_from_workflow_metadata(scatter["subWorkflowMetadata"])
                 )
         else:
             output_metadata[call] = []
@@ -141,7 +140,7 @@ def print_task_level_outputs(output_metadata: dict) -> None:
 
     Args:
         output_metadata (dict): The output metadata from the workflow
-        """
+    """
     for call, index_list in output_metadata.items():
         print(call)
         for call_index in index_list:
@@ -155,13 +154,11 @@ def print_file_like_value_in_dict(outputs_metadata: dict, indent: bool) -> None:
     Args:
         outputs_metadata (dict): The output metadata
         indent (bool): Whether to indent the output
-        """
+    """
 
     for output_name, output_value in outputs_metadata.items():
         if isinstance(output_value, str):
-            print_output_name_and_file(
-                output_name, output_value, indent=indent
-            )
+            print_output_name_and_file(output_name, output_value, indent=indent)
         elif isinstance(output_value, list):
             for output_value_item in output_value:
                 print_output_name_and_file(
@@ -191,10 +188,13 @@ def is_path_or_url_like(in_string: str) -> bool:
 
     Args:
         in_string (str): The string to check for path or url like-ness
-        """
-
-    if in_string.startswith("gs://") or in_string.startswith(
-            "/") or in_string.startswith("http://") or in_string.startswith("https://"):
+    """
+    if (
+        in_string.startswith("gs://")
+        or in_string.startswith("/")
+        or in_string.startswith("http://")
+        or in_string.startswith("https://")
+    ):
         return True
     else:
         return False
