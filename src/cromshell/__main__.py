@@ -88,6 +88,11 @@ LOGGER = logging.getLogger(__name__)
     type=str,
     help="For servers that require a referer, supply this URL in the `Referer:` header.",
 )
+@click.option(
+    "--no_json_color",
+    flag_value=True,
+    help="Disables colorized JSON output.",
+)
 @click.pass_context
 def main_entry(
     cromshell_config,
@@ -98,6 +103,7 @@ def main_entry(
     requests_skip_certs,
     gcloud_token_email,
     referer_header_url,
+    no_json_color,
 ):
     """
     Cromshell is a script for submitting workflows to a
@@ -127,6 +133,7 @@ def main_entry(
     cromshellconfig.resolve_requests_connect_timeout(timeout_cli=requests_timeout)
     cromshellconfig.resolve_gcloud_token_email(email=gcloud_token_email)
     cromshellconfig.resolve_referer_header_url(url=referer_header_url)
+    cromshellconfig.resolve_color_json(color=not no_json_color)
 
 
 @main_entry.command()

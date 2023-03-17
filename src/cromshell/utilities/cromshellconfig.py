@@ -2,6 +2,7 @@ import csv
 import json
 import logging
 import os
+import sys
 import warnings
 from enum import Enum
 from pathlib import Path
@@ -41,6 +42,7 @@ requests_connect_timeout = 5
 referer_header_url = None
 gcloud_token_email = None
 requests_verify_certs = True
+color_json = True
 
 CROMSHELL_CONFIG_OPTIONS_TEMPLATE = {
     "cromwell_server": "String",
@@ -312,6 +314,16 @@ def resolve_gcloud_token_email(email: str):
         gcloud_token_email = config_gcloud_token_email
     else:
         LOGGER.info("Not sending auth header.")
+
+
+def resolve_color_json(color: bool) -> None:
+    """Override the default color json output.
+    Arg color: True or False"""
+    global color_json
+
+    if color is False or not sys.stdout.isatty():
+        LOGGER.debug("Will not color json output.")
+        color_json = False
 
 
 # Get and Set Cromshell Configuration Default Values
