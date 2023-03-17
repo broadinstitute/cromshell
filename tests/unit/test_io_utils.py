@@ -101,7 +101,7 @@ class TestIOUtilities:
                 """{"id":"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b","status":"Submitted"}""",
                 True,
                 """\x1b[33m"{\\"id\\":\\"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b\\",\\"status\\":\\"Submitted\\"}"\x1b[39;49;00m\x1b[37m\x1b[39;49;00m\n\n""",
-            )
+            ),
         ],
     )
     def test_pretty_print_json(self, testing_input, add_color, test_output):

@@ -2,7 +2,6 @@ import json
 import logging
 import re
 import shutil
-import sys
 from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
@@ -10,7 +9,6 @@ from typing import BinaryIO, List, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from pygments import formatters, highlight, lexers
-import rich
 from termcolor import colored
 
 LOGGER = logging.getLogger(__name__)
@@ -167,10 +165,14 @@ def color_json(formatted_json: str) -> str:
 def pretty_print_json(format_json: str or dict, add_color: bool = None) -> None:
     """Prints JSON String in a fancy way
 
-    - json_text: valid json string or dictionary, NOT json file path"""
+    Args:
+    - json_text: valid json string or dictionary, NOT json file path
+    - add_color: whether to add color to the json string
+    """
 
     # Importing here to retrieve color_json value after being resolved by main()
     from cromshell.utilities.cromshellconfig import color_json as csc_color_json
+
     if add_color is None:
         add_color = csc_color_json
 
