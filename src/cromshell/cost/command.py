@@ -110,7 +110,7 @@ def main(config, workflow_ids: str or int, detailed: bool, color: bool):
             task_header=TASK_HEADER,
         )
 
-        total_cost: float = get_query_total_cost(
+        total_cost: str = get_query_total_cost(
             query_rows=formatted_query_rows, cost_header=COST_HEADER
         )
         if detailed:
@@ -123,7 +123,12 @@ def main(config, workflow_ids: str or int, detailed: bool, color: bool):
                 cost_header=COST_HEADER,
             )
 
-        print(f"Total Cost: ${total_cost}")
+        if len(workflow_ids) > 1:
+            print(f"Total Cost for {resolved_workflow_id}: ${total_cost}\n")
+        else:
+            print(f"Total Cost: ${total_cost}")
+
+    return 0
 
 
 def query_bigquery(
@@ -410,7 +415,7 @@ def color_cost_outliers(detailed_query_rows: list, cost_header: str) -> list:
     return highlighted_query_rows_cost_rounded
 
 
-def get_query_total_cost(query_rows: list, cost_header: str) -> float:
+def get_query_total_cost(query_rows: list, cost_header: str) -> str:
     """
     Gets Sum of cost column
     :param query_rows: List with each item being a dictionary containing cost key
@@ -426,7 +431,7 @@ def get_query_total_cost(query_rows: list, cost_header: str) -> float:
                 f"Expected cost column header: {cost_header} "
                 f"was not found in row: {row}. Excluding row from total."
             )
-    return round(total, 2)
+    return "{:.2f}".format(round(total, 2))
 
 
 def format_bq_query_results(query_results, task_header: str, cost_header: str) -> list:
@@ -468,4 +473,4 @@ def print_detailed_query_results(
     else:
         print_ready_rows = detailed_query_rows
 
-    print(tabulate(print_ready_rows, headers="keys", tablefmt="rst"))
+    print(tabulate(print_ready_rows, headers="keys", tablefmt="rst", floatfmt=".2f"))

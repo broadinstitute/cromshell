@@ -66,10 +66,6 @@ class TestCost:
             ).query_parameters
         )
 
-    # def test_check_bq_query_results(self):
-
-    # def test_check_bq_query_for_errors(self):
-
     @pytest.mark.parametrize(
         "hours_passed, min_hours_needed_to_be_passed, expected_minimum_time_passed",
         [
@@ -138,8 +134,6 @@ class TestCost:
 
         assert (start_time, end_time) == (expected_start_time, expected_end_time)
 
-    # def test_checks_before_query(self):
-
     @pytest.mark.parametrize(
         "query_rows, cost_header, expected_rounded_rows",
         [
@@ -170,9 +164,9 @@ class TestCost:
     @pytest.mark.parametrize(
         "query_rows, cost_header, expected_rounded_rows",
         [
-            [[{"cost": 0.3215}, {"cost": 0.15615}], "cost", 0.48],
-            [[{"COST": 0.3215}, {"COST": 0.15615}], "COST", 0.48],
-            [[{"COST": 0.3215}, {"COST": 0.15615}], "cost", 0.0],
+            [[{"cost": 0.3215}, {"cost": 0.15615}], "cost", "0.48"],
+            [[{"COST": 0.3215}, {"COST": 0.15615}], "COST", "0.48"],
+            [[{"Size": 0.3215}, {"Mem": 0.15615}], "cost", "0.00"],
         ],
     )
     def test_get_query_total_cost(
@@ -234,34 +228,33 @@ class TestCost:
                 detailed_query_rows=query_rows, cost_header=cost_header
             )
 
-    # def test_format_bq_query_results():
     @pytest.mark.parametrize(
         "color, query_rows, cost_header, expected_rows_with_color",
         [
             [
                 False,
-                [{"cost": 0.3215}, {"cost": 0.15615}, {"cost": 10.15}],
+                [{"cost": 0.32}, {"cost": 0.16}, {"cost": 10.15}],
                 "cost",
-                """========
-    cost
-========
- 0.3215
- 0.15615
-10.15
-========
+                """======
+  cost
+======
+  0.32
+  0.16
+ 10.15
+======
 """,
             ],
             [
                 True,
-                [{"cost": 0.3215}, {"cost": 0.15615}, {"cost": 10.15}],
+                [{"cost": 0.32}, {"cost": 0.16}, {"cost": 10.15}],
                 "cost",
-                """========
-    cost
-========
- 0.3215
- 0.15615
-\x1b[91m10.15\x1b[0m
-========
+                """======
+  cost
+======
+  0.32
+  0.16
+ \x1b[91m10.15\x1b[0m
+======
 """,
             ],
         ],
