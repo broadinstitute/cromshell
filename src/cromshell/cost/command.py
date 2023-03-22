@@ -11,6 +11,8 @@ import cromshell.utilities.command_setup_utils as command_setup_utils
 import cromshell.utilities.config_options_file_utils as cofu
 import cromshell.utilities.workflow_id_utils as workflow_id_utils
 import cromshell.utilities.workflow_status_utils as workflow_status_utils
+from cromshell import log
+from cromshell.utilities import io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -113,6 +115,7 @@ def main(config, workflow_ids: str or int, detailed: bool, color: bool):
         total_cost: str = get_query_total_cost(
             query_rows=formatted_query_rows, cost_header=COST_HEADER
         )
+        log.display_logo(io_utils.turtle)
         if detailed:
             formatted_rounded_rows: list = round_cost_values(
                 query_rows=formatted_query_rows, cost_header=COST_HEADER
@@ -314,6 +317,7 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
             "Cost can only be obtained 24hrs after workflow completion.",
             workflow_id,
         )
+        log.display_logo(io_utils.dead_turtle())
         exit()
 
     if not end_time:
@@ -322,6 +326,7 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
             "likely running and is not finished yet.",
             workflow_id,
         )
+        log.display_logo(io_utils.dead_turtle())
         exit()
 
     (
@@ -341,6 +346,7 @@ def checks_before_query(start_time: str, end_time: str, workflow_id: str) -> Non
             wait_minutes,
             wait_seconds,
         )
+        log.display_logo(io_utils.dead_turtle())
         exit()
 
 
