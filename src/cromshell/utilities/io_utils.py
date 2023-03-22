@@ -171,7 +171,7 @@ def pretty_print_json(format_json: str or dict, add_color: bool = None) -> None:
     """
 
     # Importing here to retrieve color_json value after being resolved by main()
-    from cromshell.utilities.cromshellconfig import color_json as csc_color_json
+    from cromshell.utilities.cromshellconfig import color_output as csc_color_json
 
     if add_color is None:
         add_color = csc_color_json
