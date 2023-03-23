@@ -32,6 +32,7 @@ workflow HelloWorld {
         }
 
     output {
+        File output_file = HelloWorldTask.output_file
     }
 }
 
@@ -89,6 +90,7 @@ task HelloWorldTask {
     # ------------------------------------------------
     # Outputs:
      output {
+         File output_file = stdout()
      }
  }
 
