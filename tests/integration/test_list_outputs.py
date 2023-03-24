@@ -17,7 +17,7 @@ class TestListOutputs:
                 None,
                 [
                     "HelloWorld.output_file: /cromwell-executions/HelloWorld/<workflow-id>/call-HelloWorldTask/execution/stdout",
-                    ""
+                    "",
                 ],
             ),
             (
@@ -27,7 +27,7 @@ class TestListOutputs:
                 [
                     "HelloWorld.HelloWorldTask",
                     "\toutput_file: /cromwell-executions/HelloWorld/<workflow-id>/call-HelloWorldTask/execution/stdout",
-                    ""
+                    "",
                 ],
             ),
             (
@@ -38,7 +38,7 @@ class TestListOutputs:
                     "{",
                     '    "HelloWorld.output_file": "/cromwell-executions/HelloWorld/<workflow-id>/call-HelloWorldTask/execution/stdout"',
                     "}",
-                    ""
+                    "",
                 ],
             ),
             (
@@ -53,7 +53,7 @@ class TestListOutputs:
                     "        }",
                     "    ]",
                     "}",
-                    ""
+                    "",
                 ],
             ),
         ],
@@ -89,7 +89,7 @@ class TestListOutputs:
         status_result_per_line = status_result.stdout.split("\n")
 
         workflow_outputs = [
-            sub.replace('<workflow-id>', test_workflow_id) for sub in output_template
+            sub.replace("<workflow-id>", test_workflow_id) for sub in output_template
         ]
 
         print("Print workflow list-outputs results:")
