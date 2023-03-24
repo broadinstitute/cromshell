@@ -9,10 +9,11 @@ from cromshell.__main__ import main_entry as cromshell
 from cromshell.utilities import cromshellconfig
 
 
-def run_cromshell_command(command: list, exit_code: int):
+def run_cromshell_command(command: list, exit_code: int, options: list = None):
     """
     Run cromshell alias using CliRunner and assert job is successful
 
+    :param options:
     :param command: The subcommand, options, and arguments in list form e.g.
     [
         "alias",
@@ -24,12 +25,18 @@ def run_cromshell_command(command: list, exit_code: int):
     :return: results from execution
     """
 
+    command_with_options = command.copy()
+    if options:
+        for item in options:
+            command_with_options.insert(1, item)
+
     runner = CliRunner(mix_stderr=False)
     # The absolute path will be passed to the invoke command because
     # the test is being run in temp directory created by CliRunner.
     with runner.isolated_filesystem():
-        result = runner.invoke(cromshell, command)
+        result = runner.invoke(cromshell, command_with_options)
         assert result.exit_code == exit_code, (
+            f"\nCOMMAND:\n{command_with_options}"
             f"\nSTDOUT:\n{result.stdout}"
             f"\nSTDERR:\n{result.stderr}"
             f"\nExceptions:\n{result.exception}"
