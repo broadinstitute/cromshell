@@ -9,32 +9,62 @@ workflows_path = Path(__file__).parents[1].joinpath("workflows/")
 
 class TestListOutputs:
     @pytest.mark.parametrize(
-        "wdl, json_file, should_fail, call_summary, workflow_state",
+        "wdl, json_file, options, output_template",
         [
             (
                 "tests/workflows/helloWorld.wdl",
                 "tests/workflows/helloWorld.json",
-                False,
-                "\tHelloWorld.HelloWorldTask\t0 Running, 1 Done, 0 Preempted, 0 Failed",
-                "Succeeded",
+                None,
+                [
+                    "HelloWorld.output_file: /cromwell-executions/HelloWorld/<workflow-id>/call-HelloWorldTask/execution/stdout",
+                    ""
+                ],
             ),
-            # (
-            #     "tests/workflows/helloWorldFail.wdl",
-            #     "tests/workflows/helloWorld.json",
-            #     True,
-            #     "\tHelloWorld.HelloWorldTask\t0 Running, 0 Done, 0 Preempted, 1 Failed",
-            #     "Failed",
-            # ),
+            (
+                "tests/workflows/helloWorld.wdl",
+                "tests/workflows/helloWorld.json",
+                ["-d"],
+                [
+                    "HelloWorld.HelloWorldTask",
+                    "\toutput_file: /cromwell-executions/HelloWorld/<workflow-id>/call-HelloWorldTask/execution/stdout",
+                    ""
+                ],
+            ),
+            (
+                "tests/workflows/helloWorld.wdl",
+                "tests/workflows/helloWorld.json",
+                ["-j"],
+                [
+                    "{",
+                    '    "HelloWorld.output_file": "/cromwell-executions/HelloWorld/<workflow-id>/call-HelloWorldTask/execution/stdout"',
+                    "}",
+                    ""
+                ],
+            ),
+            (
+                "tests/workflows/helloWorld.wdl",
+                "tests/workflows/helloWorld.json",
+                ["-j", "-d"],
+                [
+                    "{",
+                    '    "HelloWorld.HelloWorldTask": [',
+                    "        {",
+                    '            "output_file": "/cromwell-executions/HelloWorld/<workflow-id>/call-HelloWorldTask/execution/stdout"',
+                    "        }",
+                    "    ]",
+                    "}",
+                    ""
+                ],
+            ),
         ],
     )
-    def test_counts(
+    def test_list_outputs(
         self,
         local_cromwell_url: str,
         wdl: str,
         json_file: str,
-        should_fail: bool,
-        call_summary: str,
-        workflow_state: str,
+        options: list,
+        output_template: list,
         ansi_escape,
     ):
         # submit workflow
@@ -53,20 +83,17 @@ class TestListOutputs:
         status_result = utility_test_functions.run_cromshell_command(
             command=["list-outputs", test_workflow_id],
             exit_code=0,
+            options=options,
         )
 
         status_result_per_line = status_result.stdout.split("\n")
+
+        workflow_outputs = [
+            sub.replace('<workflow-id>', test_workflow_id) for sub in output_template
+        ]
 
         print("Print workflow list-outputs results:")
         for line in status_result_per_line:
             print(line)
 
-        # The workflows being used here will only generate 2 lines from the counts
-        # command, but if testing more complicated workflows the second_line will
-        # need to be asserted in a different manner to include all the calls within
-        # the workflow being tested.
-        first_line = ansi_escape.sub("", status_result_per_line[0])
-        second_line = ansi_escape.sub("", status_result_per_line[1])
-
-        assert first_line == test_workflow_id + "\t" + workflow_state
-        assert second_line == call_summary
+        assert status_result_per_line == workflow_outputs
