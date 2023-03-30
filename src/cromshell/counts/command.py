@@ -197,11 +197,14 @@ def print_call_status(call: str, indent: str, workflow_calls_metadata: dict) -> 
         )
 
 
-def print_task_status_summary(workflow_metadata: dict) -> None:
+def print_task_status_summary(
+    workflow_metadata: dict, print_color: bool = None
+) -> None:
     """
     Prints the status count for each task in a workflow.
     Does NOT run expose subworkflows
 
+    :param print_color: If True, print status summary with color
     :param workflow_metadata: Metadata of the workflow to process
     :return:
     """
@@ -214,7 +217,9 @@ def print_task_status_summary(workflow_metadata: dict) -> None:
         # task status counts
         workflow_status_summary[task] = get_shard_status_count(shards=shards)
 
-    io_utils.pretty_print_json(format_json=workflow_status_summary)
+    io_utils.pretty_print_json(
+        format_json=workflow_status_summary, add_color=print_color
+    )
 
 
 def get_shard_status_count(shards: list) -> Dict[str, int]:

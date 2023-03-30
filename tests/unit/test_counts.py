@@ -107,7 +107,9 @@ class TestCounts:
         with open(mock_data_path.joinpath(metadata_name), "r") as f:
             workflow_metadata = json.load(f)
 
-        counts_command.print_task_status_summary(workflow_metadata=workflow_metadata)
+        counts_command.print_task_status_summary(
+            workflow_metadata=workflow_metadata, print_color=False
+        )
         captured = capsys.readouterr()
         assert captured.out.rstrip() == json.dumps(
             task_summary, indent=4, sort_keys=True

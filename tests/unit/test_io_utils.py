@@ -90,24 +90,28 @@ class TestIOUtilities:
     # TODO: test something with at least 1 level of nesting
     #  to show it works on a non-trivial example.
     @pytest.mark.parametrize(
-        "testing_input, test_output",
+        "testing_input, add_color, test_output",
         [
             (
-                (
-                    """{"id":"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b","status":"Submitted"}"""
-                ),
-                (
-                    """\"{\\"id\\":\\"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b\\",\\"status\\":\\"Submitted\\"}\"\n"""
-                ),
+                """{"id":"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b","status":"Submitted"}""",
+                False,
+                """\"{\\"id\\":\\"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b\\",\\"status\\":\\"Submitted\\"}\"\n""",
+            ),
+            (
+                """{"id":"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b","status":"Submitted"}""",
+                True,
+                """\x1b[33m"{\\"id\\":\\"4bf7ca9c-0b39-48fb-9af7-83e3e488f62b\\",\\"status\\":\\"Submitted\\"}"\x1b[39;49;00m\x1b[37m\x1b[39;49;00m\n\n""",
             ),
         ],
     )
-    def test_pretty_print_json(self, testing_input, test_output):
+    def test_pretty_print_json(self, testing_input, add_color, test_output):
         # Here the function is being run and allows us to redirect the stdout which
         # would be what the function prints to the screen to file like object
         func_stdout = io.StringIO()
         with redirect_stdout(func_stdout):
-            io_utils.pretty_print_json(testing_input)
+            io_utils.pretty_print_json(testing_input, add_color=add_color)
+
+        print(func_stdout.getvalue())
 
         # assert the function stdout is the same as the expected out
         assert func_stdout.getvalue() == test_output
