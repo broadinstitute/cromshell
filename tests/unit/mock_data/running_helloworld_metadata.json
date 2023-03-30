@@ -1,0 +1,35 @@
+{
+    "actualWorkflowLanguage": "WDL",
+    "actualWorkflowLanguageVersion": "draft-2",
+    "calls": {},
+    "id": "5a2ed0ee-11c9-4199-9475-34375c933a4a",
+    "inputs": {
+        "HelloWorld.HelloWorldTask.default_boot_disk_size_gb": 15,
+        "HelloWorld.HelloWorldTask.default_disk_space_gb": 100,
+        "HelloWorld.HelloWorldTask.default_ram_mb": 3072,
+        "HelloWorld.HelloWorldTask.use_ssd": false,
+        "HelloWorld.boot_disk_size_gb": null,
+        "HelloWorld.cpu": null,
+        "HelloWorld.disk_space_gb": null,
+        "HelloWorld.docker": "frolvlad/alpine-bash",
+        "HelloWorld.mem": null,
+        "HelloWorld.preemptible_attempts": null
+    },
+    "labels": {
+        "cromwell-workflow-id": "cromwell-5a2ed0ee-11c9-4199-9475-34375c933a4a"
+    },
+    "outputs": {},
+    "start": "2023-02-22T21:33:14.325Z",
+    "status": "Running",
+    "submission": "2023-02-22T21:32:59.472Z",
+    "workflowName": "HelloWorld",
+    "workflowProcessingEvents": [
+        {
+            "cromwellId": "cromid-a191f39",
+            "cromwellVersion": "80-6a026f3",
+            "description": "PickedUp",
+            "timestamp": "2023-02-22T21:33:14.309Z"
+        }
+    ],
+    "workflowRoot": "/cromwell-executions/HelloWorld/5a2ed0ee-11c9-4199-9475-34375c933a4a"
+}
