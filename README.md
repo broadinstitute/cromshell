@@ -109,10 +109,10 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
    #### Get cost for a workflow
    * `cost [-c] [-d] [workflow-id] [[workflow-id]...]`
      * Get the cost for a workflow.
-     * Only works for workflows that completed more than 8 hours ago on GCS.
+     * Only works for workflows that completed more than 24 hours ago on GCS. See [Google Cost Exporting Documentation](https://cloud.google.com/billing/docs/how-to/export-data-bigquery-tables)
      * Billing export to BigQuery must be enabled for your GCP billing project. 
        See [Setup billing data export to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery-setup).
-     * Requires the 'gcp_bq_cost_table' key to exist in the cromshell 
+     * Requires the `bq_cost_table` key to exist in the cromshell 
        configuration file and have a value equal to the BigQuery cost table 
        for your GCP billing project.
      * `-c/--color` Color outliers in task level cost results.
