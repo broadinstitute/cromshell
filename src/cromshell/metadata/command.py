@@ -108,4 +108,4 @@ def obtain_and_print_metadata(
         headers=http_utils.generate_headers(config),
     )
 
-    io_utils.pretty_print_json(format_json=workflow_metadata_json, add_color=True)
+    io_utils.pretty_print_json(format_json=workflow_metadata_json)

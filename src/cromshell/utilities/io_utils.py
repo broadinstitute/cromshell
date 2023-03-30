@@ -162,10 +162,19 @@ def color_json(formatted_json: str) -> str:
     return highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
 
 
-def pretty_print_json(format_json: str or dict, add_color: bool = False) -> None:
+def pretty_print_json(format_json: str or dict, add_color: bool = None) -> None:
     """Prints JSON String in a fancy way
 
-    - json_text: valid json string or dictionary, NOT json file path"""
+    Args:
+    - json_text: valid json string or dictionary, NOT json file path
+    - add_color: whether to add color to the json string
+    """
+
+    # Importing here to retrieve color_json value after being resolved by main()
+    from cromshell.utilities.cromshellconfig import color_output as csc_color_json
+
+    if add_color is None:
+        add_color = csc_color_json
 
     if format_json is type(str):
         loaded_json = json.loads(format_json)

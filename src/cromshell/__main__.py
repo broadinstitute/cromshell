@@ -88,6 +88,20 @@ LOGGER = logging.getLogger(__name__)
     type=str,
     help="For servers that require a referer, supply this URL in the `Referer:` header.",
 )
+@click.option(
+    "-mc",
+    "--machine_processable",
+    "machine_processable",
+    flag_value=True,
+    help="Avoids the use of color and other human readable formatting for output.",
+)
+@click.option(
+    "-co",
+    "--colorful_output",
+    "colorful_output",
+    flag_value=True,
+    help="Uses color and other human readable formatting for output when possible.",
+)
 @click.pass_context
 def main_entry(
     cromshell_config,
@@ -98,6 +112,8 @@ def main_entry(
     requests_skip_certs,
     gcloud_token_email,
     referer_header_url,
+    machine_processable,
+    colorful_output,
 ):
     """
     Cromshell is a script for submitting workflows to a
@@ -127,6 +143,9 @@ def main_entry(
     cromshellconfig.resolve_requests_connect_timeout(timeout_cli=requests_timeout)
     cromshellconfig.resolve_gcloud_token_email(email=gcloud_token_email)
     cromshellconfig.resolve_referer_header_url(url=referer_header_url)
+    cromshellconfig.resolve_color_output(
+        machine_readable=machine_processable, colorful_output=colorful_output
+    )
 
 
 @main_entry.command()
