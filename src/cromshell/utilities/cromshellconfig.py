@@ -27,6 +27,7 @@ SLIM_METADATA_DEFAULT_KEYS = [
 ]
 CROMWELL_API_STRING = "/api/workflows/v1"
 WOMTOOL_API_STRING = "/api/womtool/v1"
+workflow_id = None
 # Concatenate the cromwell url, api string, and workflow ID. Set in subcommand.
 cromwell_api_workflow_id = None
 # Defaults for variables will be set after functions have been defined

@@ -74,10 +74,12 @@ def get_workflow_level_outputs(config) -> dict:
     )
 
     if requests_out.ok:
+        check_for_empty_output(requests_out.json(), config.workflow_id)
         return requests_out.json()
     else:
         http_utils.check_http_request_status_code(
-            short_error_message="Failed to retrieve workflow outputs.",
+            short_error_message="Failed to retrieve outputs for "
+                                f"workflow: {config.workflow_id}",
             response=requests_out,
             # Raising exception is set false to allow
             # command to retrieve outputs of remaining workflows.
@@ -200,3 +202,15 @@ def is_path_or_url_like(in_string: str) -> bool:
         return True
     else:
         return False
+
+
+def check_for_empty_output(cromwell_outputs: dict, workflow_id: str) -> None:
+    """Check if the workflow outputs are empty
+
+    Args:
+        cromwell_outputs (dict): Results from cromwell server output endpoint
+        :param workflow_id: The workflow id
+    """
+    if not cromwell_outputs.get("outputs"):
+        LOGGER.error(f"No outputs found for workflow: {workflow_id}")
+        raise Exception(f"No outputs found for workflow: {workflow_id}")

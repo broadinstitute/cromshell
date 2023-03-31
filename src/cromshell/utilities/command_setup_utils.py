@@ -17,5 +17,17 @@ def resolve_workflow_id_and_server(workflow_id: str, cromshell_config) -> str:
     http_utils.set_and_check_cromwell_server(
         config=cromshell_config, workflow_id=resolved_workflow_id
     )
+    set_workflow_id(workflow_id=resolved_workflow_id, cromshell_config=cromshell_config)
 
     return resolved_workflow_id
+
+
+def set_workflow_id(workflow_id: str, cromshell_config) -> None:
+    """
+    Sets the workflow id in the config object
+
+    :param workflow_id: workflow UUID
+    :param cromshell_config:
+    :return: None
+    """
+    cromshell_config.workflow_id = workflow_id

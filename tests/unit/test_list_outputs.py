@@ -172,3 +172,34 @@ class TestListOutputs:
     )
     def test_is_path_or_url_like(self, value, expected_bool):
         assert list_outputs_command.is_path_or_url_like(value) == expected_bool
+
+
+    @pytest.mark.parametrize(
+        "example_output_results, workflow_id",
+        [
+            [
+                {'outputs': {}, 'id': '04b65be4-896f-439c-8a01-5e4dc6c116dd'},
+                "04b65be4-896f-439c-8a01-5e4dc6c116dd'",
+            ],
+            [
+                {'outputs': {"one": 2}, 'id': '04b65be4-896f-439c-8a01-5e4dc6c116dd'},
+                "04b65be4-896f-439c-8a01-5e4dc6c116dd'",
+            ],
+        ],
+    )
+    def test_check_for_empty_output(
+        self, example_output_results: dict, workflow_id: str
+    ):
+        """Test the check_for_empty_output function"""
+
+        if example_output_results.get("outputs") == {}:
+            with pytest.raises(Exception):
+                list_outputs_command.check_for_empty_output(
+                    example_output_results, workflow_id
+                )
+        else:
+            assert (
+                list_outputs_command.check_for_empty_output(
+                    example_output_results, workflow_id
+                ) is None
+            )
