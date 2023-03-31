@@ -41,20 +41,22 @@ def main(config, workflow_ids, detailed, json_summary):
         )
 
         if not detailed:
+            workflow_outputs = get_workflow_level_outputs(config).get("outputs")
+
             if json_summary:
-                io_utils.pretty_print_json(
-                    format_json=get_workflow_level_outputs(config).get("outputs")
-                )
+                io_utils.pretty_print_json(format_json=workflow_outputs)
             else:
                 print_file_like_value_in_dict(
-                    outputs_metadata=get_workflow_level_outputs(config).get("outputs"),
+                    outputs_metadata=workflow_outputs,
                     indent=False,
                 )
         else:
+            task_outputs = get_task_level_outputs(config)
+
             if json_summary:
-                io_utils.pretty_print_json(format_json=get_task_level_outputs(config))
+                io_utils.pretty_print_json(format_json=task_outputs)
             else:
-                print_task_level_outputs(get_task_level_outputs(config))
+                print_task_level_outputs(task_outputs)
 
     return return_code
 
