@@ -81,7 +81,7 @@ def get_workflow_level_outputs(config) -> dict:
     else:
         http_utils.check_http_request_status_code(
             short_error_message="Failed to retrieve outputs for "
-                                f"workflow: {config.workflow_id}",
+            f"workflow: {config.workflow_id}",
             response=requests_out,
             # Raising exception is set false to allow
             # command to retrieve outputs of remaining workflows.
