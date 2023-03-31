@@ -8,9 +8,6 @@ from cromshell.list_outputs import command as list_outputs_command
 class TestListOutputs:
     """Test the execution list-outputs command functions"""
 
-    # def get_workflow_level_outputs(config) -> dict:
-    # def test_get_task_level_outputs(config) -> dict:
-
     @pytest.mark.parametrize(
         "workflow_metadata_file, outputs_metadata_file_path",
         [
@@ -34,7 +31,9 @@ class TestListOutputs:
             outputs_metadata = json.load(f)
 
         assert (
-            list_outputs_command.filer_outputs_from_workflow_metadata(workflow_metadata)
+            list_outputs_command.filter_outputs_from_workflow_metadata(
+                workflow_metadata
+            )
             == outputs_metadata
         )
 

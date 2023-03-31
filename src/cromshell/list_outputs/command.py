@@ -106,10 +106,10 @@ def get_task_level_outputs(config) -> dict:
         headers=http_utils.generate_headers(config),
     )
 
-    return filer_outputs_from_workflow_metadata(workflow_metadata)
+    return filter_outputs_from_workflow_metadata(workflow_metadata)
 
 
-def filer_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
+def filter_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
     """Get the outputs from the workflow metadata
 
     Args:
@@ -124,7 +124,9 @@ def filer_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
             output_metadata[call] = []
             for scatter in calls_metadata[call]:
                 output_metadata[call].append(
-                    filer_outputs_from_workflow_metadata(scatter["subWorkflowMetadata"])
+                    filter_outputs_from_workflow_metadata(
+                        scatter["subWorkflowMetadata"]
+                    )
                 )
         else:
             output_metadata[call] = []
