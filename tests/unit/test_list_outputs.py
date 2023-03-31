@@ -178,7 +178,7 @@ class TestListOutputs:
         "example_output_results, workflow_id",
         [
             [
-                {'outputs': {}, 'id': '04b65be4-896f-439c-8a01-5e4dc6c116dd'},
+                {},
                 "04b65be4-896f-439c-8a01-5e4dc6c116dd'",
             ],
             [
@@ -192,7 +192,7 @@ class TestListOutputs:
     ):
         """Test the check_for_empty_output function"""
 
-        if example_output_results.get("outputs") == {}:
+        if example_output_results == {}:
             with pytest.raises(Exception):
                 list_outputs_command.check_for_empty_output(
                     example_output_results, workflow_id

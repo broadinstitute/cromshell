@@ -74,7 +74,7 @@ def get_workflow_level_outputs(config) -> dict:
     )
 
     if requests_out.ok:
-        check_for_empty_output(requests_out.json(), config.workflow_id)
+        check_for_empty_output(requests_out.json().get("outputs"), config.workflow_id)
         return requests_out.json()
     else:
         http_utils.check_http_request_status_code(
@@ -134,6 +134,8 @@ def filter_outputs_from_workflow_metadata(workflow_metadata: dict) -> dict:
             output_metadata[call] = []
             for index in index_list:
                 output_metadata[call].append(index.get(extract_task_key))
+
+    check_for_empty_output(output_metadata, workflow_metadata["id"])
 
     return output_metadata
 
@@ -204,13 +206,13 @@ def is_path_or_url_like(in_string: str) -> bool:
         return False
 
 
-def check_for_empty_output(cromwell_outputs: dict, workflow_id: str) -> None:
+def check_for_empty_output(workflow_outputs: dict, workflow_id: str) -> None:
     """Check if the workflow outputs are empty
 
     Args:
-        cromwell_outputs (dict): Results from cromwell server output endpoint
+        cromwell_outputs (dict): Dictionary of workflow outputs
         :param workflow_id: The workflow id
     """
-    if not cromwell_outputs.get("outputs"):
+    if not workflow_outputs:
         LOGGER.error(f"No outputs found for workflow: {workflow_id}")
         raise Exception(f"No outputs found for workflow: {workflow_id}")
