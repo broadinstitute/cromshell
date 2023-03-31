@@ -17,7 +17,7 @@ class TestListOutputs:
             ],
         ],
     )
-    def test_filer_outputs_from_workflow_metadata(
+    def test_filter_outputs_from_workflow_metadata(
         self,
         mock_data_path,
         tests_metadata_path,
