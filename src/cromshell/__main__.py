@@ -8,6 +8,7 @@ from cromshell.utilities.submissions_file_utils import update_submission_db_form
 
 from .abort import command as abort
 from .alias import command as alias
+from .cost import command as cost
 from .counts import command as counts
 from .list import command as list
 from .list_outputs import command as list_outputs
@@ -89,6 +90,20 @@ LOGGER = logging.getLogger(__name__)
     type=str,
     help="For servers that require a referer, supply this URL in the `Referer:` header.",
 )
+@click.option(
+    "-mc",
+    "--machine_processable",
+    "machine_processable",
+    flag_value=True,
+    help="Avoids the use of color and other human readable formatting for output.",
+)
+@click.option(
+    "-co",
+    "--colorful_output",
+    "colorful_output",
+    flag_value=True,
+    help="Uses color and other human readable formatting for output when possible.",
+)
 @click.pass_context
 def main_entry(
     cromshell_config,
@@ -99,6 +114,8 @@ def main_entry(
     requests_skip_certs,
     gcloud_token_email,
     referer_header_url,
+    machine_processable,
+    colorful_output,
 ):
     """
     Cromshell is a script for submitting workflows to a
@@ -128,6 +145,9 @@ def main_entry(
     cromshellconfig.resolve_requests_connect_timeout(timeout_cli=requests_timeout)
     cromshellconfig.resolve_gcloud_token_email(email=gcloud_token_email)
     cromshellconfig.resolve_referer_header_url(url=referer_header_url)
+    cromshellconfig.resolve_color_output(
+        machine_readable=machine_processable, colorful_output=colorful_output
+    )
 
 
 @main_entry.command()
@@ -139,6 +159,7 @@ def version():
 # Update with new sub-commands:
 main_entry.add_command(abort.main)
 main_entry.add_command(alias.main)
+main_entry.add_command(cost.main)
 main_entry.add_command(counts.main)
 main_entry.add_command(status.main)
 main_entry.add_command(logs.main)

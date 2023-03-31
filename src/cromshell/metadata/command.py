@@ -3,7 +3,12 @@ import logging
 import click
 import requests
 
-from cromshell.utilities import command_setup_utils, http_utils, io_utils
+from cromshell.utilities import (
+    command_setup_utils,
+    cromshellconfig,
+    http_utils,
+    io_utils,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,12 +32,14 @@ def main(config, workflow_id: str, dont_expand_subworkflows: bool):
         workflow_id=workflow_id, cromshell_config=config
     )
 
-    obtain_and_print_metadata(
+    workflow_metadata_json = format_metadata_params_and_get_metadata(
         config=config,
         metadata_param=config.METADATA_KEYS_TO_OMIT,
         exclude_keys=True,
         dont_expand_subworkflows=dont_expand_subworkflows,
     )
+
+    io_utils.pretty_print_json(format_json=workflow_metadata_json, add_color=True)
 
     return 0
 
@@ -87,10 +94,21 @@ def get_workflow_metadata(
     return requests_out.json()
 
 
-def obtain_and_print_metadata(
-    config, metadata_param: list, exclude_keys: bool, dont_expand_subworkflows: bool
-) -> None:
-    """Format metadata parameters and obtains metadata from cromwell server"""
+def format_metadata_params_and_get_metadata(
+    config: object,
+    exclude_keys: bool,
+    metadata_param: list = cromshellconfig.METADATA_KEYS_TO_OMIT,
+    dont_expand_subworkflows: bool = False,
+) -> dict:
+    """
+    Format metadata parameters and obtains metadata from cromwell server
+
+    :param config: cromshell config object
+    :param exclude_keys: Whether to the given keys should be excluded from the metadata
+    :param metadata_param: Keys present in the workflow metadata
+    :param dont_expand_subworkflows: Whether to the included subworkflow metadata
+    :return:
+    """
 
     # Combine keys and flags into a dictionary
     formatted_metadata_parameter = format_metadata_params(
@@ -100,12 +118,10 @@ def obtain_and_print_metadata(
     )
 
     # Request workflow metadata
-    workflow_metadata_json = get_workflow_metadata(
+    return get_workflow_metadata(
         meta_params=formatted_metadata_parameter,
         api_workflow_id=config.cromwell_api_workflow_id,
         timeout=config.requests_connect_timeout,
         verify_certs=config.requests_verify_certs,
         headers=http_utils.generate_headers(config),
     )
-
-    io_utils.pretty_print_json(format_json=workflow_metadata_json, add_color=True)

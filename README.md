@@ -32,16 +32,17 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
 ## Supported Options:
   * `--no_turtle` or `--I_hate_turtles`
     * Hide turtle logo
-  * `--cromwell_url` `TEXT`
-    * Specify Cromwell URL used
-  * `-t` `TIMEOUT`
+  * `--cromwell_url [TEXT]`
+    * Specify Cromwell URL used. 
+    * `TEXT` Example: `http://65.61.654.8:8000`
+  * `-t [TIMEOUT]`
     * Specify the server connection timeout in seconds. 
     * Default is 5 sec.
     * `TIMEOUT` must be a positive integer.
-  * `--gcloud_token_email` `TEXT`
+  * `--gcloud_token_email [TEXT]`
     * Call `gcloud auth print-access-token` with
     this email and add the token as an auth header to requests.
-  * `--referer_header_url` `TEXT`
+  * `--referer_header_url [TEXT]`
     * For servers that require a referer, supply
     this URL in the `Referer:` header.
 
@@ -49,54 +50,55 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
 
   
    ####  Start/Stop workflows
-   * `submit` `[-w]` *`<wdl>`* *`<inputs_json>`* `[options_json]` `[included_wdl_zip_file]`
+   * `submit [-w] <wdl> <inputs_json> [options_json] [included_wdl_zip_file]`
      * Will automatically validate the WDL and JSON file.
      * Submit a new workflow.
      * *`-w`* [COMING SOON] Wait for workflow to transition from 'Submitted' to some other status before ${SCRIPTNAME} exits.
      * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
-   * `abort` *`[workflow-id] [[workflow-id]...]`*                   
+   * `abort [workflow-id] [[workflow-id]...]`               
      * Abort a running workflow.
    #### Workflow information:
-   * `alias` *`<workflow-id>` `<alias_name>`* 
+   * `alias <workflow-id> <alias_name>`
      * Label the given workflow ID with the given alias_name.  Aliases can be used in place of workflow IDs to reference jobs.
      * Remove alias by passing empty double quotes as `alias_name` (e.g. `alias <workflow-id> ""`)
    #### Query workflow status:
-   * `status` *`[workflow-id] [[workflow-id]...]`*                   
+   * `status [workflow-id] [[workflow-id]...]`                   
      * Check the status of a workflow.
-   * `metadata` *`[workflow-id] [[workflow-id]...]`*                
+   * `metadata [workflow-id] [[workflow-id]...]`                
      * Get the full metadata of a workflow.
-   * `slim-metadata` *`[workflow-id] [[workflow-id]...]`*           
+   * `slim-metadata [workflow-id] [[workflow-id]...]`
      * Get a subset of the metadata from a workflow.
-   * `counts` *`[-j] [-x] [workflow-id] [[workflow-id]...]`*   
+   * `counts [-j] [-x] [workflow-id] [[workflow-id]...]`   
      * Get the summarized status of all jobs in the workflow.
      * `-j` prints a JSON instead of a pretty summary of the execution status (compresses subworkflows)
      * `-x` compress sub-workflows for less detailed summarization
    * `timing` *`[workflow-id] [[workflow-id]...]`*                  
+
      * Open the timing diagram in a browser.
   
    #### Logs
-   * `logs` *`[workflow-id] [[workflow-id]...]`*                     
+   * `logs [workflow-id] [[workflow-id]...]`                    
      * List the log files produced by a workflow.
-   * [COMING SOON] `fetch-logs` *`[workflow-id] [[workflow-id]...]`*               
+   * [COMING SOON] `fetch-logs [workflow-id] [[workflow-id]...]`              
      * Download all logs produced by a workflow.
   
    #### Job Outputs
-   * [COMING SOON] `list-outputs` *`[workflow-id] [[workflow-id]...]`*           
+   * [COMING SOON] `list-outputs [workflow-id] [[workflow-id]...]`         
      *  List all output files produced by a workflow.
-   * [COMING SOON] `fetch-all` *`[workflow-id] [[workflow-id]...]`*             
+   * [COMING SOON] `fetch-all [workflow-id] [[workflow-id]...]`        
      * Download all output files produced by a workflow.
    
    ####  Get email notification on job completion
-   * [COMING SOON] `notify` *`[workflow-id]` `[daemon-server]` `email` `[cromwell-server]`*
+   * [COMING SOON] `notify [workflow-id] [daemon-server] email [cromwell-server]`
      * *`daemon-server`*  server to run the notification daemon on
 
    #### Display a list jobs submitted through cromshell
-   * `list` *`[-c]` `[-u]`*                                            
-     * *`-c`*    Color the output by completion status
-     * *`-u`*    Check completion status of all unfinished jobs
+   * `list [-c] [-u]`                                            
+     * `-c`    Color the output by completion status
+     * `-u`    Check completion status of all unfinished jobs
 
    #### Clean up local cached list
-   * [COMING SOON] `cleanup` *`[-s STATUS]`*    
+   * [COMING SOON] `cleanup [-s STATUS]`
      * Remove completed jobs from local list.
        Will remove all jobs from the local list that are in a completed state,
        where a completed state is one of: `Succeeded`, `Failed`, `Aborted`
@@ -106,6 +108,17 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
    * `update-server`
      * Change the cromwell server that new jobs will be submitted to.
 
+   #### Get cost for a workflow
+   * `cost [-c] [-d] [workflow-id] [[workflow-id]...]`
+     * Get the cost for a workflow.
+     * Only works for workflows that completed more than 24 hours ago on GCS. See [Google Cost Exporting Documentation](https://cloud.google.com/billing/docs/how-to/export-data-bigquery-tables)
+     * Billing export to BigQuery must be enabled for your GCP billing project. 
+       See [Setup billing data export to BigQuery](https://cloud.google.com/billing/docs/how-to/export-data-bigquery-setup).
+     * Requires the `bq_cost_table` key to exist in the cromshell 
+       configuration file and have a value equal to the BigQuery cost table 
+       for your GCP billing project.
+     * `-c/--color` Color outliers in task level cost results.
+     * `-d/--detailed` Get the cost for a workflow at the task level.
   
 ## Features:
  * Running `submit` will create a new folder in the `~/.cromshell/${CROMWELL_URL}/` directory named with the cromwell job id of the newly submitted job.  
@@ -149,7 +162,5 @@ From pypi/source
 ## Development
 
 See the [Developer Docs](./developer_docs/)
-
-
 
 

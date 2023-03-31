@@ -2,8 +2,8 @@ import csv
 import json
 import logging
 import os
+import sys
 import warnings
-from enum import Enum
 from pathlib import Path
 from typing import Dict, Union
 
@@ -34,6 +34,7 @@ config_dir = None
 SUBMISSION_FILE_NAME = "all.workflow.database.tsv"
 CROMSHELL_CONFIG_FILE_NAME = "cromshell_config.json"
 submission_file_path = None
+cromshell_config_path = None
 cromshell_config_options = None
 cromwell_server = None
 # Request defaults
@@ -41,6 +42,7 @@ requests_connect_timeout = 5
 referer_header_url = None
 gcloud_token_email = None
 requests_verify_certs = True
+color_output = None
 
 CROMSHELL_CONFIG_OPTIONS_TEMPLATE = {
     "cromwell_server": "String",
@@ -62,32 +64,6 @@ def override_requests_cert_parameters(skip_certs: bool) -> None:
         warnings.filterwarnings(
             "ignore", message="Unverified HTTPS request is being made to"
         )
-
-
-class WorkflowStatuses(Enum):
-    """Enum to hold all possible status of workflow"""
-
-    # States listed here: https://github.com/broadinstitute/cromwell/blob/32d5d0cbf07e46f56d3d070f457eaff0138478d5/core/src/main/scala/cromwell/core/WorkflowState.scala
-
-    SUBMITTED = ["Submitted"]
-    FAILED = ["Failed", "fail"]
-    ABORTED = ["Aborted", "Aborting", "abort"]
-    RUNNING = ["Running"]
-    SUCCEEDED = ["Succeeded"]
-    DOOMED = ["DOOMED"]
-
-
-class TaskStatus(Enum):
-    """Enum to hold all possible status of workflow"""
-
-    FAILED = "Failed"
-    RUNNING = "Running"
-    DONE = "Done"
-    RETRYABLEFAILURE = "RetryableFailure"
-
-    @classmethod
-    def list(cls):
-        return [key.value for key in cls]
 
 
 def resolve_cromwell_config_server_address(server_user=None, workflow_id=None) -> None:
@@ -188,7 +164,7 @@ def __get_submission_file(config_directory: Path, sub_file_name: str) -> str:
 
 
 def __load_cromshell_config_file(
-    config_directory: str, config_file_name: str, config_file_template: str
+    config_directory: str, config_file_name: str, config_file_template: dict
 ) -> Dict[str, Union[str, list, int, dict, float]]:
     """
     Load options from Cromshell Config File to dictionary.
@@ -224,7 +200,7 @@ def __load_cromshell_config_file(
     return config_options
 
 
-def __get_cromwell_server(config_options: dict) -> dict:
+def __get_cromwell_server(config_options: dict) -> str:
     """Get Cromwell Server URL from configuration options"""
 
     if not config_options["cromwell_server"]:
@@ -314,11 +290,37 @@ def resolve_gcloud_token_email(email: str):
         LOGGER.info("Not sending auth header.")
 
 
+def resolve_color_output(machine_readable: bool, colorful_output: bool) -> None:
+    """Override the default color json output.
+    Arg color: True or False"""
+    global color_output
+
+    if machine_readable and colorful_output:
+        LOGGER.error("Cannot color json output and be machine readable.")
+        LOGGER.error("Please choose one or the other Cromshell flags.")
+        raise ValueError("Cannot color json output and be machine readable.")
+
+    if machine_readable:
+        LOGGER.debug("Will not color json output.")
+        color_output = False
+    elif colorful_output or sys.stdout.isatty():
+        LOGGER.debug("Will color json output.")
+        color_output = True
+    else:
+        LOGGER.debug("Will not color json output.")
+        color_output = False
+
+
 # Get and Set Cromshell Configuration Default Values
 config_dir = __get_config_dir()
-submission_file_path = __get_submission_file(config_dir, SUBMISSION_FILE_NAME)
+submission_file_path = __get_submission_file(
+    config_directory=config_dir, sub_file_name=SUBMISSION_FILE_NAME
+)
 # TODO: Validate cromshell_config_options keys
 cromshell_config_options = __load_cromshell_config_file(
-    config_dir, CROMSHELL_CONFIG_FILE_NAME, CROMSHELL_CONFIG_OPTIONS_TEMPLATE
+    config_directory=config_dir,
+    config_file_name=CROMSHELL_CONFIG_FILE_NAME,
+    config_file_template=CROMSHELL_CONFIG_OPTIONS_TEMPLATE,
 )
 cromwell_server = __get_cromwell_server(cromshell_config_options)
+cromshell_config_path: Path = Path(os.path.join(config_dir, CROMSHELL_CONFIG_FILE_NAME))
