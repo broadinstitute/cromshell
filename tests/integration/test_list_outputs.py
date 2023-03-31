@@ -83,7 +83,7 @@ class TestListOutputs:
         status_result = utility_test_functions.run_cromshell_command(
             command=["list-outputs", test_workflow_id],
             exit_code=0,
-            options=options,
+            subcommand_options=options,
         )
 
         status_result_per_line = status_result.stdout.split("\n")
