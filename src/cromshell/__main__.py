@@ -11,6 +11,7 @@ from .alias import command as alias
 from .cost import command as cost
 from .counts import command as counts
 from .list import command as list
+from .list_outputs import command as list_outputs
 from .logs import command as logs
 from .metadata import command as metadata
 from .slim_metadata import command as slim_metadata
@@ -168,6 +169,7 @@ main_entry.add_command(metadata.main)
 main_entry.add_command(update_server.main)
 main_entry.add_command(timing.main)
 main_entry.add_command(list.main)
+main_entry.add_command(list_outputs.main)
 
 
 if __name__ == "__main__":
