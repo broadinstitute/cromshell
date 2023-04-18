@@ -9,6 +9,9 @@
 
 # Cromshell
 [![GitHub version](https://badge.fury.io/gh/broadinstitute%2Fcromshell.svg)](https://badge.fury.io/gh/broadinstitute%2Fcromshell)
+[![Integration Workflow](https://github.com/broadinstitute/cromshell/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/broadinstitute/cromshell/actions/workflows/integration_tests.yml/badge.svg)
+[![Integration Workflow](https://github.com/broadinstitute/cromshell/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/broadinstitute/cromshell/actions/workflows/unit_tests.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/querying their results.
 
