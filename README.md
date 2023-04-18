@@ -7,36 +7,28 @@
       ""     ""    ""                                                          ""    ""     ""
 ```
 
-# cromshell
- A CLI for submitting workflows to a cromwell server and monitoring / querying their results.
+# Cromshell
+[![GitHub version](https://badge.fury.io/gh/broadinstitute%2Fcromshell.svg)](https://badge.fury.io/gh/broadinstitute%2Fcromshell)
 
-Current version: 2.0.0.beta 
-
-Cromshell 2 is the next step in the evolution Cromshell. It offers many of the same
-functions as Cromshell 1 but has been rebuilt in python with many added benefits such as:
-- Automatically zip dependencies when submitting a workflow.
-- Added integration and unit tests to insure reliability 
-- Multiple ways of installation (source, brew tap, and pypi).
-- Modular architecture making adding new functionalities easier.
-- Developer documentation showing how to add new features and commands to the tool.
+Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/querying their results.
 
 ## Examples:
 
 ```
-         cromshell-beta submit workflow.wdl inputs.json options.json dependencies.zip
-         cromshell-beta status
-         cromshell-beta -t 20 metadata
-         cromshell-beta logs -2
+         cromshell submit workflow.wdl inputs.json options.json dependencies.zip
+         cromshell status
+         cromshell -t 20 metadata
+         cromshell logs -2
 ```
 
 ## Supported Options:
   * `--no_turtle` or `--I_hate_turtles`
     * Hide turtle logo
   * `--cromwell_url [TEXT]`
-    * Specify Cromwell URL used. 
+    * Specifies Cromwell URL used. 
     * `TEXT` Example: `http://65.61.654.8:8000`
   * `-t [TIMEOUT]`
-    * Specify the server connection timeout in seconds. 
+    * Specifies the server connection timeout in seconds. 
     * Default is 5 sec.
     * `TIMEOUT` must be a positive integer.
   * `--gcloud_token_email [TEXT]`
@@ -51,8 +43,8 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
   
    ####  Start/Stop workflows
    * `submit [-w] <wdl> <inputs_json> [options_json] [included_wdl_zip_file]`
-     * Will automatically validate the WDL and JSON file.
-     * Submit a new workflow.
+     * Automatically validates the WDL and JSON file.
+     * Submit a new workflow to the Cromwell server.
      * *`-w`* [COMING SOON] Wait for workflow to transition from 'Submitted' to some other status before ${SCRIPTNAME} exits.
      * *`included_wdl_zip_file`*  Zip file containing any WDL files included in the input WDL
    * `abort [workflow-id] [[workflow-id]...]`               
@@ -60,7 +52,7 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
    #### Workflow information:
    * `alias <workflow-id> <alias_name>`
      * Label the given workflow ID with the given alias_name.  Aliases can be used in place of workflow IDs to reference jobs.
-     * Remove alias by passing empty double quotes as `alias_name` (e.g. `alias <workflow-id> ""`)
+     * Remove an alias by passing empty double quotes as `alias_name` (e.g. `alias <workflow-id> ""`)
    #### Query workflow status:
    * `status [workflow-id] [[workflow-id]...]`                   
      * Check the status of a workflow.
@@ -72,8 +64,7 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
      * Get the summarized status of all jobs in the workflow.
      * `-j` prints a JSON instead of a pretty summary of the execution status (compresses subworkflows)
      * `-x` compress sub-workflows for less detailed summarization
-   * `timing` *`[workflow-id] [[workflow-id]...]`*                  
-
+   * `timing` *`[workflow-id] [[workflow-id]...]`*
      * Open the timing diagram in a browser.
   
    #### Logs
@@ -90,19 +81,19 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
    
    ####  Get email notification on job completion
    * [COMING SOON] `notify [workflow-id] [daemon-server] email [cromwell-server]`
-     * *`daemon-server`*  server to run the notification daemon on
+     * *`daemon-server`*  server to run the notification daemon on.
 
    #### Display a list jobs submitted through cromshell
    * `list [-c] [-u]`                                            
-     * `-c`    Color the output by completion status
-     * `-u`    Check completion status of all unfinished jobs
+     * `-c` Color the output by completion status.
+     * `-u` Check completion status of all unfinished jobs.
 
    #### Clean up local cached list
    * [COMING SOON] `cleanup [-s STATUS]`
      * Remove completed jobs from local list.
-       Will remove all jobs from the local list that are in a completed state,
+       This command removes all jobs from the local list that are in a completed state,
        where a completed state is one of: `Succeeded`, `Failed`, `Aborted`
-     * *`-s STATUS`*     If provided, will only remove jobs with the given `STATUS` from the local list.
+     * *`-s [STATUS]`* If provided, will only remove jobs with the given `[STATUS]` from the local list.
 
    #### Update cromwell server
    * `update-server`
@@ -127,9 +118,9 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
  You may omit the job ID of the last job submitted when running commands, or use negative numbers to reference previous jobs, e.g. "-1" will track the last job, "-2" will track the one before that, and so on.
  * You can override the default cromwell server by setting the argument `--cromwell_url` to the appropriate URL.
  * You can override the default cromshell configuration folder by setting the environmental variable `CROMSHELL_CONFIG` to the appropriate directory.
- * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `./cromshell status -- -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
- * Assign aliases to workflow ids using the alias command (i.e. `./cromshell alias -- -1 myAliasName`).
- * Once the Alias command is used to attach an alias to a workflow id, the alias name can be used instead of the id (i.e. `./cromshell status myAliasName`).
+ * Most commands takes multiple workflow-ids, which you *can specify both in relative and absolute ID value* (i.e. `cromshell status -- -1 -2 -3 c2db2989-2e09-4f2c-8a7f-c3733ae5ba7b`). 
+ * Assign aliases to workflow ids using the alias command (i.e. `cromshell alias -- -1 myAliasName`).
+   Once the Alias command is used to attach an alias to a workflow id, the alias name can be used instead of the id (i.e. `cromshell status myAliasName`).
 
 ## Installation
 From brew
@@ -145,10 +136,9 @@ From source
 
     git clone git@github.com:broadinstitute/cromshell.git
     cd cromshell
-    git checkout cromshell_2.0
     pip install .
 
-    cromshell-beta --help
+    cromshell --help
 
 ## Uninstallation
 From brew
@@ -157,7 +147,7 @@ From brew
 
 From pypi/source
 
-    pip uninstall cromshell-beta
+    pip uninstall cromshell
 
 ## Development
 
