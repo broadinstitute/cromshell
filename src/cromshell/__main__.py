@@ -62,9 +62,10 @@ LOGGER = logging.getLogger(__name__)
     help="Hide turtle logo",
 )
 @click.option(
+    "-cu",
     "--cromwell_url",
     type=str,
-    help="Specify Cromwell URL used",
+    help="Specify Cromwell URL used. Example: 'http://65.61.654.8:8000'.",
 )
 @click.option(
     "-t",
