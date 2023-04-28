@@ -9,8 +9,8 @@
 
 # Cromshell
 [![GitHub version](https://badge.fury.io/gh/broadinstitute%2Fcromshell.svg)](https://badge.fury.io/gh/broadinstitute%2Fcromshell)
-[![Integration Workflow](https://github.com/broadinstitute/cromshell/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/broadinstitute/cromshell/actions/workflows/integration_tests.yml/badge.svg)
-[![Integration Workflow](https://github.com/broadinstitute/cromshell/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/broadinstitute/cromshell/actions/workflows/unit_tests.yml/badge.svg)
+[![Integration Test Workflow](https://github.com/broadinstitute/cromshell/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/broadinstitute/cromshell/actions/workflows/integration_tests.yml/badge.svg)
+[![Unit Test Workflow](https://github.com/broadinstitute/cromshell/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/broadinstitute/cromshell/actions/workflows/unit_tests.yml/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/querying their results.
@@ -30,6 +30,7 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
   * `--cromwell_url [TEXT]`
     * Specifies Cromwell URL used. 
     * `TEXT` Example: `http://65.61.654.8:8000`
+    * Note: Depending on your Cromwell server configuration, you may not need to specify the port.
   * `-t [TIMEOUT]`
     * Specifies the server connection timeout in seconds. 
     * Default is 5 sec.
@@ -81,10 +82,6 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
      *  List all output files produced by a workflow.
    * [COMING SOON] `fetch-all [workflow-id] [[workflow-id]...]`        
      * Download all output files produced by a workflow.
-   
-   ####  Get email notification on job completion
-   * [COMING SOON] `notify [workflow-id] [daemon-server] email [cromwell-server]`
-     * *`daemon-server`*  server to run the notification daemon on.
 
    #### Display a list jobs submitted through cromshell
    * `list [-c] [-u]`                                            
