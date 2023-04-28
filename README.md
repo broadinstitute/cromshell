@@ -78,7 +78,7 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
      * Download all logs produced by a workflow.
   
    #### Job Outputs
-   * [COMING SOON] `list-outputs [workflow-id] [[workflow-id]...]`         
+   * `list-outputs [workflow-id] [[workflow-id]...]`         
      *  List all output files produced by a workflow.
    * [COMING SOON] `fetch-all [workflow-id] [[workflow-id]...]`        
      * Download all output files produced by a workflow.
@@ -153,4 +153,8 @@ From pypi/source
 
 See the [Developer Docs](./developer_docs/)
 
+## Legacy Cromshell
 
+The original Cromshell shell script is still available in the legacy_cromshell folder and in the `cromshell1` branch of this repository.
+It is no longer maintained, but is still available for use. The original Cromshell contains some commands not yet available in Cromshell2,
+such as `fetch-logs`, `fetch-all`, `notify`, and `cleanup`. These commands will be added to Cromshell2 in the future.
