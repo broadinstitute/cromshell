@@ -79,8 +79,7 @@ functions as Cromshell 1 but has been rebuilt in python with many added benefits
    #### Logs
    * `logs [workflow-id] [[workflow-id]...]`                    
      * List the log files produced by a workflow.
-   * [COMING SOON] `fetch-logs [workflow-id] [[workflow-id]...]`              
-     * Download all logs produced by a workflow.
+     * *`-f`*  Download the log files produced by a workflow.
   
    #### Job Outputs
    * [COMING SOON] `list-outputs [workflow-id] [[workflow-id]...]`         
