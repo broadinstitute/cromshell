@@ -1,0 +1,27 @@
+# Continuous integration and delivery of the main branch.
+
+name: CI/CD
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  # Minor Version Bump
+  minor_version_bump:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: pip install bumpversion
+
+    - name: Bump minor version
+      run: |
+        bumpversion patch --commit --message "Bump version to {new_version}"
+        git push origin main
+
+
