@@ -1,4 +1,5 @@
 # Continuous integration and delivery of the main branch.
+# This workflow will run action below on every push to the main branch.
 
 name: CI/CD
 on:
@@ -8,11 +9,14 @@ on:
 
 jobs:
   # Minor Version Bump
+  # This job will bump the version number by one minor version, in the
+  # files listed in .bumpversion.cfg, and push the changes to the main branch. Thus,
+  # when a PR is merged into the main branch, the version number will be bumped.
   minor_version_bump:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         python-version: '3.11'
 
@@ -22,6 +26,8 @@ jobs:
     - name: Bump minor version
       run: |
         bumpversion patch --commit --message "Bump version to {new_version}"
+
+    - name: Push changes to main branch
+        git config --global user.name 'Beri Shifaw'
+        git config --global user.email 'bshifaw@users.noreply.github.com'
         git push origin main
-
-
