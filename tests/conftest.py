@@ -32,3 +32,14 @@ def local_cromshell_config_json(local_hidden_cromshell_folder):
 @pytest.fixture
 def test_workflows_path():
     return Path(__file__).joinpath("workflows/")
+
+
+@pytest.fixture
+def get_current_version() -> str:
+    filename = Path(__file__).parents[1].joinpath("src/cromshell/__main__.py")
+    with open(filename) as f:
+        for line in f:
+            if line.startswith('__version__'):
+                version = line.split('=')[1].strip().strip('\'\"')
+
+    return version
