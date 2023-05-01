@@ -40,6 +40,6 @@ def get_current_version() -> str:
     with open(filename) as f:
         for line in f:
             if line.startswith("__version__"):
-                version = line.split("=")[1].strip().strip("\'\"")
+                version = line.split("=")[1].strip().strip('"')
 
     return version
