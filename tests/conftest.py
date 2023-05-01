@@ -39,7 +39,7 @@ def get_current_version() -> str:
     filename = Path(__file__).parents[1].joinpath("src/cromshell/__main__.py")
     with open(filename) as f:
         for line in f:
-            if line.startswith('__version__'):
-                version = line.split('=')[1].strip().strip('\'\"')
+            if line.startswith("__version__"):
+                version = line.split("=")[1].strip().strip("\'\"")
 
     return version

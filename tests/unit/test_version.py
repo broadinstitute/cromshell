@@ -5,7 +5,6 @@ class TestVersion:
     """Test the version command functions."""
 
     def test_version(self, get_current_version, capsys):
-
         cromshell_version = get_current_version
 
         print_version()
