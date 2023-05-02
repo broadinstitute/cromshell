@@ -153,8 +153,14 @@ def main_entry(
 
 @main_entry.command()
 def version():
-    """Print the version of cromshell"""
+    """Command to print the version of cromshell"""
     LOGGER.info("cromshell %s", __version__)
+    print_version()
+
+
+def print_version():
+    """Print the version of cromshell"""
+    print(f"cromshell {__version__}")
 
 
 # Update with new sub-commands:
