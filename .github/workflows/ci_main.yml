@@ -12,22 +12,42 @@ jobs:
   # This job will bump the version number by one minor version, in the
   # files listed in .bumpversion.cfg, and push the changes to the main branch. Thus,
   # when a PR is merged into the main branch, the version number will be bumped.
-  minor_version_bump:
+  patch_version_bump:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - uses: actions/checkout@master
+
+    - name: Generate Release Notes
+      # Retrieves the commit message from the last commit in current branch (main)
+      # and writes it to a file called release_notes.txt
+      run: git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
+
+    - name: Github Bumpversion Action
+      id: version-bump
+      uses: jasonamyers/github-bumpversion-action@v1.0.4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEFAULT_BUMP: "patch"
+
+    - name: New Version
+      run: echo ${{ steps.version-bump.outputs.new_ver }}
+
+    - name: Push Changes To Master/Main
+      # Pushes the changes to the main branch, requires workflows to be able to
+      # push and approve PRs to the main branch
+      uses: ad-m/github-push-action@master
       with:
-        python-version: '3.11'
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        tags: true
 
-    - name: Install Dependencies
-      run: pip install bumpversion
-
-    - name: Bump minor version
-      run: |
-        bumpversion patch --commit --message "Bump version to {new_version}"
-
-    - name: Push changes to main branch
-        git config --global user.name 'Beri Shifaw'
-        git config --global user.email 'bshifaw@users.noreply.github.com'
-        git push origin main
+    - name: Create Github release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version-bump.outputs.new_ver }}
+        release_name: '${{ steps.version-bump.outputs.new_ver }}'
+        body_path: "release_notes.txt"
+        draft: false
+        prerelease: false
