@@ -29,6 +29,7 @@ setup(
     author="Jonn Smith, Louis Bergelson, Beri Shifaw",
     author_email="jonn@broadinstitute.org, louisb@broadinstitute.org, "
     "bshifaw@broadinstitute.org",
+    url="https://github.com/broadinstitute/cromshell",
     license="BSD 3-Clause",
     long_description=long_description,
     install_requires=install_requires,
