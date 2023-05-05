@@ -35,7 +35,7 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
@@ -46,6 +46,6 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    entry_points={"console_scripts": ["cromshell-beta=cromshell.__main__:main_entry"]},
+    entry_points={"console_scripts": ["cromshell=cromshell.__main__:main_entry"]},
     include_package_data=True,
 )

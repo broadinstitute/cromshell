@@ -62,9 +62,10 @@ LOGGER = logging.getLogger(__name__)
     help="Hide turtle logo",
 )
 @click.option(
+    "-cu",
     "--cromwell_url",
     type=str,
-    help="Specify Cromwell URL used",
+    help="Specify Cromwell URL used. Example: 'http://65.61.654.8:8000'.",
 )
 @click.option(
     "-t",
@@ -152,8 +153,14 @@ def main_entry(
 
 @main_entry.command()
 def version():
-    """Print the version of cromshell"""
+    """Command to print the version of cromshell"""
     LOGGER.info("cromshell %s", __version__)
+    print_version()
+
+
+def print_version():
+    """Print the version of cromshell"""
+    print(f"cromshell {__version__}")
 
 
 # Update with new sub-commands:
