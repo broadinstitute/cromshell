@@ -8,12 +8,21 @@ on:
     - main
 
 jobs:
+  include:
+    - workflow: "Unit Tests"
+      job: "build"
+      uses: ./.github/workflows/unit_tests.yml
+    - workflow: "Integration Tests"
+      job: "build"
+      uses: ./.github/workflows/integration_tests.yml
+
   # Minor Version Bump
   # This job will bump the version number by one minor version, in the
   # files listed in .bumpversion.cfg, and push the changes to the main branch. Thus,
   # when a PR is merged into the main branch, the version number will be bumped.
   patch_version_bump:
     runs-on: ubuntu-latest
+    needs: [build]
     steps:
     - uses: actions/checkout@master
 
@@ -40,6 +49,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         tags: true
 
+    # Create Github Release
     - name: Create Github release
       id: create_release
       uses: actions/create-release@v1
@@ -51,3 +61,25 @@ jobs:
         body_path: "release_notes.txt"
         draft: false
         prerelease: false
+
+    # PyPI Packaging
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
+
+    - name: Setup Env
+      run: python3 -m pip install --upgrade pip build
+
+    - name: Validate setup.py
+      run: python3 setup.py check --metadata
+
+    - name: Build
+      run: python3 -m build
+
+    - name: Upload to PyPI
+      uses: pypa/gh-action-pypi-publish@v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        packages-dir: dist/
