@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import BinaryIO, List, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from azure.storage.blob import BlobServiceClient
+from google.cloud import storage
+import boto3
+
 from pygments import formatters, highlight, lexers
 from termcolor import colored
 
@@ -230,6 +234,103 @@ def copy_files_to_directory(
         shutil.copy(inputs, directory)
 
 
+def cat_file(file_path: str or Path) -> str:
+    """Prints the contents of a file to stdout. The path can either be a local file path,
+    GCP file path, Azure file path, or AWS file path."""
+
+    # Check if the file path is a local path
+    if Path(file_path).is_file():
+        with open(file_path, 'r') as file:
+            file_contents = file.read()
+    # Check if the file path is a GCP path
+    elif file_path.startswith('gs://'):
+        file_contents = get_gcp_file_content(file_path)
+    # Check if the file path is an Azure path
+    elif file_path.startswith('https://'):
+        file_contents = get_azure_file_content(file_path)
+    # Check if the file path is an AWS path
+    elif file_path.startswith('s3://'):
+        file_contents = get_aws_file_content(file_path)
+    else:
+        raise ValueError('Invalid file path')
+    return file_contents
+
+
+def get_gcp_file_content(file_path: str) -> str or None:
+    """Returns the contents of a file located on GCP"""
+
+    bucket_name, blob_path = file_path.split('//')[-1].split('/', 1)
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_path)
+
+    return blob.download_as_string().decode('utf-8') if blob.exists() else None
+
+
+
+def get_azure_file_content(file_path: str) -> str:
+    """Returns the contents of a file located on Azure"""
+
+    container_url, blob_path = file_path.rsplit('/', 1)
+    account_url = '/'.join(container_url.split('/')[:3])
+    container_name = container_url.split('/')[-1]
+    blob_service_client = BlobServiceClient(account_url=account_url)
+    blob_client = blob_service_client.get_blob_client(container=container_name,
+                                                      blob=blob_path)
+    return blob_client.download_blob().content_as_text()
+
+
+def get_aws_file_content(file_path: str) -> str:
+    """Returns the contents of a file located on AWS"""
+
+    bucket_name, blob_path = file_path.split('//')[-1].split('/', 1)
+    s3 = boto3.resource('s3')
+    obj = s3.Object(bucket_name, blob_path)
+
+    return obj.get()['Body'].read().decode('utf-8')
+
+
+def is_path_or_url_like(in_string: str) -> bool:
+    """Check if the string is a path or url
+
+    Args:
+        in_string (str): The string to check for path or url like-ness
+    """
+    if (
+        in_string.startswith("gs://")
+        or in_string.startswith("/")
+        or in_string.startswith("http://")
+        or in_string.startswith("https://")
+        or in_string.startswith("s3://")
+    ):
+        return True
+    else:
+        return False
+
+
+def download_gcs_files(file_paths, local_dir):
+    """Downloads GCS files to local_dir while preserving directory structure"""
+    storage_client = storage.Client()
+
+    for file_path in file_paths:
+        # Extract bucket and blob path from file path
+        print(file_path)
+        bucket_name, blob_path = file_path.split('//')[-1].split('/', 1)
+
+        # Create local subdirectory if it doesn't exist
+        local_subdir = Path(local_dir) / Path(blob_path).parent
+        Path.mkdir(local_subdir, exist_ok=True, parents=True)
+
+        # Download file to local subdirectory
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        if blob.exists():
+            local_path = Path(local_subdir).join(Path(blob_path).name)
+            blob.download_to_filename(local_path)
+
+            print(f"Downloaded {file_path} to {local_path}")
+
+
 class TextStatusesColor:
     """Holds stdout formatting per workflow status"""
 
@@ -247,14 +348,16 @@ class TextStatusesColor:
     TASK_COLOR_FAILED = "red"
 
 
-def get_color_for_status_key(status: str) -> str:
+def get_color_for_status_key(status: str) -> str or None:
     """
     Helper method for getting the correct font color for
     a given execution status for a job (or none for unrecognized statuses)
     """
 
-    task_status_font = None
+    from cromshell.utilities.cromshellconfig import color_output
 
+    if not color_output:
+        return None
     if "Done" in status:
         task_status_font = TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif "Running" in status:
