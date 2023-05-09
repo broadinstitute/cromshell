@@ -9,11 +9,9 @@ from typing import BinaryIO, List, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import azure.core.exceptions
-from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
 from google.cloud import storage
-import boto3
-
 from pygments import formatters, highlight, lexers
 from termcolor import colored
 

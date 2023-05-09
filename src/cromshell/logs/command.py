@@ -4,7 +4,6 @@ import os
 
 import click
 from termcolor import colored
-import requests
 
 import cromshell.utilities.http_utils as http_utils
 import cromshell.utilities.io_utils as io_utils
@@ -85,12 +84,6 @@ def main(
             workflow_id=workflow_id, cromshell_config=config
         )
 
-        # if not detailed:
-        #     workflow_logs = get_workflow_level_logs(config).get("calls")
-        #
-        #     if json_summary:
-        #         io_utils.pretty_print_json(format_json=workflow_logs)
-        # else:
         task_logs = get_task_level_outputs(
             config,
             requested_status=status_param,
@@ -110,40 +103,13 @@ def main(
     return return_code
 
 
-def get_workflow_level_logs(config) -> dict:
-    """Get the workflow level logs from the workflow metadata
-
-    Args:
-        config (dict): The cromshell config object
-    """
-
-    requests_out = requests.get(
-        f"{config.cromwell_api_workflow_id}/logs",
-        timeout=config.requests_connect_timeout,
-        verify=config.requests_verify_certs,
-        headers=http_utils.generate_headers(config),
-    )
-
-    if requests_out.ok:
-        # check_for_empty_logs(requests_out.json().get("outputs"), config.workflow_id)
-        return requests_out.json()
-    else:
-        http_utils.check_http_request_status_code(
-            short_error_message="Failed to retrieve logs for "
-            f"workflow: {config.workflow_id}",
-            response=requests_out,
-            # Raising exception is set false to allow
-            # command to retrieve outputs of remaining workflows.
-            raise_exception=False,
-        )
-
-
 def get_task_level_outputs(config, expand_subworkflows, requested_status) -> dict:
     """Get the task level outputs from the workflow metadata
 
     Args:
-        config (dict): The cromshell config object
-        :param expand_subworkflows: Whether to expand subworkflows
+        config (object): The cromshell config object
+        requested_status (list): The list of requested status
+        expand_subworkflows (bool) : Whether to expand subworkflows
     """
 
     metadata_keys = [
@@ -198,7 +164,8 @@ def filter_task_logs_from_workflow_metadata(
             for scatter in calls_metadata[call]:
                 all_task_logs[call].append(
                     filter_task_logs_from_workflow_metadata(
-                        scatter["subWorkflowMetadata"], requested_status=requested_status
+                        scatter["subWorkflowMetadata"],
+                        requested_status=requested_status
                     )
                 )
         else:
@@ -430,7 +397,6 @@ def download_file_like_value_in_dict(task_log_metadata):
         print(f"Downloaded files to: {path_to_downloaded_files}")
     else:
         print(f"Unsupported backend : {task_log_metadata.get('backend')}")
-
 
 
 def download_task_level_logs(all_task_log_metadata):
