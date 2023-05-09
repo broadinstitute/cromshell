@@ -240,7 +240,7 @@ def cat_file(file_path: str or Path, backend: str = None) -> str:
 
     # Check if the file path is a local path
     if backend == "Local":
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             file_contents = file.read()
     # Check if the file path is a GCP path
     elif backend == "PAPIv2":
@@ -249,19 +249,19 @@ def cat_file(file_path: str or Path, backend: str = None) -> str:
     elif backend == "TES":
         file_contents = get_azure_file_content(file_path)
     else:
-        raise ValueError('Invalid file path')
+        raise ValueError("Invalid file path")
     return file_contents
 
 
 def get_gcp_file_content(file_path: str) -> str or None:
     """Returns the contents of a file located on GCP"""
 
-    bucket_name, blob_path = file_path.split('//')[-1].split('/', 1)
+    bucket_name, blob_path = file_path.split("//")[-1].split("/", 1)
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_path)
 
-    return blob.download_as_string().decode('utf-8') if blob.exists() else None
+    return blob.download_as_string().decode("utf-8") if blob.exists() else None
 
 
 def get_azure_file_content(file_path: str) -> str or None:
@@ -269,9 +269,9 @@ def get_azure_file_content(file_path: str) -> str or None:
 
     blob_service_client = BlobServiceClient(
         account_url=f"https://{get_az_storage_account()}.blob.core.windows.net",
-        credential=DefaultAzureCredential()
+        credential=DefaultAzureCredential(),
     )
-    container_name, blob_path = file_path.split('/', 2)[1:]
+    container_name, blob_path = file_path.split("/", 2)[1:]
     blob_client = blob_service_client.get_blob_client(
         container=container_name, blob=blob_path
     )
@@ -279,14 +279,16 @@ def get_azure_file_content(file_path: str) -> str or None:
 
     try:
         if blob_client.exists():
-            return blob_client.download_blob().readall().decode('utf-8')
+            return blob_client.download_blob().readall().decode("utf-8")
         else:
             return None
     except azure.core.exceptions.HttpResponseError as e:
         if "AuthorizationPermissionMismatch" in str(e):
-            LOGGER.error("Caught an AuthorizationPermissionMismatch error, check that"
-                         "the Azure Storage Container has your account listed to have"
-                         "Storage Blob Data Contributor")
+            LOGGER.error(
+                "Caught an AuthorizationPermissionMismatch error, check that"
+                "the Azure Storage Container has your account listed to have"
+                "Storage Blob Data Contributor"
+            )
         else:
             LOGGER.error(
                 "Caught an error while trying to download the file from Azure: %s", e
@@ -295,7 +297,9 @@ def get_azure_file_content(file_path: str) -> str or None:
 
 def get_az_storage_account() -> str:
     """Returns the account name of the Azure storage account"""
+
     import cromshell.utilities.cromshellconfig as config
+
     try:
         return config.cromshell_config_options["azure_storage_account"]
     except KeyError:
@@ -324,13 +328,19 @@ def is_path_or_url_like(in_string: str) -> bool:
 
 
 def download_gcs_files(file_paths, local_dir) -> None:
-    """Downloads GCS files to local_dir while preserving directory structure"""
+    """
+    Downloads GCS files to local_dir while preserving directory structure
+
+    Args:
+        file_paths: list of GCS file paths to download
+        local_dir: local directory to download files to
+    """
     storage_client = storage.Client()
 
     for file_path in file_paths:
         # Extract bucket and blob path from file path
         LOGGER.debug("Downloading file %s", file_path)
-        bucket_name, blob_path = file_path.split('//')[-1].split('/', 1)
+        bucket_name, blob_path = file_path.split("//")[-1].split("/", 1)
 
         # Create local subdirectory if it doesn't exist
         LOGGER.debug("Creating local subdirectory %s", blob_path)
@@ -351,8 +361,15 @@ def download_gcs_files(file_paths, local_dir) -> None:
 
 
 def download_azure_files(file_paths, local_dir) -> None:
-    """Downloads Azure files to local_dir while preserving directory structure"""
-    # connection_string = "<your-azure-storage-connection-string>"
+    """
+    Downloads Azure files to local_dir while preserving directory structure
+
+    Args:
+        file_paths (list): List of Azure file paths to download
+        local_dir (str): Local directory to download files to
+
+    """
+
     default_credential = DefaultAzureCredential()
     account_url = f"https://{get_az_storage_account()}.blob.core.windows.net"
 
@@ -360,13 +377,12 @@ def download_azure_files(file_paths, local_dir) -> None:
         # Extract container and blob path from file path
         LOGGER.debug("Downloading file %s", file_path)
         blob_service_client = BlobServiceClient(
-            account_url=account_url,
-            credential=default_credential
+            account_url=account_url, credential=default_credential
         )
-        container_name, blob_path = file_path.split('/', 2)[1:]
-        blob_client = blob_service_client.get_blob_client(container=container_name,
-                                                          blob=blob_path)
-        # blob_client.download_blob()
+        container_name, blob_path = file_path.split("/", 2)[1:]
+        blob_client = blob_service_client.get_blob_client(
+            container=container_name, blob=blob_path
+        )
 
         # Create local subdirectory if it doesn't exist
         LOGGER.debug("Creating local subdirectory %s", blob_path)
@@ -375,8 +391,6 @@ def download_azure_files(file_paths, local_dir) -> None:
 
         # Download file to local subdirectory
         LOGGER.debug("Downloading file %s to %s", file_path, local_subdir)
-        # container_client = blob_service_client.get_container_client(container_name)
-        # blob_client = container_client.get_blob_client(blob_path)
         if blob_client.exists():
             local_path = Path(local_subdir) / Path(blob_path).name
             with open(local_path, "wb") as file:

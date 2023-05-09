@@ -28,7 +28,7 @@ LOGGER = logging.getLogger(__name__)
     "--fetch-logs",
     is_flag=True,
     default=False,
-    help="Download the logs to the current directory if true. "
+    help="Download the logs to the current directory if true. ",
 )
 @click.option(
     "-des",
@@ -79,7 +79,6 @@ def main(
     LOGGER.info("Status keys set to %s", status_param)
 
     for workflow_id in workflow_ids:
-
         command_setup_utils.resolve_workflow_id_and_server(
             workflow_id=workflow_id, cromshell_config=config
         )
@@ -87,7 +86,7 @@ def main(
         task_logs = get_task_level_outputs(
             config,
             requested_status=status_param,
-            expand_subworkflows=not dont_expand_subworkflows
+            expand_subworkflows=not dont_expand_subworkflows,
         )
 
         if fetch_logs:
@@ -147,7 +146,7 @@ def get_task_level_outputs(config, expand_subworkflows, requested_status) -> dic
 
 
 def filter_task_logs_from_workflow_metadata(
-        workflow_metadata: dict, requested_status: list
+    workflow_metadata: dict, requested_status: list
 ) -> dict:
     """Get the logs from the workflow metadata
 
@@ -165,13 +164,16 @@ def filter_task_logs_from_workflow_metadata(
                 all_task_logs[call].append(
                     filter_task_logs_from_workflow_metadata(
                         scatter["subWorkflowMetadata"],
-                        requested_status=requested_status
+                        requested_status=requested_status,
                     )
                 )
         else:
             all_task_logs[call] = []
             for index in index_list:
-                if "ALL" in requested_status or index.get("executionStatus") in requested_status:
+                if (
+                    "ALL" in requested_status
+                    or index.get("executionStatus") in requested_status
+                ):
                     all_task_logs[call].append(
                         {
                             "attempt": index.get("attempt"),
@@ -180,14 +182,14 @@ def filter_task_logs_from_workflow_metadata(
                             "executionStatus": index.get("executionStatus"),
                             "shardIndex": index.get("shardIndex"),
                             "stderr": index.get("stderr"),
-                            "stdout": index.get("stdout")
-                         },
+                            "stdout": index.get("stdout"),
+                        },
                     )
 
     check_for_empty_logs(
         workflow_logs=all_task_logs,
         workflow_id=workflow_metadata["id"],
-        requested_status=requested_status
+        requested_status=requested_status,
     )
 
     return all_task_logs
@@ -199,10 +201,10 @@ def print_task_level_logs(all_task_log_metadata: dict, cat_logs: bool) -> None:
 
     Args:
         all_task_log_metadata (dict): All task logs metadata from the workflow
+        cat_logs (bool): Whether to print the logs
     """
 
     for call, index_list in all_task_log_metadata.items():
-
         print(f"{call}:")
         for call_index in index_list:
             if call_index is not None:
@@ -225,13 +227,15 @@ def print_file_like_value_in_dict(
     i = "\t" * indent
 
     task_status_font = (
-        io_utils.get_color_for_status_key(task_log_metadata.get("executionStatus")) if task_log_metadata.get('executionStatus') else None
+        io_utils.get_color_for_status_key(task_log_metadata.get("executionStatus"))
+        if task_log_metadata.get("executionStatus")
+        else None
     )
 
     print(
         colored(
             f"{i}status: {task_log_metadata.get('executionStatus')}",
-            color=task_status_font
+            color=task_status_font,
         )
     )
 
@@ -243,7 +247,7 @@ def print_file_like_value_in_dict(
                 indent=indent,
                 txt_color=task_status_font,
                 cat_logs=cat_logs,
-                backend=task_log_metadata.get('backend')
+                backend=task_log_metadata.get("backend"),
             )
         elif isinstance(log_value, dict):
             print_file_like_value_in_dict(log_value, indent=indent, cat_logs=cat_logs)
@@ -252,18 +256,18 @@ def print_file_like_value_in_dict(
             for output_value_item in log_value:
                 print_file_like_value_in_dict(
                     task_log_metadata=output_value_item,
-                    indent=indent+1,
+                    indent=indent + 1,
                     cat_logs=cat_logs,
                 )
 
 
 def print_output_name_and_file(
     output_name: str,
-        output_value: str,
-        indent: int = 0,
-        txt_color: str = None,
-        cat_logs: bool = False,
-        backend: str = None,
+    output_value: str,
+    indent: int = 0,
+    txt_color: str = None,
+    cat_logs: bool = False,
+    backend: str = None,
 ) -> None:
     """Print the task name and the file name
 
@@ -303,7 +307,8 @@ def print_log_file_content(
         backend (str): The backend to used to run workflow. Default is None.
     """
     term_size = os.get_terminal_size().columns
-    print(colored(
+    print(
+        colored(
             f"{'=' * term_size}\n{output_name}: {output_value}\n{'=' * term_size}",
             color=txt_color,
         )
@@ -319,7 +324,7 @@ def print_log_file_content(
 
 
 def check_for_empty_logs(
-        workflow_logs: dict, workflow_id: str, requested_status
+    workflow_logs: dict, workflow_id: str, requested_status
 ) -> None:
     """Check if the workflow logs are empty
 
@@ -380,19 +385,15 @@ def download_file_like_value_in_dict(task_log_metadata):
             download_file_like_value_in_dict(log_value)
         elif isinstance(log_value, list):  # Lists are subworkflows, an item is a task
             for output_value_item in log_value:
-                download_file_like_value_in_dict(
-                    task_log_metadata=output_value_item
-                )
+                download_file_like_value_in_dict(task_log_metadata=output_value_item)
 
     path_to_downloaded_files = os.getcwd()
     if task_log_metadata.get("backend") == "PAPIv2":
-        io_utils.download_gcs_files(
-            files_to_download, local_dir=os.getcwd()
-        )
+        io_utils.download_gcs_files(file_paths=files_to_download, local_dir=os.getcwd())
         print(f"Downloaded files to: {path_to_downloaded_files}")
     elif task_log_metadata.get("backend") == "TES":
         io_utils.download_azure_files(
-            files_to_download, local_dir=os.getcwd()
+            file_paths=files_to_download, local_dir=os.getcwd()
         )
         print(f"Downloaded files to: {path_to_downloaded_files}")
     else:
@@ -408,9 +409,6 @@ def download_task_level_logs(all_task_log_metadata):
     """
 
     for call, index_list in all_task_log_metadata.items():
-
         for call_index in index_list:
             if call_index is not None:
-                download_file_like_value_in_dict(
-                    task_log_metadata=call_index
-                )
+                download_file_like_value_in_dict(task_log_metadata=call_index)
