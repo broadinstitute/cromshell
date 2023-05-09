@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import BinaryIO, List, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
+import azure.core.exceptions
 from azure.storage.blob import BlobServiceClient
+from azure.identity import DefaultAzureCredential
 from google.cloud import storage
 import boto3
 
@@ -234,23 +236,20 @@ def copy_files_to_directory(
         shutil.copy(inputs, directory)
 
 
-def cat_file(file_path: str or Path) -> str:
-    """Prints the contents of a file to stdout. The path can either be a local file path,
-    GCP file path, Azure file path, or AWS file path."""
+def cat_file(file_path: str or Path, backend: str = None) -> str:
+    """Prints the contents of a file to stdout. The path can either be a
+    local file path, GCP file path, Azure file path, or AWS file path."""
 
     # Check if the file path is a local path
-    if Path(file_path).is_file():
+    if backend == "Local":
         with open(file_path, 'r') as file:
             file_contents = file.read()
     # Check if the file path is a GCP path
-    elif file_path.startswith('gs://'):
+    elif backend == "PAPIv2":
         file_contents = get_gcp_file_content(file_path)
     # Check if the file path is an Azure path
-    elif file_path.startswith('https://'):
+    elif backend == "TES":
         file_contents = get_azure_file_content(file_path)
-    # Check if the file path is an AWS path
-    elif file_path.startswith('s3://'):
-        file_contents = get_aws_file_content(file_path)
     else:
         raise ValueError('Invalid file path')
     return file_contents
@@ -267,27 +266,45 @@ def get_gcp_file_content(file_path: str) -> str or None:
     return blob.download_as_string().decode('utf-8') if blob.exists() else None
 
 
-
-def get_azure_file_content(file_path: str) -> str:
+def get_azure_file_content(file_path: str) -> str or None:
     """Returns the contents of a file located on Azure"""
 
-    container_url, blob_path = file_path.rsplit('/', 1)
-    account_url = '/'.join(container_url.split('/')[:3])
-    container_name = container_url.split('/')[-1]
-    blob_service_client = BlobServiceClient(account_url=account_url)
-    blob_client = blob_service_client.get_blob_client(container=container_name,
-                                                      blob=blob_path)
-    return blob_client.download_blob().content_as_text()
+    blob_service_client = BlobServiceClient(
+        account_url=f"https://{get_az_storage_account()}.blob.core.windows.net",
+        credential=DefaultAzureCredential()
+    )
+    container_name, blob_path = file_path.split('/', 2)[1:]
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name, blob=blob_path
+    )
+    blob_client.download_blob()
+
+    try:
+        if blob_client.exists():
+            return blob_client.download_blob().readall().decode('utf-8')
+        else:
+            return None
+    except azure.core.exceptions.HttpResponseError as e:
+        if "AuthorizationPermissionMismatch" in str(e):
+            LOGGER.error("Caught an AuthorizationPermissionMismatch error, check that"
+                         "the Azure Storage Container has your account listed to have"
+                         "Storage Blob Data Contributor")
+        else:
+            LOGGER.error(
+                "Caught an error while trying to download the file from Azure: %s", e
+            )
 
 
-def get_aws_file_content(file_path: str) -> str:
-    """Returns the contents of a file located on AWS"""
-
-    bucket_name, blob_path = file_path.split('//')[-1].split('/', 1)
-    s3 = boto3.resource('s3')
-    obj = s3.Object(bucket_name, blob_path)
-
-    return obj.get()['Body'].read().decode('utf-8')
+def get_az_storage_account() -> str:
+    """Returns the account name of the Azure storage account"""
+    import cromshell.utilities.cromshellconfig as config
+    try:
+        return config.cromshell_config_options["azure_storage_account"]
+    except KeyError:
+        LOGGER.error(
+            "An 'azure_storage_account' is required for this action but"
+            "was not found in Cromshell configuration file. "
+        )
 
 
 def is_path_or_url_like(in_string: str) -> bool:
@@ -308,27 +325,68 @@ def is_path_or_url_like(in_string: str) -> bool:
         return False
 
 
-def download_gcs_files(file_paths, local_dir):
+def download_gcs_files(file_paths, local_dir) -> None:
     """Downloads GCS files to local_dir while preserving directory structure"""
     storage_client = storage.Client()
 
     for file_path in file_paths:
         # Extract bucket and blob path from file path
-        print(file_path)
+        LOGGER.debug("Downloading file %s", file_path)
         bucket_name, blob_path = file_path.split('//')[-1].split('/', 1)
 
         # Create local subdirectory if it doesn't exist
+        LOGGER.debug("Creating local subdirectory %s", blob_path)
         local_subdir = Path(local_dir) / Path(blob_path).parent
         Path.mkdir(local_subdir, exist_ok=True, parents=True)
 
         # Download file to local subdirectory
+        LOGGER.debug("Downloading file %s to %s", file_path, local_subdir)
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(blob_path)
         if blob.exists():
-            local_path = Path(local_subdir).join(Path(blob_path).name)
+            local_path = Path(local_subdir) / Path(blob_path).name
             blob.download_to_filename(local_path)
 
-            print(f"Downloaded {file_path} to {local_path}")
+            LOGGER.debug("Downloaded file %s to %s", file_path, local_subdir)
+        else:
+            LOGGER.warning("File %s does not exist", file_path)
+
+
+def download_azure_files(file_paths, local_dir) -> None:
+    """Downloads Azure files to local_dir while preserving directory structure"""
+    # connection_string = "<your-azure-storage-connection-string>"
+    default_credential = DefaultAzureCredential()
+    account_url = f"https://{get_az_storage_account()}.blob.core.windows.net"
+
+    for file_path in file_paths:
+        # Extract container and blob path from file path
+        LOGGER.debug("Downloading file %s", file_path)
+        blob_service_client = BlobServiceClient(
+            account_url=account_url,
+            credential=default_credential
+        )
+        container_name, blob_path = file_path.split('/', 2)[1:]
+        blob_client = blob_service_client.get_blob_client(container=container_name,
+                                                          blob=blob_path)
+        # blob_client.download_blob()
+
+        # Create local subdirectory if it doesn't exist
+        LOGGER.debug("Creating local subdirectory %s", blob_path)
+        local_subdir = Path(local_dir) / Path(blob_path).parent
+        Path.mkdir(local_subdir, exist_ok=True, parents=True)
+
+        # Download file to local subdirectory
+        LOGGER.debug("Downloading file %s to %s", file_path, local_subdir)
+        # container_client = blob_service_client.get_container_client(container_name)
+        # blob_client = container_client.get_blob_client(blob_path)
+        if blob_client.exists():
+            local_path = Path(local_subdir) / Path(blob_path).name
+            with open(local_path, "wb") as file:
+                file.write(blob_client.download_blob().readall())
+
+            LOGGER.debug("Downloaded file %s to %s", file_path, local_subdir)
+        else:
+            LOGGER.warning("File %s does not exist", file_path)
 
 
 class TextStatusesColor:

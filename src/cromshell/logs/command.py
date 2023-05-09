@@ -145,10 +145,25 @@ def get_task_level_outputs(config, expand_subworkflows, requested_status) -> dic
         config (dict): The cromshell config object
         :param expand_subworkflows: Whether to expand subworkflows
     """
+
+    metadata_keys = [
+        "id",
+        "executionStatus",
+        "subWorkflowMetadata",
+        "subWorkflowId",
+        "failures",
+        "attempt",
+        "backendLogs",
+        "backend",
+        "shardIndex",
+        "stderr",
+        "stdout",
+    ]
+
     # Get metadata
     formatted_metadata_parameter = metadata_command.format_metadata_params(
-        list_of_keys=config.METADATA_KEYS_TO_OMIT,
-        exclude_keys=True,
+        list_of_keys=metadata_keys,
+        exclude_keys=False,
         expand_subworkflows=expand_subworkflows,
     )
 
@@ -160,7 +175,9 @@ def get_task_level_outputs(config, expand_subworkflows, requested_status) -> dic
         headers=http_utils.generate_headers(config),
     )
 
-    return filter_task_logs_from_workflow_metadata(workflow_metadata=workflow_metadata, requested_status=requested_status)
+    return filter_task_logs_from_workflow_metadata(
+        workflow_metadata=workflow_metadata, requested_status=requested_status
+    )
 
 
 def filter_task_logs_from_workflow_metadata(
@@ -227,18 +244,22 @@ def print_task_level_logs(all_task_log_metadata: dict, cat_logs: bool) -> None:
                 )
 
 
-def print_file_like_value_in_dict(task_log_metadata: dict, indent: int, cat_logs: bool) -> None:
+def print_file_like_value_in_dict(
+    task_log_metadata: dict, indent: int, cat_logs: bool
+) -> None:
     """Print the file like values in the output metadata dictionary
 
     Args:
         task_log_metadata (dict): The output metadata
         indent (int): The number of tabs to indent the output
+        cat_logs (bool): Whether to print the logs
     """
 
     i = "\t" * indent
 
-    task_status_font = io_utils.get_color_for_status_key(
-        task_log_metadata.get("executionStatus")) if task_log_metadata.get('executionStatus') else None
+    task_status_font = (
+        io_utils.get_color_for_status_key(task_log_metadata.get("executionStatus")) if task_log_metadata.get('executionStatus') else None
+    )
 
     print(
         colored(
@@ -255,9 +276,10 @@ def print_file_like_value_in_dict(task_log_metadata: dict, indent: int, cat_logs
                 indent=indent,
                 txt_color=task_status_font,
                 cat_logs=cat_logs,
+                backend=task_log_metadata.get('backend')
             )
         elif isinstance(log_value, dict):
-            print_file_like_value_in_dict(log_value, indent=indent)
+            print_file_like_value_in_dict(log_value, indent=indent, cat_logs=cat_logs)
         elif isinstance(log_value, list):  # Lists are subworkflows, an item is a task
             print(f"{i}{log_name}:\t")  # Print the subworkflow task name
             for output_value_item in log_value:
@@ -273,7 +295,8 @@ def print_output_name_and_file(
         output_value: str,
         indent: int = 0,
         txt_color: str = None,
-        cat_logs: bool = False
+        cat_logs: bool = False,
+        backend: str = None,
 ) -> None:
     """Print the task name and the file name
 
@@ -282,7 +305,9 @@ def print_output_name_and_file(
         output_value (str): The task output value
         indent (bool): Whether to indent the output
         cat_logs (bool): Whether to cat the log file
-        txt_color (str): The color to use for printing the output. Default is None. """
+        txt_color (str): The color to use for printing the output. Default is None.
+        backend: The backend to use for printing the output. Default is None.
+    """
 
     i = "\t" * indent
 
@@ -293,18 +318,22 @@ def print_output_name_and_file(
                     output_name=output_name,
                     output_value=output_value,
                     txt_color=txt_color,
+                    backend=backend,
                 )
             else:
                 print(colored(f"{i}{output_name}: {output_value}", color=txt_color))
 
 
-def print_log_file_content(output_name: str, output_value: str, txt_color: str = "blue") -> None:
+def print_log_file_content(
+    output_name: str, output_value: str, txt_color: str = "blue", backend: str = None
+) -> None:
     """Prints output logs and cat the file if possible.
 
     Args:
         output_name (str): The name of the output log.
         output_value (str): The value of the output log.
         txt_color (str): The color to use for printing the output. Default is "blue".
+        backend (str): The backend to used to run workflow. Default is None.
     """
     term_size = os.get_terminal_size().columns
     print(colored(
@@ -313,15 +342,18 @@ def print_log_file_content(output_name: str, output_value: str, txt_color: str =
         )
     )
 
-    file_contents = io_utils.cat_file(output_value)
-    if file_contents:
-        print(file_contents)
-    else:
+    file_contents = io_utils.cat_file(output_value, backend=backend)
+    if file_contents is None:
         print(f"Unable to locate logs at {output_value}.")
+    else:
+        print(file_contents)
+
     print("\n\n\n")  # Add some space between logs
 
 
-def check_for_empty_logs(workflow_logs: dict, workflow_id: str, requested_status) -> None:
+def check_for_empty_logs(
+        workflow_logs: dict, workflow_id: str, requested_status
+) -> None:
     """Check if the workflow logs are empty
 
     Args:
@@ -334,12 +366,19 @@ def check_for_empty_logs(workflow_logs: dict, workflow_id: str, requested_status
         raise Exception(f"No calls found for workflow: {workflow_id}")
 
     if "log" not in json.dumps(workflow_logs):
-        LOGGER.error(
-            f"No log found for workflow: {workflow_id} with status: {requested_status}"
-        )
-        raise Exception(
-            f"No logs found for workflow: {workflow_id} with status: {requested_status}"
-        )
+        if "TES" in json.dumps(workflow_logs):
+            # Cromwell does not return backendlogs for TES backend at the moment.
+            pass
+        else:
+            print(json.dumps(workflow_logs))
+            LOGGER.error(
+                f"No log found for workflow: {workflow_id} with status: "
+                f"{requested_status}"
+            )
+            raise Exception(
+                f"No logs found for workflow: {workflow_id} with status: "
+                f"{requested_status}"
+            )
 
 
 def get_backend_logs(task_instance: dict) -> str:
@@ -378,9 +417,20 @@ def download_file_like_value_in_dict(task_log_metadata):
                     task_log_metadata=output_value_item
                 )
 
-    flattened_list = [x for sublist in files_to_download for x in sublist]
-    io_utils.download_gcs_files(files_to_download, local_dir=os.getcwd())
-    # print(files_to_download)
+    path_to_downloaded_files = os.getcwd()
+    if task_log_metadata.get("backend") == "PAPIv2":
+        io_utils.download_gcs_files(
+            files_to_download, local_dir=os.getcwd()
+        )
+        print(f"Downloaded files to: {path_to_downloaded_files}")
+    elif task_log_metadata.get("backend") == "TES":
+        io_utils.download_azure_files(
+            files_to_download, local_dir=os.getcwd()
+        )
+        print(f"Downloaded files to: {path_to_downloaded_files}")
+    else:
+        print(f"Unsupported backend : {task_log_metadata.get('backend')}")
+
 
 
 def download_task_level_logs(all_task_log_metadata):
