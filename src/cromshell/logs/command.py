@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 
 import click
 from termcolor import colored
@@ -296,7 +297,7 @@ def print_output_name_and_file(
 
 
 def print_log_file_content(
-    output_name: str, output_value: str, txt_color: str = "blue", backend: str = None
+    output_name: str, output_value: str, txt_color: None or str = "blue", backend: str = None
 ) -> None:
     """Prints output logs and cat the file if possible.
 
@@ -306,7 +307,7 @@ def print_log_file_content(
         txt_color (str): The color to use for printing the output. Default is "blue".
         backend (str): The backend to used to run workflow. Default is None.
     """
-    term_size = os.get_terminal_size().columns
+    term_size = os.get_terminal_size().columns if sys.stdout.isatty() else 80
     print(
         colored(
             f"{'=' * term_size}\n{output_name}: {output_value}\n{'=' * term_size}",
@@ -344,7 +345,7 @@ def check_for_empty_logs(
         else:
             print(json.dumps(workflow_logs))
             LOGGER.error(
-                f"No log found for workflow: {workflow_id} with status: "
+                f"No logs found for workflow: {workflow_id} with status: "
                 f"{requested_status}"
             )
             raise Exception(
@@ -372,7 +373,7 @@ def get_backend_logs(task_instance: dict) -> str:
     return backend_logs.get("log")
 
 
-def download_file_like_value_in_dict(task_log_metadata):
+def download_file_like_value_in_dict(task_log_metadata: dict):
     """Download the file like values in the output metadata dictionary"""
 
     files_to_download = []
@@ -389,18 +390,20 @@ def download_file_like_value_in_dict(task_log_metadata):
 
     path_to_downloaded_files = os.getcwd()
     if task_log_metadata.get("backend") == "PAPIv2":
-        io_utils.download_gcs_files(file_paths=files_to_download, local_dir=os.getcwd())
+        io_utils.download_gcs_files(
+            file_paths=files_to_download, local_dir=path_to_downloaded_files
+        )
         print(f"Downloaded files to: {path_to_downloaded_files}")
     elif task_log_metadata.get("backend") == "TES":
         io_utils.download_azure_files(
-            file_paths=files_to_download, local_dir=os.getcwd()
+            file_paths=files_to_download, local_dir=path_to_downloaded_files
         )
         print(f"Downloaded files to: {path_to_downloaded_files}")
     else:
         print(f"Unsupported backend : {task_log_metadata.get('backend')}")
 
 
-def download_task_level_logs(all_task_log_metadata):
+def download_task_level_logs(all_task_log_metadata: dict):
     """Download the logs from the workflow metadata
     task_logs_metadata: {call_name:[index1{task_log_name: taskvalue}, index2{...}, ...], call_name:[], ...}
 
