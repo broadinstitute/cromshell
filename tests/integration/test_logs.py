@@ -9,17 +9,21 @@ workflows_path = Path(__file__).parents[1].joinpath("workflows/")
 
 class TestLogs:
     @pytest.mark.parametrize(
-        "wdl, json_file, expected_logs",
+        "wdl, json_file, status, expected_logs, exit_code",
         [
             (
                 "tests/workflows/helloWorld.wdl",
                 "tests/workflows/helloWorld.json",
-                "No logs with status ['Failed'] found for workflow, try adding the argument '-s ALL' to list logs with any status\n",
+                "ALL",
+                """HelloWorld.HelloWorldTask:\n\tstatus: Done\n\tstderr: /cromwell-executions/HelloWorld/2686fb3f-d2e6-4a4c-aa66-5dede568310f/call-HelloWorldTask/execution/stderr\n\tstdout: /cromwell-executions/HelloWorld/2686fb3f-d2e6-4a4c-aa66-5dede568310f/call-HelloWorldTask/execution/stdout\n""",
+                0,
             ),
             (
                 "tests/workflows/helloWorldFail.wdl",
                 "tests/workflows/helloWorld.json",
-                "HelloWorld.HelloWorldTask:\tFailed\t Backend Logs Not Found\n",
+                "Done",
+                "No logs found for workflow: 2686fb3f-d2e6-4a4c-aa66-5dede568310f with status: ['Done']",
+                1,
             ),
         ],
     )
@@ -28,7 +32,9 @@ class TestLogs:
         local_cromwell_url: str,
         wdl: str,
         json_file: str,
+        status: str,
         expected_logs: str,
+        exit_code: int,
         ansi_escape,
     ):
         test_workflow_id = utility_test_functions.submit_workflow(
@@ -44,13 +50,17 @@ class TestLogs:
 
         # run logs
         logs_result = utility_test_functions.run_cromshell_command(
-            command=["logs", test_workflow_id],
-            exit_code=0,
+            command=["logs", "-s", status, test_workflow_id],
+            exit_code=exit_code,
         )
 
-        print("Print workflow counts results:")
+        print("Print workflow logs results:")
         print(logs_result.stdout)
+        print(logs_result.stderr)
+        print(logs_result.exception)
 
-        workflow_logs = ansi_escape.sub("", logs_result.stdout)
+        workflow_logs = ansi_escape.sub("", logs_result.stdout) if exit_code == 0 else str(logs_result.exception)
 
-        assert workflow_logs == expected_logs
+        id_updated_expected_logs = utility_test_functions.replace_uuids(expected_logs, test_workflow_id)
+
+        assert workflow_logs == id_updated_expected_logs
