@@ -51,10 +51,11 @@ LOGGER = logging.getLogger(__name__)
     "-s",
     "--status",
     default="Failed",
+    show_default=True,
     help="Return a list with links to the task logs with the indicated status. "
     "Separate multiple keys by comma or use 'ALL' to print all logs. "
-    "Some standard Cromwell status options are 'ALL', 'Done', 'RetryableFailure', 'Running', and 'Failed'.",
-) # TODO: Show defaults in help
+    "Some standard Cromwell status options are 'Done', 'RetryableFailure', 'Running', and 'Failed'.",
+)
 @click.pass_obj
 def main(
     config,
