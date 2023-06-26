@@ -23,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
     is_flag=True,
     default=False,
     help="Print the contents of the logs to stdout if true. "
-    "Note: This assumes GCS bucket logs with default permissions otherwise this may not work", # todo: add a note about this for azure
+    "Note: This assumes GCS or Azure stored logs with default permissions otherwise this will not work",
 )
 @click.option(
     "-d",
@@ -101,17 +101,17 @@ def main(
             expand_subworkflows=not dont_expand_subworkflows,
         )
 
-        if fetch_logs: # Todo: mutually exclusive options
+        if fetch_logs:
             download_task_level_logs(
                 all_task_log_metadata=task_logs, path_to_download=fetch_logs
             )
+
+        if json_summary:
+            io_utils.pretty_print_json(format_json=task_logs)
         else:
-            if json_summary:
-                io_utils.pretty_print_json(format_json=task_logs)
-            else:
-                print_task_level_logs(
-                    all_task_log_metadata=task_logs, cat_logs=print_logs
-                )
+            print_task_level_logs(
+                all_task_log_metadata=task_logs, cat_logs=print_logs
+            )
 
     return return_code
 
@@ -412,7 +412,9 @@ def download_file_like_value_in_dict(
         )
         print(f"Downloaded files to: {path_to_downloaded_files}")
     else:
-        print(f"Unsupported backend : {task_log_metadata.get('backend')}")
+        print(
+            f"Downloading items is unsupported for backend : {task_log_metadata.get('backend')}"
+        )
 
 
 def download_task_level_logs(
