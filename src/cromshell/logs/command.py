@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+from pathlib import Path
 
 import click
 from termcolor import colored
@@ -24,13 +25,16 @@ LOGGER = logging.getLogger(__name__)
     help="Print the contents of the logs to stdout if true. "
     "Note: This assumes GCS bucket logs with default permissions otherwise this may not work", # todo: add a note about this for azure
 )
-@click.option( # TODO: option to specify the location of downloaded logs
+@click.option(
     "-d",
     "--fetch-logs",
     "--download-logs",
-    is_flag=True,
-    default=False,
-    help="Download the logs to the current directory if true. ",
+    is_flag=False,
+    flag_value=Path.cwd(),
+    default=None,
+    show_default=True,
+    type=click.Path(exists=True),
+    help="Download the logs to the current directory or provided directory path. ",
 
 )
 @click.option(
@@ -64,7 +68,7 @@ def main(
     status: list,
     dont_expand_subworkflows: bool,
     print_logs: bool,
-    fetch_logs: bool,
+    fetch_logs,
 ):
     """Get the logs for a workflow.
 
@@ -98,7 +102,9 @@ def main(
         )
 
         if fetch_logs: # Todo: mutually exclusive options
-            download_task_level_logs(all_task_log_metadata=task_logs)
+            download_task_level_logs(
+                all_task_log_metadata=task_logs, path_to_download=fetch_logs
+            )
         else:
             if json_summary:
                 io_utils.pretty_print_json(format_json=task_logs)
@@ -373,7 +379,9 @@ def get_backend_logs(task_instance: dict) -> str:
     return backend_logs.get("log")
 
 
-def download_file_like_value_in_dict(task_log_metadata: dict) -> None:
+def download_file_like_value_in_dict(
+    task_log_metadata: dict, path_to_download: Path or str
+) -> None:
     """Download the file like values in the output metadata dictionary
 
     :param task_log_metadata: The task log metadata
@@ -392,7 +400,7 @@ def download_file_like_value_in_dict(task_log_metadata: dict) -> None:
             for output_value_item in log_value:
                 download_file_like_value_in_dict(task_log_metadata=output_value_item)
 
-    path_to_downloaded_files = os.getcwd()
+    path_to_downloaded_files = path_to_download
     if task_log_metadata.get("backend") == "PAPIv2":
         io_utils.download_gcs_files(
             file_paths=files_to_download, local_dir=path_to_downloaded_files
@@ -407,15 +415,20 @@ def download_file_like_value_in_dict(task_log_metadata: dict) -> None:
         print(f"Unsupported backend : {task_log_metadata.get('backend')}")
 
 
-def download_task_level_logs(all_task_log_metadata: dict):
+def download_task_level_logs(
+    all_task_log_metadata: dict, path_to_download: Path or str
+):
     """Download the logs from the workflow metadata
     task_logs_metadata: {call_name:[index1{task_log_name: taskvalue}, index2{...}, ...], call_name:[], ...}
 
     Args:
         all_task_log_metadata (dict): All task logs metadata from the workflow
+        path_to_download: Path to download log files
     """
 
     for call, index_list in all_task_log_metadata.items():
         for call_index in index_list:
             if call_index is not None:
-                download_file_like_value_in_dict(task_log_metadata=call_index)
+                download_file_like_value_in_dict(
+                    task_log_metadata=call_index, path_to_download=path_to_download
+                )
