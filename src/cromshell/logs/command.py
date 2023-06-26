@@ -22,14 +22,16 @@ LOGGER = logging.getLogger(__name__)
     is_flag=True,
     default=False,
     help="Print the contents of the logs to stdout if true. "
-    "Note: This assumes GCS bucket logs with default permissions otherwise this may not work",
+    "Note: This assumes GCS bucket logs with default permissions otherwise this may not work", # todo: add a note about this for azure
 )
-@click.option(
-    "-f",
+@click.option( # TODO: option to specify the location of downloaded logs
+    "-d",
     "--fetch-logs",
+    "--download-logs",
     is_flag=True,
     default=False,
     help="Download the logs to the current directory if true. ",
+
 )
 @click.option(
     "-des",
@@ -52,7 +54,7 @@ LOGGER = logging.getLogger(__name__)
     help="Return a list with links to the task logs with the indicated status. "
     "Separate multiple keys by comma or use 'ALL' to print all logs. "
     "Some standard Cromwell status options are 'ALL', 'Done', 'RetryableFailure', 'Running', and 'Failed'.",
-)
+) # TODO: Show defaults in help
 @click.pass_obj
 def main(
     config,
@@ -63,7 +65,11 @@ def main(
     print_logs: bool,
     fetch_logs: bool,
 ):
-    """Get a subset of the workflow metadata."""
+    """Get the logs for a workflow.
+
+    Note:
+    By default, only failed tasks are returned unless
+    otherwise specified using -s/--status."""
 
     LOGGER.info("logs")
 
@@ -90,7 +96,7 @@ def main(
             expand_subworkflows=not dont_expand_subworkflows,
         )
 
-        if fetch_logs:
+        if fetch_logs: # Todo: mutually exclusive options
             download_task_level_logs(all_task_log_metadata=task_logs)
         else:
             if json_summary:
@@ -205,12 +211,12 @@ def print_task_level_logs(all_task_log_metadata: dict, cat_logs: bool) -> None:
         cat_logs (bool): Whether to print the logs
     """
 
-    for call, index_list in all_task_log_metadata.items():
+    for call, list_of_call_instances in all_task_log_metadata.items():
         print(f"{call}:")
-        for call_index in index_list:
-            if call_index is not None:
+        for call_instance in list_of_call_instances:
+            if call_instance is not None:
                 print_file_like_value_in_dict(
-                    task_log_metadata=call_index, indent=1, cat_logs=cat_logs
+                    task_log_metadata=call_instance, indent=1, cat_logs=cat_logs
                 )
 
 
@@ -227,18 +233,12 @@ def print_file_like_value_in_dict(
 
     i = "\t" * indent
 
+    task_status = task_log_metadata.get("executionStatus")
     task_status_font = (
-        io_utils.get_color_for_status_key(task_log_metadata.get("executionStatus"))
-        if task_log_metadata.get("executionStatus")
-        else None
+        io_utils.get_color_for_status_key(task_status) if task_status else None
     )
 
-    print(
-        colored(
-            f"{i}status: {task_log_metadata.get('executionStatus')}",
-            color=task_status_font,
-        )
-    )
+    print(colored(f"{i}status: {task_status}", color=task_status_font))
 
     for log_name, log_value in task_log_metadata.items():
         if isinstance(log_value, str):
@@ -283,17 +283,16 @@ def print_output_name_and_file(
 
     i = "\t" * indent
 
-    if isinstance(output_value, str):
-        if io_utils.is_path_or_url_like(output_value):
-            if cat_logs:
-                print_log_file_content(
-                    output_name=output_name,
-                    output_value=output_value,
-                    txt_color=txt_color,
-                    backend=backend,
-                )
-            else:
-                print(colored(f"{i}{output_name}: {output_value}", color=txt_color))
+    if isinstance(output_value, str) and io_utils.is_path_or_url_like(output_value):
+        if cat_logs:
+            print_log_file_content(
+                output_name=output_name,
+                output_value=output_value,
+                txt_color=txt_color,
+                backend=backend,
+            )
+        else:
+            print(colored(f"{i}{output_name}: {output_value}", color=txt_color))
 
 
 def print_log_file_content(
@@ -321,7 +320,7 @@ def print_log_file_content(
     else:
         print(file_contents)
 
-    print("\n\n\n")  # Add some space between logs
+    print("\n")  # Add some space between logs
 
 
 def check_for_empty_logs(
@@ -339,11 +338,11 @@ def check_for_empty_logs(
         raise Exception(f"No calls found for workflow: {workflow_id}")
 
     if "log" not in json.dumps(workflow_logs):
-        if "TES" in json.dumps(workflow_logs):
+        substrings = ["TES", "Local"]
+        if any(substring in json.dumps(workflow_logs) for substring in substrings):
             # Cromwell does not return backendlogs for TES backend at the moment.
             pass
         else:
-            print(json.dumps(workflow_logs))
             LOGGER.error(
                 f"No logs found for workflow: {workflow_id} with status: "
                 f"{requested_status}"
@@ -373,8 +372,12 @@ def get_backend_logs(task_instance: dict) -> str:
     return backend_logs.get("log")
 
 
-def download_file_like_value_in_dict(task_log_metadata: dict):
-    """Download the file like values in the output metadata dictionary"""
+def download_file_like_value_in_dict(task_log_metadata: dict) -> None:
+    """Download the file like values in the output metadata dictionary
+
+    :param task_log_metadata: The task log metadata
+    :return: None
+    """
 
     files_to_download = []
 
