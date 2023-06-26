@@ -144,3 +144,23 @@ def run_cromshell_submit(
             f"\n{print_exception(*result.exc_info)}"
         )
         return result
+
+
+import re
+def replace_uuids(input_string: str, replacement_uuid: str):
+    """
+    Replace all UUIDs in a string with a given UUID
+    :param input_string: the string to replace UUIDs in
+    :param replacement_uuid: the UUID to replace all UUIDs in the string with
+    :return:
+    """
+    # Define the pattern to match 128-bit UUIDs
+    uuid_pattern = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+
+    # Generate the replacement UUID
+    new_uuid = str(replacement_uuid)
+
+    # Use regular expressions to find and replace UUIDs in the string
+    output_string = re.sub(uuid_pattern, new_uuid, input_string)
+
+    return output_string
