@@ -59,8 +59,14 @@ class TestLogs:
         print(logs_result.stderr)
         print(logs_result.exception)
 
-        workflow_logs = ansi_escape.sub("", logs_result.stdout) if exit_code == 0 else str(logs_result.exception)
+        workflow_logs = (
+            ansi_escape.sub("", logs_result.stdout)
+            if exit_code == 0
+            else str(logs_result.exception)
+        )
 
-        id_updated_expected_logs = utility_test_functions.replace_uuids(expected_logs, test_workflow_id)
+        id_updated_expected_logs = utility_test_functions.replace_uuids(
+            expected_logs, test_workflow_id
+        )
 
         assert workflow_logs == id_updated_expected_logs

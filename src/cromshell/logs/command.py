@@ -35,7 +35,6 @@ LOGGER = logging.getLogger(__name__)
     show_default=True,
     type=click.Path(exists=True),
     help="Download the logs to the current directory or provided directory path. ",
-
 )
 @click.option(
     "-des",
@@ -109,9 +108,7 @@ def main(
         if json_summary:
             io_utils.pretty_print_json(format_json=task_logs)
         else:
-            print_task_level_logs(
-                all_task_log_metadata=task_logs, cat_logs=print_logs
-            )
+            print_task_level_logs(all_task_log_metadata=task_logs, cat_logs=print_logs)
 
     return return_code
 
@@ -303,7 +300,10 @@ def print_output_name_and_file(
 
 
 def print_log_file_content(
-    output_name: str, output_value: str, txt_color: None or str = "blue", backend: str = None
+    output_name: str,
+    output_value: str,
+    txt_color: None or str = "blue",
+    backend: str = None,
 ) -> None:
     """Prints output logs and cat the file if possible.
 

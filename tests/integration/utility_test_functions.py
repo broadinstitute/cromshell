@@ -1,4 +1,5 @@
 import json
+import re
 from importlib import reload
 from pathlib import Path
 from traceback import print_exception
@@ -146,7 +147,6 @@ def run_cromshell_submit(
         return result
 
 
-import re
 def replace_uuids(input_string: str, replacement_uuid: str):
     """
     Replace all UUIDs in a string with a given UUID
