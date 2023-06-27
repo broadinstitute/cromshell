@@ -127,12 +127,12 @@ class TestLogs:
             (
                 "success.json",
                 ["Failed"],
-                "No logs found for workflow: 261ee81a-b6c4-4547-8373-4c879eb24858 with status: ['Failed']",
+                "No logs found for workflow: 261ee81a-b6c4-4547-8373-4c879eb24858 with status: ['Failed']. Try adding the argument '-s ALL' to list logs with any status.",
             ),
             (
                 "will_fail.json",
                 ["RetryableFailure"],
-                "No logs found for workflow: 019d7962-4c0c-4651-87ac-b90efff26ff6 with status: ['RetryableFailure']",
+                "No logs found for workflow: 019d7962-4c0c-4651-87ac-b90efff26ff6 with status: ['RetryableFailure']. Try adding the argument '-s ALL' to list logs with any status.",
             ),
         ],
     )
@@ -349,7 +349,8 @@ class TestLogs:
         if workflow_logs:
             expected_error = (
                 f"No logs found for workflow: {workflow_id} with status: "
-                f"{requested_status}"
+                f"{requested_status}. Try adding the argument '-s ALL' to "
+                f"list logs with any status."
             )
         else:
             expected_error = f"No calls found for workflow: {workflow_id}"

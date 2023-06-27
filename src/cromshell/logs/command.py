@@ -352,11 +352,13 @@ def check_for_empty_logs(
         else:
             LOGGER.error(
                 f"No logs found for workflow: {workflow_id} with status: "
-                f"{requested_status}"
+                f"{requested_status}. Try adding the argument '-s ALL' to "
+                f"list logs with any status."
             )
             raise Exception(
                 f"No logs found for workflow: {workflow_id} with status: "
-                f"{requested_status}"
+                f"{requested_status}. Try adding the argument '-s ALL' to "
+                f"list logs with any status."
             )
 
 
