@@ -1,70 +1,93 @@
-name: Publish to PyPi
+# Action to create a version bump, git release, and push to PyPi.
+# Performed manually through workflow dispatch.
 
-# Controls when the action will run.
-# Triggered manually
+name: Publish to PyPi
 on:
   workflow_dispatch:
-    PyPI_Repo:
-        description: 'Where to upload Package'
-        required: true
-        default: 'testpypi'
-        type: choice
-        options:
-        - testpypi
-        - pypi
-    version:
-      description: 'Release Version'
+    bump_version_type:
+      description: 'The type of version bump'
       required: true
+      default: 'patch'
+      type: choice
+      options:
+        - patch
+        - minor
+        - major
+    release_notes:
+      description: "The content of git release notes"
+      required: false
       type: string
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  # This job will bump the version number, in the files listed in
+  # .bumpversion.cfg, and push the changes to the main branch. Thus,
+  # when a PR is merged into the main branch, the version number will be bumped.
+  patch_version_bump:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@master
 
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
+    - name: Generate Release Notes
+      # Uses user proved release notes or retrieves the commit message from the last commit
+      # in current branch (main) and writes it to a file called release_notes.txt
+      id: release_notes
+      run: |
+          if [ -n "${{ inputs.release_notes }}" ]; then
+            echo "${{ inputs.release_notes }}" > release_notes.txt
+          else
+            git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
+          fi
 
-      - name: Setup Env
-        run: |
-          python3 -m pip install --upgrade pip twine build
+    - name: Github Bumpversion Action
+      id: version-bump
+      uses: jasonamyers/github-bumpversion-action@v1.0.4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEFAULT_BUMP: ${{ inputs.bump_version_type }}
 
-      - name: Replace version tag in pyproject.toml
-        run: |
-          sed -iE "s/^\s*version\s*=\s*.*$/version = \"${{ inputs.version }}\"/" pyproject.toml
+    - name: New Version
+      run: echo ${{ steps.version-bump.outputs.new_ver }}
 
-      - name: Replace release name in pyproject.toml file with cromshell-draft-release
-        if: ${{ inputs.PyPI_Repo  == 'testpypi' }}
-        run: | 
-          sed -iE "s/^\s*name\s*=\s*.*$/name = \"cromshell-draft-release\"/" pyproject.toml
-          cat pyproject.toml
+    - name: Push Changes To Master/Main
+      # Pushes the changes to the main branch, requires workflows to be able to
+      # push and approve PRs to the main branch
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        tags: true
 
-      - name: Replace release name in pyproject.toml file with cromshell
-        if: ${{ inputs.PyPI_Repo  == 'pypi' }}
-        run: |
-          sed -iE "s/^\s*name\s*=\s*.*$/name = \"cromshell\"/" pyproject.toml
-          cat pyproject.toml
+    # Create Github Release
+    - name: Create Github release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version-bump.outputs.new_ver }}
+        release_name: '${{ steps.version-bump.outputs.new_ver }}'
+        body_path: "release_notes.txt"
+        draft: false
+        prerelease: false
 
-      - name: Build
-        run: python3 -m build
-          
-      # PYPI_TOKEN is set in github secrets. It is used by the commands below
-      # to have permission to edit pypi repositories.
-      - name: Publish to testPyPi
-        if: ${{ inputs.PyPI_Repo  == 'testpypi' }}
-        run: |
-          python3 -m twine upload --username __token__ --password ${{ secrets.Test_PYPI_TOKEN }} --repository testpypi dist/*
+    # PyPI Packaging
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
 
-      - name: Publish to PyPi
-        if: ${{ inputs.PyPI_Repo  == 'pypi' }}
-        run: |
-          python3 -m twine upload --username __token__ --password ${{ secrets.PYPI_TOKEN }} --repository pypi dist/*
+    - name: Setup Env
+      run: python3 -m pip install --upgrade pip build
+
+    - name: Validate setup.py
+      run: python3 setup.py check --metadata
+
+    - name: Build
+      run: python3 -m build
+
+    - name: Upload to TestPyPI
+      uses: pypa/gh-action-pypi-publish@v1
+      with:
+        user: __token__
+        password: ${{ secrets.Test_PYPI_TOKEN }}
+        packages-dir: dist/
+        repository-url: https://test.pypi.org/
