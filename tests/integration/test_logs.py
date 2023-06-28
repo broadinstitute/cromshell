@@ -22,7 +22,7 @@ class TestLogs:
                 "tests/workflows/helloWorldFail.wdl",
                 "tests/workflows/helloWorld.json",
                 "Done",
-                "No logs found for workflow: 2686fb3f-d2e6-4a4c-aa66-5dede568310f with status: ['Done']",
+                "No logs found for workflow: 2686fb3f-d2e6-4a4c-aa66-5dede568310f with status: ['Done']. Try adding the argument '-s ALL' to list logs with any status.",
                 1,
             ),
         ],
