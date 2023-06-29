@@ -4,19 +4,20 @@
 name: Publish to PyPi
 on:
   workflow_dispatch:
-    bump_version_type:
-      description: 'The type of version bump'
-      required: true
-      default: 'patch'
-      type: choice
-      options:
-        - patch
-        - minor
-        - major
-    release_notes:
-      description: "The content of git release notes"
-      required: false
-      type: string
+    inputs:
+      bump_version_type:
+        description: 'The type of version bump'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      release_notes:
+        description: "The content of git release notes"
+        required: false
+        type: string
 
 jobs:
   # This job will bump the version number, in the files listed in
@@ -32,8 +33,9 @@ jobs:
       # in current branch (main) and writes it to a file called release_notes.txt
       id: release_notes
       run: |
-          if [ -n "${{ inputs.release_notes }}" ]; then
-            echo "${{ inputs.release_notes }}" > release_notes.txt
+          echo '${{ inputs.release_notes }}' > release_notes.txt
+          if [ -s release_notes.txt ]; then
+            : # Pass
           else
             git log --format=%B -n 1 ${{ github.event.after }} > release_notes.txt
           fi
@@ -85,7 +87,7 @@ jobs:
       run: python3 -m build
 
     - name: Upload to TestPyPI
-      uses: pypa/gh-action-pypi-publish@v1
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.Test_PYPI_TOKEN }}
