@@ -94,7 +94,7 @@ def main(
             workflow_id=workflow_id, cromshell_config=config
         )
 
-        task_logs = get_task_level_outputs(
+        task_logs = get_task_level_logs(
             config,
             requested_status=status_param,
             expand_subworkflows=not dont_expand_subworkflows,
@@ -113,8 +113,12 @@ def main(
     return return_code
 
 
-def get_task_level_outputs(config, expand_subworkflows, requested_status) -> dict:
-    """Get the task level outputs from the workflow metadata
+def get_task_level_logs(config, expand_subworkflows, requested_status) -> dict:
+    """Get the task level logs from the workflow metadata
+
+        Note: This command isn't using Cromwell's 'log' api to obtain the logs.
+        Instead, the logs is extracted from the metadata, this allows us to filter
+        logs by task status, also retrieve subworkflows logs of a workflow.
 
     Args:
         config (object): The cromshell config object
