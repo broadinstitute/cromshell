@@ -345,7 +345,7 @@ def check_for_empty_logs(
         raise Exception(f"No calls found for workflow: {workflow_id}")
 
     if "log" not in json.dumps(workflow_logs):
-        substrings = ["TES", "Local"]
+        substrings = io_utils.BackendType.AZURE.value + io_utils.BackendType.LOCAL.value
         if any(substring in json.dumps(workflow_logs) for substring in substrings):
             # Cromwell does not return backendlogs for TES backend at the moment.
             pass
@@ -403,12 +403,12 @@ def download_file_like_value_in_dict(
                 download_file_like_value_in_dict(task_log_metadata=output_value_item)
 
     path_to_downloaded_files = path_to_download
-    if task_log_metadata.get("backend") == "PAPIv2":
+    if task_log_metadata.get("backend") in io_utils.BackendType.GCP.value:
         io_utils.download_gcs_files(
             file_paths=files_to_download, local_dir=path_to_downloaded_files
         )
         print(f"Downloaded files to: {path_to_downloaded_files}")
-    elif task_log_metadata.get("backend") == "TES":
+    elif task_log_metadata.get("backend") in io_utils.BackendType.AZURE.value:
         io_utils.download_azure_files(
             file_paths=files_to_download, local_dir=path_to_downloaded_files
         )

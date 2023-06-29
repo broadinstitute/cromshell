@@ -3,6 +3,7 @@ import logging
 import re
 import shutil
 from contextlib import nullcontext
+from enum import Enum
 from io import BytesIO
 from pathlib import Path
 from typing import BinaryIO, List, Union
@@ -239,14 +240,14 @@ def cat_file(file_path: str or Path, backend: str = None) -> str:
     local file path, GCP file path, Azure file path, or AWS file path."""
 
     # Check if the file path is a local path
-    if backend == "Local":
+    if backend in BackendType.LOCAL.value:
         with open(file_path, "r") as file:
             file_contents = file.read()
     # Check if the file path is a GCP path
-    elif backend == "PAPIv2":
+    elif backend in BackendType.GCP.value:
         file_contents = get_gcp_file_content(file_path)
     # Check if the file path is an Azure path
-    elif backend == "TES":
+    elif backend in BackendType.AZURE.value:
         file_contents = get_azure_file_content(file_path)
     else:
         raise ValueError("Invalid file path")
@@ -293,6 +294,7 @@ def get_azure_file_content(file_path: str) -> str or None:
             LOGGER.error(
                 "Caught an error while trying to download the file from Azure: %s", e
             )
+            raise e
 
 
 def get_az_storage_account() -> str:
@@ -307,6 +309,7 @@ def get_az_storage_account() -> str:
             "An 'azure_storage_account' is required for this action but"
             "was not found in Cromshell configuration file. "
         )
+        raise KeyError("Missing 'azure_storage_account' in Cromshell configuration")
 
 
 def is_path_or_url_like(in_string: str) -> bool:
@@ -327,7 +330,25 @@ def is_path_or_url_like(in_string: str) -> bool:
         return False
 
 
-def download_gcs_files(file_paths, local_dir) -> None:
+def create_local_subdirectory(local_dir: str or Path, blob_path: str or Path) -> Path:
+    """
+    Creates a local subdirectory for a given blob path.
+    A blob path is a path to a file in a GCS bucket.
+
+    :param local_dir: Path to local directory
+    :param blob_path: Path to blob in GCS bucket
+    :return:
+    """
+
+    LOGGER.debug("Creating local subdirectory %s", blob_path)
+
+    local_subdir = Path(local_dir) / Path(blob_path).parent
+    Path.mkdir(local_subdir, exist_ok=True, parents=True)
+
+    return local_subdir
+
+
+def download_gcs_files(file_paths: list, local_dir: str or Path) -> None:
     """
     Downloads GCS files to local_dir while preserving directory structure
 
@@ -343,9 +364,9 @@ def download_gcs_files(file_paths, local_dir) -> None:
         bucket_name, blob_path = file_path.split("//")[-1].split("/", 1)
 
         # Create local subdirectory if it doesn't exist
-        LOGGER.debug("Creating local subdirectory %s", blob_path)
-        local_subdir = Path(local_dir) / Path(blob_path).parent
-        Path.mkdir(local_subdir, exist_ok=True, parents=True)
+        local_subdir = create_local_subdirectory(
+            local_dir=local_dir, blob_path=blob_path
+        )
 
         # Download file to local subdirectory
         LOGGER.debug("Downloading file %s to %s", file_path, local_subdir)
@@ -360,7 +381,7 @@ def download_gcs_files(file_paths, local_dir) -> None:
             LOGGER.warning("File %s does not exist", file_path)
 
 
-def download_azure_files(file_paths, local_dir) -> None:
+def download_azure_files(file_paths: list, local_dir: str or Path) -> None:
     """
     Downloads Azure files to local_dir while preserving directory structure
 
@@ -385,9 +406,9 @@ def download_azure_files(file_paths, local_dir) -> None:
         )
 
         # Create local subdirectory if it doesn't exist
-        LOGGER.debug("Creating local subdirectory %s", blob_path)
-        local_subdir = Path(local_dir) / Path(blob_path).parent
-        Path.mkdir(local_subdir, exist_ok=True, parents=True)
+        local_subdir = create_local_subdirectory(
+            local_dir=local_dir, blob_path=blob_path
+        )
 
         # Download file to local subdirectory
         LOGGER.debug("Downloading file %s to %s", file_path, local_subdir)
@@ -399,6 +420,19 @@ def download_azure_files(file_paths, local_dir) -> None:
             LOGGER.debug("Downloaded file %s to %s", file_path, local_subdir)
         else:
             LOGGER.warning("File %s does not exist", file_path)
+
+
+class BackendType(Enum):
+    """Enum to hold supported backend types"""
+
+    # Backends listed here: https://cromwell.readthedocs.io/en/latest/backends/Backends/
+
+    AWS = ("AWSBatch", "AWSBatchOld", "AWSBatchOld_Single", "AWSBatch_Single")
+    AZURE = ("TES", "AzureBatch", "AzureBatch_Single")
+    GA4GH = ("TES",)
+    GCP = ("PAPIv2", "PAPIv2alpha1", "PAPIv2beta", "PAPIv2alpha")
+    LOCAL = ("Local",)
+    HPC = ("SGE", "SLURM", "LSF", "SunGridEngine", "HtCondor")
 
 
 class TextStatusesColor:
