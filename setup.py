@@ -19,6 +19,8 @@ with open("README.md") as fh:
 
 # following src dir layout according to
 # https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
+
+# Version number is automatically set via bumpversion. DO NOT MODIFY:
 version = "2.0.0"
 setup(
     name="cromshell",
@@ -27,6 +29,7 @@ setup(
     author="Jonn Smith, Louis Bergelson, Beri Shifaw",
     author_email="jonn@broadinstitute.org, louisb@broadinstitute.org, "
     "bshifaw@broadinstitute.org",
+    url="https://github.com/broadinstitute/cromshell",
     license="BSD 3-Clause",
     long_description=long_description,
     install_requires=install_requires,

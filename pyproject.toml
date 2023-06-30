@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cromshell-draft-release"
-version = "0.0.0"
+# Version number is automatically set via bumpversion. DO NOT MODIFY:
+version = "2.0.0"
 readme = "README.md"
 
 
