@@ -262,11 +262,21 @@ def get_gcp_file_content(file_path: str) -> str or None:
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_path)
 
-    return blob.download_as_string().decode("utf-8") if blob.exists() else None
+    if not blob.exists():
+        LOGGER.warning(
+            "Unable to find file '%s' in bucket '%s'", blob_path, bucket_name
+        )
+        return None
+    else:
+        return blob.download_as_string().decode("utf-8")
 
 
 def get_azure_file_content(file_path: str) -> str or None:
-    """Returns the contents of a file located on Azure"""
+    """Returns the contents of a file located on Azure
+
+    file_path: full blob path to file on Azure example:
+    "/cromwell-executions/HelloWorld/5dd14f5c-4bf5-413a-9641-b6498a1778c3/call-HelloWorldTask/execution/stdout"
+    """
 
     blob_service_client = BlobServiceClient(
         account_url=f"https://{get_az_storage_account()}.blob.core.windows.net",
@@ -282,6 +292,9 @@ def get_azure_file_content(file_path: str) -> str or None:
         if blob_client.exists():
             return blob_client.download_blob().readall().decode("utf-8")
         else:
+            LOGGER.warning(
+                "Unable to find file '%s' in container '%s'", blob_path, container_name
+            )
             return None
     except azure.core.exceptions.HttpResponseError as e:
         if "AuthorizationPermissionMismatch" in str(e):
@@ -317,17 +330,11 @@ def is_path_or_url_like(in_string: str) -> bool:
 
     Args:
         in_string (str): The string to check for path or url like-ness
+    Returns:
+        bool: True if the string is a path or URL, False otherwise.
     """
-    if (
-        in_string.startswith("gs://")
-        or in_string.startswith("/")
-        or in_string.startswith("http://")
-        or in_string.startswith("https://")
-        or in_string.startswith("s3://")
-    ):
-        return True
-    else:
-        return False
+    prefixes = ("gs://", "/", "http://", "https://", "s3://")
+    return any(in_string.startswith(prefix) for prefix in prefixes)
 
 
 def create_local_subdirectory(local_dir: str or Path, blob_path: str or Path) -> Path:
