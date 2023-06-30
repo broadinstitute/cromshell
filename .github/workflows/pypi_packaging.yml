@@ -68,7 +68,7 @@ jobs:
         tag_name: ${{ steps.version-bump.outputs.new_ver }}
         release_name: '${{ steps.version-bump.outputs.new_ver }}'
         body_path: "release_notes.txt"
-        draft: false
+        draft: true
         prerelease: false
 
     # PyPI Packaging
