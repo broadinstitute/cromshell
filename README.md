@@ -126,11 +126,11 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
 From brew
 
     brew tap broadinstitute/dsp
-    brew install cromshell@2.0.0.beta.1
+    brew install cromshell
 
 From pypi
 
-    pip install -i https://test.pypi.org/simple/ cromshell-draft-release
+    pip install cromshell
 
 From source
 
@@ -143,7 +143,7 @@ From source
 ## Uninstallation
 From brew
 
-    brew uninstall cromshell@2.0.0.beta.1
+    brew uninstall cromshell
 
 From pypi/source
 
