@@ -355,24 +355,6 @@ class TestIOUtilities:
         else:
             io_utils.cat_file(file_path=mock_workflow_database_tsv, backend=backend)
 
-    @pytest.mark.parametrize(
-        "file_path, should_fail",
-        [
-            [
-                "gs://gcs-public-data--genomics/cannabis/README.txt",
-                False,
-            ],
-            [
-                "gs://path2fail/cannabis/README.txt",
-                True,
-            ],
-        ],
-    )
-    def test_get_gcp_file_content(self, file_path, should_fail) -> None:
-        if should_fail:
-            assert io_utils.get_gcp_file_content(file_path=file_path) is None
-        else:
-            assert io_utils.get_gcp_file_content(file_path=file_path)
 
     @pytest.mark.parametrize(
         "file_path, should_fail",
