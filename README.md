@@ -73,9 +73,12 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
   
    #### Logs
    * `logs [workflow-id] [[workflow-id]...]`                    
-     * List the log files produced by a workflow.
-   * [COMING SOON] `fetch-logs [workflow-id] [[workflow-id]...]`              
-     * Download all logs produced by a workflow.
+     * List the log files produced by a workflow, Defaults to print `Failed` status only.
+     * `-f`  Download the log files produced by a workflow.
+     *  `-p` Print the log files produced by a workflow.
+     *  `-des` Don't expand the subworkflows.
+     *  `-j` Print the log files produced by a workflow in JSON format.
+     * `-s [STATUS]` Only print logs for jobs with the given `[STATUS]`.
   
    #### Job Outputs
    * `list-outputs [workflow-id] [[workflow-id]...]`         

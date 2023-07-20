@@ -12,6 +12,7 @@ CONFIG_FILE_TEMPLATE = {
     "gcloud_token_email": "str",
     "referer_header_url": "str",
     "bq_cost_table": "str",
+    "azure_storage_account": "str",
 }
 
 

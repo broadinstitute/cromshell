@@ -3,11 +3,16 @@ import logging
 import re
 import shutil
 from contextlib import nullcontext
+from enum import Enum
 from io import BytesIO
 from pathlib import Path
 from typing import BinaryIO, List, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
+import azure.core.exceptions
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
+from google.cloud import storage
 from pygments import formatters, highlight, lexers
 from termcolor import colored
 
@@ -230,6 +235,213 @@ def copy_files_to_directory(
         shutil.copy(inputs, directory)
 
 
+def cat_file(file_path: str or Path, backend: str = None) -> str:
+    """Prints the contents of a file to stdout. The path can either be a
+    local file path, GCP file path, Azure file path, or AWS file path."""
+
+    # Check if the file path is a local path
+    if backend in BackendType.LOCAL.value:
+        with open(file_path, "r") as file:
+            file_contents = file.read()
+    # Check if the file path is a GCP path
+    elif backend in BackendType.GCP.value:
+        file_contents = get_gcp_file_content(file_path)
+    # Check if the file path is an Azure path
+    elif backend in BackendType.AZURE.value:
+        file_contents = get_azure_file_content(file_path)
+    else:
+        raise ValueError("Invalid file path")
+    return file_contents
+
+
+def get_gcp_file_content(file_path: str) -> str or None:
+    """Returns the contents of a file located on GCP"""
+
+    bucket_name, blob_path = file_path.split("//")[-1].split("/", 1)
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_path)
+
+    if not blob.exists():
+        LOGGER.warning(
+            "Unable to find file '%s' in bucket '%s'", blob_path, bucket_name
+        )
+        return None
+    else:
+        return blob.download_as_string().decode("utf-8")
+
+
+def get_azure_file_content(file_path: str) -> str or None:
+    """Returns the contents of a file located on Azure
+
+    file_path: full blob path to file on Azure example:
+    "/cromwell-executions/HelloWorld/5dd14f5c-4bf5-413a-9641-b6498a1778c3/call-HelloWorldTask/execution/stdout"
+    """
+
+    blob_service_client = BlobServiceClient(
+        account_url=f"https://{get_az_storage_account()}.blob.core.windows.net",
+        credential=DefaultAzureCredential(),
+    )
+    container_name, blob_path = file_path.split("/", 2)[1:]
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name, blob=blob_path
+    )
+    blob_client.download_blob()
+
+    try:
+        if blob_client.exists():
+            return blob_client.download_blob().readall().decode("utf-8")
+        else:
+            LOGGER.warning(
+                "Unable to find file '%s' in container '%s'", blob_path, container_name
+            )
+            return None
+    except azure.core.exceptions.HttpResponseError as e:
+        if "AuthorizationPermissionMismatch" in str(e):
+            LOGGER.error(
+                "Caught an AuthorizationPermissionMismatch error, check that"
+                "the Azure Storage Container has your account listed to have"
+                "Storage Blob Data Contributor"
+            )
+        else:
+            LOGGER.error(
+                "Caught an error while trying to download the file from Azure: %s", e
+            )
+            raise e
+
+
+def get_az_storage_account() -> str:
+    """Returns the account name of the Azure storage account"""
+
+    import cromshell.utilities.cromshellconfig as config
+
+    try:
+        return config.cromshell_config_options["azure_storage_account"]
+    except KeyError:
+        LOGGER.error(
+            "An 'azure_storage_account' is required for this action but"
+            "was not found in Cromshell configuration file. "
+        )
+        raise KeyError("Missing 'azure_storage_account' in Cromshell configuration")
+
+
+def is_path_or_url_like(in_string: str) -> bool:
+    """Check if the string is a path or url
+
+    Args:
+        in_string (str): The string to check for path or url like-ness
+    Returns:
+        bool: True if the string is a path or URL, False otherwise.
+    """
+    prefixes = ("gs://", "/", "http://", "https://", "s3://")
+    return any(in_string.startswith(prefix) for prefix in prefixes)
+
+
+def create_local_subdirectory(local_dir: str or Path, blob_path: str or Path) -> Path:
+    """
+    Creates a local subdirectory for a given blob path.
+    A blob path is a path to a file in a GCS bucket.
+
+    :param local_dir: Path to local directory
+    :param blob_path: Path to blob in GCS bucket
+    :return:
+    """
+
+    LOGGER.debug("Creating local subdirectory %s", blob_path)
+
+    local_subdir = Path(local_dir) / Path(blob_path).parent
+    Path.mkdir(local_subdir, exist_ok=True, parents=True)
+
+    return local_subdir
+
+
+def download_gcs_files(file_paths: list, local_dir: str or Path) -> None:
+    """
+    Downloads GCS files to local_dir while preserving directory structure
+
+    Args:
+        file_paths: list of GCS file paths to download
+        local_dir: local directory to download files to
+    """
+    storage_client = storage.Client()
+
+    for file_path in file_paths:
+        # Extract bucket and blob path from file path
+        LOGGER.debug("Downloading file %s", file_path)
+        bucket_name, blob_path = file_path.split("//")[-1].split("/", 1)
+
+        # Create local subdirectory if it doesn't exist
+        local_subdir = create_local_subdirectory(
+            local_dir=local_dir, blob_path=blob_path
+        )
+
+        # Download file to local subdirectory
+        LOGGER.debug("Downloading file %s to %s", file_path, local_subdir)
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        if blob.exists():
+            local_path = Path(local_subdir) / Path(blob_path).name
+            blob.download_to_filename(local_path)
+
+            LOGGER.debug("Downloaded file %s to %s", file_path, local_subdir)
+        else:
+            LOGGER.warning("File %s does not exist", file_path)
+
+
+def download_azure_files(file_paths: list, local_dir: str or Path) -> None:
+    """
+    Downloads Azure files to local_dir while preserving directory structure
+
+    Args:
+        file_paths (list): List of Azure file paths to download
+        local_dir (str): Local directory to download files to
+
+    """
+
+    default_credential = DefaultAzureCredential()
+    account_url = f"https://{get_az_storage_account()}.blob.core.windows.net"
+
+    for file_path in file_paths:
+        # Extract container and blob path from file path
+        LOGGER.debug("Downloading file %s", file_path)
+        blob_service_client = BlobServiceClient(
+            account_url=account_url, credential=default_credential
+        )
+        container_name, blob_path = file_path.split("/", 2)[1:]
+        blob_client = blob_service_client.get_blob_client(
+            container=container_name, blob=blob_path
+        )
+
+        # Create local subdirectory if it doesn't exist
+        local_subdir = create_local_subdirectory(
+            local_dir=local_dir, blob_path=blob_path
+        )
+
+        # Download file to local subdirectory
+        LOGGER.debug("Downloading file %s to %s", file_path, local_subdir)
+        if blob_client.exists():
+            local_path = Path(local_subdir) / Path(blob_path).name
+            with open(local_path, "wb") as file:
+                file.write(blob_client.download_blob().readall())
+
+            LOGGER.debug("Downloaded file %s to %s", file_path, local_subdir)
+        else:
+            LOGGER.warning("File %s does not exist", file_path)
+
+
+class BackendType(Enum):
+    """Enum to hold supported backend types"""
+
+    # Backends listed here: https://cromwell.readthedocs.io/en/latest/backends/Backends/
+
+    AWS = ("AWSBatch", "AWSBatchOld", "AWSBatchOld_Single", "AWSBatch_Single")
+    AZURE = ("TES", "AzureBatch", "AzureBatch_Single")
+    GA4GH = ("TES",)
+    GCP = ("PAPIv2", "PAPIv2alpha1", "PAPIv2beta", "PAPIv2alpha")
+    LOCAL = ("Local",)
+    HPC = ("SGE", "SLURM", "LSF", "SunGridEngine", "HtCondor")
+
+
 class TextStatusesColor:
     """Holds stdout formatting per workflow status"""
 
@@ -247,14 +459,16 @@ class TextStatusesColor:
     TASK_COLOR_FAILED = "red"
 
 
-def get_color_for_status_key(status: str) -> str:
+def get_color_for_status_key(status: str) -> str or None:
     """
     Helper method for getting the correct font color for
     a given execution status for a job (or none for unrecognized statuses)
     """
 
-    task_status_font = None
+    from cromshell.utilities.cromshellconfig import color_output
 
+    if not color_output:
+        return None
     if "Done" in status:
         task_status_font = TextStatusesColor.TASK_COLOR_SUCCEEDED
     elif "Running" in status:
