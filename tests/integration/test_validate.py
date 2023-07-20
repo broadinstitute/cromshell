@@ -1,6 +1,9 @@
-from tests.integration import utility_test_functions
-import pytest
 from pathlib import Path
+
+import pytest
+
+from tests.integration import utility_test_functions
+
 
 class TestValidate:
     """Test the version command."""
@@ -9,19 +12,26 @@ class TestValidate:
         "wdl, results",
         [
             (
-                    "helloWorld.wdl",
-                    "Validation successful.\n",
+                "helloWorld.wdl",
+                "Validation successful.\n",
             ),
             (
-                    "not_valid.wdl",
-                    "Validation failed.\n",
+                "not_valid.wdl",
+                "Validation failed.\n",
             ),
         ],
     )
     def test_validate(self, wdl, results, workflows_path):
         workflow_path = str(Path.joinpath(workflows_path, wdl))
         validate_result = utility_test_functions.run_cromshell_command(
-            command=["validate", workflow_path, "--suppress", "UnusedDeclaration", "--suppress", "MixedIndentation"],
+            command=[
+                "validate",
+                workflow_path,
+                "--suppress",
+                "UnusedDeclaration",
+                "--suppress",
+                "MixedIndentation",
+            ],
             exit_code=0,
         )
 
@@ -34,12 +44,12 @@ class TestValidate:
         "wdl, suppress",
         [
             (
-                    "helloWorld.wdl",
-                    "UnusedDeclaration",
+                "helloWorld.wdl",
+                "UnusedDeclaration",
             ),
             (
-                    "helloWorld.wdl",
-                    "",
+                "helloWorld.wdl",
+                "",
             ),
         ],
     )

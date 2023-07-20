@@ -7,8 +7,10 @@ from WDL import Error as miniwdlError
 
 LOGGER = logging.getLogger(__name__)
 
+
 class ValidationFailedError(Exception):
     pass
+
 
 @click.command(name="validate")
 @click.argument("wdl", type=click.Path(exists=True), required=True)
@@ -27,7 +29,7 @@ class ValidationFailedError(Exception):
     is_flag=True,
     default=False,
     help="Exit with nonzero status code if any lint warnings are shown "
-         "(in addition to syntax and type errors)"
+    "(in addition to syntax and type errors)",
 )
 @click.option(
     "-sup",
@@ -56,13 +58,13 @@ def main(config, wdl: Path, dependencies: tuple, strict: bool, suppress: tuple):
             uri=[str(wdl)],
             path=list(dependencies),
             strict=strict,
-            suppress=",".join([str(item) for item in suppress]) # Turn into string
+            suppress=",".join([str(item) for item in suppress]),  # Turn into string
         )
     except (
-            miniwdlError.SyntaxError,
-            miniwdlError.ImportError,
-            miniwdlError.ValidationError,
-            miniwdlError.MultipleValidationErrors,
+        miniwdlError.SyntaxError,
+        miniwdlError.ImportError,
+        miniwdlError.ValidationError,
+        miniwdlError.MultipleValidationErrors,
     ) as exn:
         miniwdlCLI.print_error(exn)
 
