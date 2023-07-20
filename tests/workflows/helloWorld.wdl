@@ -76,7 +76,7 @@ task HelloWorldTask {
     # Run our command:
      command <<<
          set -e
-				 echo 'Hello World!'				 
+         echo 'Hello World!'
      >>>
 
     # ------------------------------------------------
