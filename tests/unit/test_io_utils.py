@@ -341,26 +341,19 @@ class TestIOUtilities:
                 "PAPIv2",
                 False,
             ],
-        ]
+        ],
     )
     def test_cat_file(
-            self,
-            file_path: str,
-            backend: str,
-            should_fail: bool,
-            mock_workflow_database_tsv,
+        self,
+        file_path: str,
+        backend: str,
+        should_fail: bool,
+        mock_workflow_database_tsv,
     ) -> None:
-
         if file_path:
-            io_utils.cat_file(
-                file_path=file_path,
-                backend=backend
-            )
+            io_utils.cat_file(file_path=file_path, backend=backend)
         else:
-            io_utils.cat_file(
-                file_path=mock_workflow_database_tsv,
-                backend=backend
-            )
+            io_utils.cat_file(file_path=mock_workflow_database_tsv, backend=backend)
 
     @pytest.mark.parametrize(
         "file_path, should_fail",
@@ -373,7 +366,7 @@ class TestIOUtilities:
                 "gs://path2fail/cannabis/README.txt",
                 True,
             ],
-        ]
+        ],
     )
     def test_get_gcp_file_content(self, file_path, should_fail) -> None:
         if should_fail:
@@ -404,13 +397,14 @@ class TestIOUtilities:
                 "s3://",
                 False,
             ],
-        ]
+        ],
     )
     def test_is_path_or_url_like(self, file_path: str, should_fail: bool) -> None:
         if should_fail:
             assert not io_utils.is_path_or_url_like(in_string=file_path)
         else:
             assert io_utils.is_path_or_url_like(in_string=file_path)
+
     @pytest.fixture
     def mock_data_path(self):
         return Path(__file__).parent.joinpath("mock_data/")
