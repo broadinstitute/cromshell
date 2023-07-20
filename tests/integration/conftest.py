@@ -18,6 +18,9 @@ def mock_data_path():
 def mock_workflow_database_tsv(mock_data_path):
     return mock_data_path.joinpath("all.workflow.database.tsv")
 
+@pytest.fixture
+def workflows_path():
+    return Path(__file__).parents[1].joinpath("workflows/")
 
 @pytest.fixture
 def ansi_escape():

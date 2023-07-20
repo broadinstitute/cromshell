@@ -19,6 +19,7 @@ from .status import command as status
 from .submit import command as submit
 from .timing import command as timing
 from .update_server import command as update_server
+from .validate import command as validate
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
@@ -168,15 +169,16 @@ main_entry.add_command(abort.main)
 main_entry.add_command(alias.main)
 main_entry.add_command(cost.main)
 main_entry.add_command(counts.main)
-main_entry.add_command(status.main)
-main_entry.add_command(logs.main)
-main_entry.add_command(submit.main)
-main_entry.add_command(slim_metadata.main)
-main_entry.add_command(metadata.main)
-main_entry.add_command(update_server.main)
-main_entry.add_command(timing.main)
 main_entry.add_command(list.main)
 main_entry.add_command(list_outputs.main)
+main_entry.add_command(logs.main)
+main_entry.add_command(metadata.main)
+main_entry.add_command(slim_metadata.main)
+main_entry.add_command(status.main)
+main_entry.add_command(submit.main)
+main_entry.add_command(timing.main)
+main_entry.add_command(update_server.main)
+main_entry.add_command(validate.main)
 
 
 if __name__ == "__main__":
