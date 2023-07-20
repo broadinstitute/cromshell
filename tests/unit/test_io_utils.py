@@ -355,7 +355,6 @@ class TestIOUtilities:
         else:
             io_utils.cat_file(file_path=mock_workflow_database_tsv, backend=backend)
 
-
     @pytest.mark.parametrize(
         "file_path, should_fail",
         [
