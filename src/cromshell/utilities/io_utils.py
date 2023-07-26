@@ -1,11 +1,13 @@
 import json
 import logging
 import re
+import os
 import shutil
 from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
-from typing import BinaryIO, List, Union
+import tempfile
+from typing import BinaryIO, List, Union, Tuple
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from pygments import formatters, highlight, lexers
@@ -99,6 +101,59 @@ def assert_path_is_not_empty(path: Union[str, Path], description: str) -> None:
         if Path(path).stat().st_size == 0:
             LOGGER.error("ERROR: %s is empty: %s.", description, path)
             raise EOFError(f"ERROR: {description} is empty: {path}.")
+
+
+def has_nested_dependencies(wdl_path: str or Path) -> bool:
+    """Determine if a WDL has any nested imports."""
+
+    with open(wdl_path, 'r') as rf:
+        for l in rf:
+            if l.startswith('import'):
+                m = re.match(r'import "(.+)"', l)
+
+                if "../" in m.group(1):
+                    return True
+
+    return False
+
+
+def get_flattened_filename(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path):
+    """Generate the filename to use for flattened WDL files."""
+
+    return os.path.join(
+        tempdir.name,
+        re.sub("^-", "", re.sub(os.path.sep, "-", os.path.dirname(wdl_path))) + '-' + os.path.basename(wdl_path)
+    )
+
+
+def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path) -> str:
+    """Flatten a WDL directory structure and rewrite imports accordingly.
+
+    Return string representing the filesystem location of the rewritten WDL.
+    """
+
+    wdl_dir = os.path.dirname(wdl_path)
+
+    new_wdl_path = get_flattened_filename(tempdir, wdl_path)
+
+    with open(wdl_path, 'r') as rf, open(new_wdl_path, 'w') as wf:
+        for l in rf:
+            if l.startswith('import'):
+                m = re.match(r'import "(.+)"', l)
+
+                imported_wdl_path = os.path.abspath(os.path.join(wdl_dir, m.group(1)))
+                import_line = re.sub(m.group(1), os.path.basename(get_flattened_filename(tempdir, imported_wdl_path)), l)
+
+                if ' as ' in l:
+                    wf.write(import_line)
+                else:
+                    wf.write(f'{import_line} as {re.sub(".wdl", "", os.path.basename(imported_wdl_path))}')
+
+                flatten_nested_dependencies(tempdir, imported_wdl_path)
+            else:
+                wf.write(l)
+
+    return new_wdl_path
 
 
 def open_or_zip(path: Union[str, Path, None]) -> Union[nullcontext, BytesIO, BinaryIO]:

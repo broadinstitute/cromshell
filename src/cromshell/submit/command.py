@@ -4,6 +4,9 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path, PurePath
+import tempfile
+
+import os
 
 import click
 import requests
@@ -64,6 +67,11 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip, no_validation):
     LOGGER.info("submit")
 
     http_utils.assert_can_communicate_with_server(config=config)
+
+    if io_utils.has_nested_dependencies(wdl):
+        tempdir = tempfile.TemporaryDirectory(prefix='cromshell_')
+        wdl = io_utils.flatten_nested_dependencies(tempdir, wdl)
+        dependencies_zip = tempdir.name
 
     if no_validation:
         LOGGER.info("Skipping WDL validation")
