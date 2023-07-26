@@ -147,7 +147,7 @@ def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: 
                 if ' as ' in l:
                     wf.write(import_line)
                 else:
-                    wf.write(f'{import_line} as {re.sub(".wdl", "", os.path.basename(imported_wdl_path))}')
+                    wf.write(f'{import_line.strip()} as {re.sub(".wdl", "", os.path.basename(imported_wdl_path))}\n')
 
                 flatten_nested_dependencies(tempdir, imported_wdl_path)
             else:
