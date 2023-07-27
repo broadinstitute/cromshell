@@ -1,13 +1,14 @@
 import json
 import logging
 import re
-#import os
+
+# import os
 import shutil
+import tempfile
 from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
-import tempfile
-from typing import BinaryIO, List, Union, Tuple
+from typing import BinaryIO, List, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from pygments import formatters, highlight, lexers
@@ -106,30 +107,41 @@ def assert_path_is_not_empty(path: Union[str, Path], description: str) -> None:
 def has_nested_dependencies(wdl_path: str or Path) -> bool:
     """Determine if a WDL has any nested imports."""
 
-    with open(wdl_path, 'r') as rf:
-        for l in rf:
-            if l.startswith('import'):
-                m = re.match(r'import "(.+)"', l)
+    with open(wdl_path, "r") as rf:
+        for line in rf:
+            if line.startswith("import"):
+                m = re.match(r'import "(.+)"', line)
 
-                if "../" in m.group(1):
+                imported_wdl_name = m.group(1)
+                if "../" in imported_wdl_name:
                     return True
 
     return False
 
 
-def get_flattened_filename(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path) -> Path:
-    """ Generate hyphen-separated path to use for flattened WDL file path.
-    For example: 
+def get_flattened_filename(
+    tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path
+) -> Path:
+    """Generate hyphen-separated path to use for flattened WDL file path.
+    For example:
     tempdir: /path/2/tempdir/ and wdl_path: /dir/path/2/wdl.wdl
     returns: /path/2/tempdir/dir-path-2-wdl.wdl
     """
 
     p = Path(wdl_path)
 
-    return Path(tempdir.name + "/" + re.sub("^-", "", re.sub("/", "-", str(p.parent))) + '-' + str(p.name))
+    return Path(
+        tempdir.name
+        + "/"
+        + re.sub("^-", "", re.sub("/", "-", str(p.parent)))
+        + "-"
+        + str(p.name)
+    )
 
 
-def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path) -> Path:
+def flatten_nested_dependencies(
+    tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path
+) -> Path:
     """Flatten a WDL directory structure and rewrite imports accordingly.
 
     Return string representing the filesystem location of the rewritten WDL.
@@ -140,22 +152,28 @@ def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: 
 
     new_wdl_path = get_flattened_filename(tempdir, wdl_path)
 
-    with open(wdl_path, 'r') as rf, open(new_wdl_path, 'w') as wf:
-        for l in rf:
-            if l.startswith('import'):
-                m = re.match(r'import "(.+)"', l)
+    with open(wdl_path, "r") as rf, open(new_wdl_path, "w") as wf:
+        for line in rf:
+            if line.startswith("import"):
+                m = re.match(r'import "(.+)"', line)
                 imported_wdl_name = m.group(1)
-                imported_wdl_path = (Path(wdl_dir) / m.group(1)).absolute()
-                import_line = re.sub(m.group(1), Path(get_flattened_filename(tempdir, imported_wdl_path)).name, l)
+                imported_wdl_path = (Path(wdl_dir) / imported_wdl_name).absolute()
+                import_line = re.sub(
+                    imported_wdl_name,
+                    Path(get_flattened_filename(tempdir, imported_wdl_path)).name,
+                    line,
+                )
 
-                if ' as ' in l:
+                if " as " in line:
                     wf.write(import_line)
                 else:
-                    wf.write(f'{import_line.strip()} as {re.sub(".wdl", "", Path(imported_wdl_path).name)}\n')
+                    wf.write(
+                        f'{import_line.strip()} as {re.sub(".wdl", "", Path(imported_wdl_path).name)}\n'
+                    )
 
                 flatten_nested_dependencies(tempdir, imported_wdl_path)
             else:
-                wf.write(l)
+                wf.write(line)
 
     return new_wdl_path
 

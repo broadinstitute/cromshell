@@ -2,9 +2,9 @@ import contextlib
 import csv
 import json
 import logging
+import tempfile
 from datetime import datetime
 from pathlib import Path, PurePath
-import tempfile
 
 import click
 import requests
@@ -65,7 +65,15 @@ class WorkflowStatusError(Exception):
     help=".",
 )
 @click.pass_obj
-def main(config, wdl, wdl_json, options_json, dependencies_zip, no_validation, do_not_flatten_wdls):
+def main(
+    config,
+    wdl,
+    wdl_json,
+    options_json,
+    dependencies_zip,
+    no_validation,
+    do_not_flatten_wdls,
+):
     """Submit a workflow and arguments to the Cromwell Server"""
 
     LOGGER.info("submit")
@@ -73,7 +81,7 @@ def main(config, wdl, wdl_json, options_json, dependencies_zip, no_validation, d
     http_utils.assert_can_communicate_with_server(config=config)
 
     if not do_not_flatten_wdls and io_utils.has_nested_dependencies(wdl):
-        tempdir = tempfile.TemporaryDirectory(prefix='cromshell_')
+        tempdir = tempfile.TemporaryDirectory(prefix="cromshell_")
 
         LOGGER.info(f"Flattening WDL structure to {tempdir.name}.")
 
