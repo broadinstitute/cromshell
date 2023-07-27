@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-import os
+#import os
 import shutil
 from contextlib import nullcontext
 from io import BytesIO
@@ -117,22 +117,22 @@ def has_nested_dependencies(wdl_path: str or Path) -> bool:
     return False
 
 
-def get_flattened_filename(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path):
+def get_flattened_filename(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path) -> Path:
     """Generate the filename to use for flattened WDL files."""
 
-    return os.path.join(
-        tempdir.name,
-        re.sub("^-", "", re.sub(os.path.sep, "-", os.path.dirname(wdl_path))) + '-' + os.path.basename(wdl_path)
-    )
+    p = Path(wdl_path)
+
+    return Path(tempdir.name + "/" + re.sub("^-", "", re.sub("/", "-", str(p.parent))) + '-' + str(p.name))
 
 
-def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path) -> str:
+def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path) -> Path:
     """Flatten a WDL directory structure and rewrite imports accordingly.
 
     Return string representing the filesystem location of the rewritten WDL.
     """
 
-    wdl_dir = os.path.dirname(wdl_path)
+    p = Path(wdl_path)
+    wdl_dir = p.parent
 
     new_wdl_path = get_flattened_filename(tempdir, wdl_path)
 
@@ -141,13 +141,13 @@ def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: 
             if l.startswith('import'):
                 m = re.match(r'import "(.+)"', l)
 
-                imported_wdl_path = os.path.abspath(os.path.join(wdl_dir, m.group(1)))
-                import_line = re.sub(m.group(1), os.path.basename(get_flattened_filename(tempdir, imported_wdl_path)), l)
+                imported_wdl_path = (Path(wdl_dir) / m.group(1)).absolute()
+                import_line = re.sub(m.group(1), Path(get_flattened_filename(tempdir, imported_wdl_path)).name, l)
 
                 if ' as ' in l:
                     wf.write(import_line)
                 else:
-                    wf.write(f'{import_line.strip()} as {re.sub(".wdl", "", os.path.basename(imported_wdl_path))}\n')
+                    wf.write(f'{import_line.strip()} as {re.sub(".wdl", "", Path(imported_wdl_path).name)}\n')
 
                 flatten_nested_dependencies(tempdir, imported_wdl_path)
             else:
