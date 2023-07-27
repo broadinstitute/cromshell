@@ -118,7 +118,11 @@ def has_nested_dependencies(wdl_path: str or Path) -> bool:
 
 
 def get_flattened_filename(tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path) -> Path:
-    """Generate the filename to use for flattened WDL files."""
+    """ Generate hyphen-separated path to use for flattened WDL file path.
+    For example: 
+    tempdir: /path/2/tempdir/ and wdl_path: /dir/path/2/wdl.wdl
+    returns: /path/2/tempdir/dir-path-2-wdl.wdl
+    """
 
     p = Path(wdl_path)
 
