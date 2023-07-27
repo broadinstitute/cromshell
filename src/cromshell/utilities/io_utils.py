@@ -144,7 +144,7 @@ def flatten_nested_dependencies(tempdir: tempfile.TemporaryDirectory, wdl_path: 
         for l in rf:
             if l.startswith('import'):
                 m = re.match(r'import "(.+)"', l)
-
+                imported_wdl_name = m.group(1)
                 imported_wdl_path = (Path(wdl_dir) / m.group(1)).absolute()
                 import_line = re.sub(m.group(1), Path(get_flattened_filename(tempdir, imported_wdl_path)).name, l)
 
