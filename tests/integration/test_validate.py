@@ -9,6 +9,58 @@ class TestValidate:
     """Test the version command."""
 
     @pytest.mark.parametrize(
+        "wdl, wdl_json, exit_code, expected_results",
+        [
+            (
+                "helloWorld.wdl",
+                "",
+                2,
+                "",
+            ),
+            (
+                "helloWorld.wdl",
+                "helloWorld.json",
+                0,
+                "Validation successful.\n",
+            ),
+            (
+                "not_valid.wdl",
+                "not_valid.json",
+                1,
+                "",
+            ),
+        ],
+    )
+    def test_validate(
+        self,
+        wdl,
+        wdl_json,
+        exit_code,
+        expected_results,
+        workflows_path,
+        local_cromwell_url: str,
+    ):
+        workflow_path = str(Path.joinpath(workflows_path, wdl))
+        wdl_json_path = str(Path.joinpath(workflows_path, wdl_json)) if wdl_json else ""
+        validate_result = utility_test_functions.run_cromshell_command(
+            command=[
+                "--no_turtle",
+                "--cromwell_url",
+                local_cromwell_url,
+                "validate",
+                workflow_path,
+                wdl_json_path,
+            ],
+            exit_code=exit_code,
+        )
+
+        print("Print version results:")
+        print(validate_result.stdout)
+
+        if expected_results:
+            assert expected_results in str(validate_result.stdout)
+
+    @pytest.mark.parametrize(
         "wdl, results",
         [
             (
@@ -21,7 +73,7 @@ class TestValidate:
             ),
         ],
     )
-    def test_validate(self, wdl, results, workflows_path):
+    def test_validate_using_miniwdl(self, wdl, results, workflows_path):
         workflow_path = str(Path.joinpath(workflows_path, wdl))
         validate_result = utility_test_functions.run_cromshell_command(
             command=[
@@ -31,6 +83,7 @@ class TestValidate:
                 "UnusedDeclaration",
                 "--suppress",
                 "MixedIndentation",
+                "--miniwdl",
             ],
             exit_code=0,
         )
@@ -53,10 +106,10 @@ class TestValidate:
             ),
         ],
     )
-    def test_validate_suppress(self, wdl, suppress, workflows_path):
+    def test_validate_suppress_using_miniwdl(self, wdl, suppress, workflows_path):
         workflow_path = str(Path.joinpath(workflows_path, wdl))
         validate_result = utility_test_functions.run_cromshell_command(
-            command=["validate", workflow_path, "--suppress", suppress],
+            command=["validate", workflow_path, "--suppress", suppress, "--miniwdl"],
             exit_code=0,
         )
 
