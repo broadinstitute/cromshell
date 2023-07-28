@@ -39,6 +39,7 @@ def run_cromshell_command(
     with runner.isolated_filesystem():
         result = runner.invoke(cromshell, command_with_options)
         assert result.exit_code == exit_code, (
+            f"\nEXIT_CODE: {result.exit_code}"
             f"\nCOMMAND:\n{command_with_options}"
             f"\nSTDOUT:\n{result.stdout}"
             f"\nSTDERR:\n{result.stderr}"
