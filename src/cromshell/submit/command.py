@@ -14,6 +14,7 @@ import cromshell.utilities.workflow_status_utils
 from cromshell import log
 from cromshell.utilities import cromshellconfig, http_utils, io_utils
 from cromshell.utilities.io_utils import dead_turtle
+import cromshell.utilities.miniwdl_utils as miniwdl
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,6 +26,10 @@ class WorkflowIDError(Exception):
 class WorkflowStatusError(Exception):
     """Raised when Workflow Status of a recently submitted workflow
     is not 'Submitted'"""
+
+class ValidationFailedError(Exception):
+    """Raised when WDL validation fails"""
+    pass
 
 
 @click.command(name="submit")
@@ -130,7 +135,12 @@ def validate_input(
         )
     else:
         # See: https://github.com/broadinstitute/cromshell/issues/139
-        LOGGER.info("Skipping validation of WDL plus a dependencies zip")
+        LOGGER.debug("Skipping validation of WDL plus a dependencies zip")
+
+    if miniwdl.miniwdl_validate_wdl(wdl=Path(wdl)) == 0:
+        LOGGER.debug("Miniwdl validation passed.")
+    else:
+        raise ValidationFailedError("MiniWDL Validation failed.")
 
 
 def submit_workflow_to_server(
