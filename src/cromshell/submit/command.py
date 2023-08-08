@@ -9,12 +9,12 @@ import click
 import requests
 from requests import Response
 
+import cromshell.utilities.miniwdl_utils as miniwdl
 import cromshell.utilities.womtool_utils as womtool_utils
 import cromshell.utilities.workflow_status_utils
 from cromshell import log
 from cromshell.utilities import cromshellconfig, http_utils, io_utils
 from cromshell.utilities.io_utils import dead_turtle
-import cromshell.utilities.miniwdl_utils as miniwdl
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,8 +27,10 @@ class WorkflowStatusError(Exception):
     """Raised when Workflow Status of a recently submitted workflow
     is not 'Submitted'"""
 
+
 class ValidationFailedError(Exception):
     """Raised when WDL validation fails"""
+
     pass
 
 

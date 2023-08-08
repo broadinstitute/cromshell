@@ -3,6 +3,7 @@ from pathlib import Path
 
 from WDL import CLI as miniwdlCLI
 from WDL import Error as miniwdlError
+
 from cromshell import log
 from cromshell.utilities.io_utils import dead_turtle
 
@@ -12,8 +13,9 @@ LOGGER = logging.getLogger(__name__)
 class ValidationFailedError(Exception):
     pass
 
+
 def miniwdl_validate_wdl(
-    wdl: Path, dependencies: tuple =(), strict: bool =False , suppress: [] =[]
+    wdl: Path, dependencies: tuple = (), strict: bool = False, suppress=None
 ) -> int:
     """Validates a WDL file.
 
@@ -26,6 +28,8 @@ def miniwdl_validate_wdl(
     Returns:
       0 if the WDL file is valid, 1 otherwise.
     """
+    if suppress is None:
+        suppress = []
     LOGGER.debug("Validating WDL file with miniwdl.")
 
     for dep in dependencies:

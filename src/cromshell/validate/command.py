@@ -27,7 +27,7 @@ class MissingArgumentError(Exception):
     multiple=True,
     type=click.Path(exists=True),
     help="MiniWDL option: Directory containing workflow source files that are "
-         "used to resolve local imports. (can supply multiple times)",
+    "used to resolve local imports. (can supply multiple times)",
 )
 @click.option(
     "-s",
@@ -35,7 +35,7 @@ class MissingArgumentError(Exception):
     is_flag=True,
     default=False,
     help="MiniWDL option: Exit with nonzero status code if any lint warnings are shown "
-         "(in addition to syntax and type errors)",
+    "(in addition to syntax and type errors)",
 )
 @click.option(
     "-sup",
@@ -58,14 +58,14 @@ class MissingArgumentError(Exception):
 )
 @click.pass_obj
 def main(
-        config,
-        wdl: Path,
-        wdl_json: Path,
-        dependencies: tuple,
-        strict: bool,
-        suppress: tuple,
-        no_miniwdl: bool,
-        no_womtool: bool,
+    config,
+    wdl: Path,
+    wdl_json: Path,
+    dependencies: tuple,
+    strict: bool,
+    suppress: tuple,
+    no_miniwdl: bool,
+    no_womtool: bool,
 ):
     """
     Validate a WDL workflow and its input JSON using the Cromwell server's womtool API
@@ -81,7 +81,6 @@ def main(
     return_code = 0
 
     if not no_womtool:
-
         if not wdl_json:
             LOGGER.error("WDL JSON file is required.")
             raise MissingArgumentError("WDL JSON file is required.")
