@@ -93,12 +93,13 @@ def submit_workflow(
     wdl: str,
     json_file: str,
     exit_code: int,
+    no_validation: bool = True,
 ) -> str:
     # Run cromshell submit
     submit_result = run_cromshell_submit(
         wdl=wdl,
         json_file=json_file,
-        no_validation=False,
+        no_validation=no_validation,
         exit_code=exit_code,
         local_cromwell_url=local_cromwell_url,
     )

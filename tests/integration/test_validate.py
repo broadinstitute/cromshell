@@ -79,16 +79,12 @@ class TestValidate:
             command=[
                 "validate",
                 workflow_path,
-                "--suppress",
-                "UnusedDeclaration",
-                "--suppress",
-                "MixedIndentation",
-                "--miniwdl",
+                "--no-womtool",
             ],
             exit_code=0,
         )
 
-        print("Print version results:")
+        print("Print validate results:")
         print(validate_result.stdout)
 
         assert results in validate_result.stdout
@@ -109,7 +105,7 @@ class TestValidate:
     def test_validate_suppress_using_miniwdl(self, wdl, suppress, workflows_path):
         workflow_path = str(Path.joinpath(workflows_path, wdl))
         validate_result = utility_test_functions.run_cromshell_command(
-            command=["validate", workflow_path, "--suppress", suppress, "--miniwdl"],
+            command=["validate", workflow_path, "--suppress", suppress, "--no-womtool"],
             exit_code=0,
         )
 
