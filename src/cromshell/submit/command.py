@@ -139,7 +139,7 @@ def validate_input(
         # See: https://github.com/broadinstitute/cromshell/issues/139
         LOGGER.debug("Skipping validation of WDL plus a dependencies zip")
 
-    if miniwdl.miniwdl_validate_wdl(wdl=Path(wdl)) == 0:
+    if miniwdl.miniwdl_validate_wdl(wdl=Path(wdl), show_warnings=False) == 0:
         LOGGER.debug("Miniwdl validation passed.")
     else:
         raise ValidationFailedError("MiniWDL Validation failed.")
