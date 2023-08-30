@@ -164,7 +164,7 @@ def print_version():
     print(f"cromshell {__version__}")
 
 
-# Update with new sub-commands:
+# Update with new sub-commands here. Keep in alphabetical order:
 main_entry.add_command(abort.main)
 main_entry.add_command(alias.main)
 main_entry.add_command(cost.main)
