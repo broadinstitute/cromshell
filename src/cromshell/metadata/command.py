@@ -39,7 +39,7 @@ def main(config, workflow_id: str, dont_expand_subworkflows: bool):
         dont_expand_subworkflows=dont_expand_subworkflows,
     )
 
-    io_utils.pretty_print_json(format_json=workflow_metadata_json, add_color=True)
+    io_utils.pretty_print_json(format_json=workflow_metadata_json)
 
     return 0
 
