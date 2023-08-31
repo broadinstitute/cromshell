@@ -1,5 +1,7 @@
 import io
 import logging
+import tempfile
+import zipfile
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -15,7 +17,7 @@ class ValidationFailedError(Exception):
 
 def miniwdl_validate_wdl(
     wdl: Path,
-    dependencies: tuple = (),
+        dependencies=None,
     strict: bool = False,
     suppress=None,
     show_warnings: bool = True,
@@ -32,12 +34,23 @@ def miniwdl_validate_wdl(
     Returns:
       0 if the WDL file is valid, 1 otherwise.
     """
+
     LOGGER.debug("Validating WDL file with miniwdl.")
     if suppress is None:
         suppress = []
+    if dependencies is None:
+        dependencies = []
 
-    for dep in dependencies:
-        Path(dep).resolve(strict=True)
+    if Path(dependencies).is_file():
+        temp_dir = tempfile.mkdtemp()
+        with zipfile.ZipFile(dependencies, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+        resolved_dependencies = temp_dir
+        print(resolved_dependencies)
+        print([file.name for file in Path(temp_dir).iterdir()])
+    else:
+        resolved_dependencies =  dependencies
+    print(resolved_dependencies)
 
     try:
         f = io.StringIO()
@@ -47,7 +60,7 @@ def miniwdl_validate_wdl(
 
             miniwdl_check(
                 uri=[str(wdl)],
-                path=list(dependencies),
+                path=[resolved_dependencies],
                 strict=strict,
                 suppress=",".join([str(item) for item in suppress]),  # Turn into string
             )

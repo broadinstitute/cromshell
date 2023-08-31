@@ -22,12 +22,12 @@ class MissingArgumentError(Exception):
 @click.argument("wdl_json", type=click.Path(exists=True), required=False)
 @click.option(
     "-d",
-    "--dependencies",
+    "--dependencies-zip",
     required=False,
-    multiple=True,
     type=click.Path(exists=True),
-    help="MiniWDL option: Directory containing workflow source files that are "
-    "used to resolve local imports. (can supply multiple times)",
+    help="MiniWDL option: ZIP file or directory containing workflow source files "
+    "that are used to resolve local imports. This zip bundle will be "
+    "unpacked in a sandbox accessible to",
 )
 @click.option(
     "-s",
@@ -61,7 +61,7 @@ def main(
     config,
     wdl: Path,
     wdl_json: Path,
-    dependencies: tuple,
+    dependencies_zip: str,
     strict: bool,
     suppress: tuple,
     no_miniwdl: bool,
@@ -91,7 +91,7 @@ def main(
 
     if not no_miniwdl:
         return_code = miniwdl.miniwdl_validate_wdl(
-            wdl=wdl, dependencies=dependencies, strict=strict, suppress=suppress
+            wdl=wdl, dependencies=dependencies_zip, strict=strict, suppress=suppress
         )
 
     if return_code == 0:
