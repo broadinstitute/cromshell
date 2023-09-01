@@ -89,6 +89,8 @@ def main(
             wdl=str(wdl), wdl_json=str(wdl_json), config=config
         )
 
+    # Todo: Have it support nested directories after PR 268 is merged
+    # https://github.com/broadinstitute/cromshell/pull/268
     if not no_miniwdl:
         return_code = miniwdl.miniwdl_validate_wdl(
             wdl=wdl, dependencies=dependencies_zip, strict=strict, suppress=suppress

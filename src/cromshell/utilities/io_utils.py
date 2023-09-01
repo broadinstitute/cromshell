@@ -230,6 +230,21 @@ def copy_files_to_directory(
         shutil.copy(inputs, directory)
 
 
+def check_if_dir_contains_wdl(dir):
+    """Checks if a directory contains a WDL file.
+
+    Args:
+      dir: The path to the directory.
+
+    Raises:
+      ValidationFailedError: If the directory does not contain a WDL file.
+    """
+
+    LOGGER.debug("Checking if directory contains a WDL file.")
+    if not any(Path(dir).rglob("*.wdl")):
+        raise FileNotFoundError(f"Directory {dir} does not contain a WDL file.")
+
+
 class TextStatusesColor:
     """Holds stdout formatting per workflow status"""
 
