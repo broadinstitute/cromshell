@@ -81,8 +81,12 @@ def miniwdl_validate_wdl(
     return 0
 
 
-def resolve_wdl_dependencies(dependencies: str or Path):
-    """Resolves the dependencies of a WDL file.
+def resolve_wdl_dependencies(dependencies: str or Path) -> str or Path:
+    """Resolves the dependencies of a WDL file. If the dependencies are a ZIP file,
+    it will be extracted to a temporary directory and the path to the temp directory
+    will be returned. If the `dependencies` is a directory,
+    it will be checked if it contains a WDL file. If it does, the path to the
+    directory will be returned. Otherwise, an error will be raised.
 
     Args:
         dependencies: A list of paths to the WDL file's dependencies.
@@ -94,11 +98,14 @@ def resolve_wdl_dependencies(dependencies: str or Path):
         temp_dir = tempfile.mkdtemp(prefix="cromshell_")
         with zipfile.ZipFile(dependencies, "r") as zip_ref:
             zip_ref.extractall(temp_dir)
+        io_utils.check_if_dir_contains_wdl(temp_dir)
         resolved_dependencies = temp_dir
     elif Path(dependencies).is_dir():
         io_utils.check_if_dir_contains_wdl(dependencies)
         resolved_dependencies = dependencies
     else:
-        pass
+        raise FileNotFoundError(
+            f"Dependencies {dependencies} is not a directory or a ZIP file."
+        )
 
     return resolved_dependencies
