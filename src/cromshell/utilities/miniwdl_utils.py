@@ -40,13 +40,14 @@ def miniwdl_validate_wdl(
     LOGGER.debug("Validating WDL file with miniwdl.")
     if suppress is None:
         suppress = []
-    if dependencies is None:
-        dependencies = []
 
     resolved_dependencies = resolve_wdl_dependencies(dependencies)
 
-    LOGGER.debug(f"WDL dependencies location: {resolved_dependencies}")
-    LOGGER.debug(f"Contents dependencies location: {listdir(resolved_dependencies)}")
+    if resolved_dependencies and Path(resolved_dependencies).is_dir():
+        LOGGER.debug(f"WDL dependencies location: {resolved_dependencies}")
+        LOGGER.debug(
+            f"Contents dependencies location: {listdir(resolved_dependencies)}"
+        )
 
     try:
         f = io.StringIO()
@@ -92,9 +93,11 @@ def resolve_wdl_dependencies(dependencies: str or Path) -> str or Path:
         dependencies: A list of paths to the WDL file's dependencies.
     """
 
-    resolved_dependencies = []
+    resolved_dependencies = ""
 
-    if Path(dependencies).is_file():
+    if dependencies is None:
+        return resolved_dependencies
+    elif Path(dependencies).is_file():
         temp_dir = tempfile.mkdtemp(prefix="cromshell_")
         with zipfile.ZipFile(dependencies, "r") as zip_ref:
             zip_ref.extractall(temp_dir)
