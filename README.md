@@ -42,7 +42,7 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
     * For servers that require a referer, supply
     this URL in the `Referer:` header.
   * One of `--machine_processable` or `--colorful_output`
-    * Override the automatically determined output coloring setting
+    * Override the automatically determined output coloring setting.
     * Otherwise the output will be colored if it detects that it's connected to an interactive terminal.
 ## Supported Subcommands:
 
