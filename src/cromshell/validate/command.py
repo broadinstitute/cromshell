@@ -27,7 +27,7 @@ class MissingArgumentError(Exception):
     type=click.Path(exists=True),
     help="MiniWDL option: ZIP file or directory containing workflow source files "
     "that are used to resolve local imports. This zip bundle will be "
-    "unpacked in a sandbox accessible to",
+    "unpacked in a sandbox accessible to this workflow.",
 )
 @click.option(
     "-s",
