@@ -1,4 +1,5 @@
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -33,3 +34,11 @@ def tmp_submission_file(mock_workflow_database_tsv, tmp_path):
     shutil.copyfile(mock_workflow_database_tsv, tmp_submission_file)
 
     return tmp_submission_file
+
+
+# Define a temporary directory for testing
+@pytest.fixture(scope="function")
+def temp_dir():
+    temp = tempfile.mkdtemp()
+    yield temp
+    shutil.rmtree(temp)

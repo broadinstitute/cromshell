@@ -39,6 +39,7 @@ def run_cromshell_command(
     with runner.isolated_filesystem():
         result = runner.invoke(cromshell, command_with_options)
         assert result.exit_code == exit_code, (
+            f"\nEXIT_CODE: {result.exit_code}"
             f"\nCOMMAND:\n{command_with_options}"
             f"\nSTDOUT:\n{result.stdout}"
             f"\nSTDERR:\n{result.stderr}"
@@ -92,12 +93,13 @@ def submit_workflow(
     wdl: str,
     json_file: str,
     exit_code: int,
+    no_validation: bool = True,
 ) -> str:
     # Run cromshell submit
     submit_result = run_cromshell_submit(
         wdl=wdl,
         json_file=json_file,
-        no_validation=False,
+        no_validation=no_validation,
         exit_code=exit_code,
         local_cromwell_url=local_cromwell_url,
     )

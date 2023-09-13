@@ -243,6 +243,31 @@ class TestIOUtilities:
         # 'tmp_path' is a default pytest fixture
 
     @pytest.mark.parametrize(
+        "contains_wdl, expected_exception",
+        [
+            (True, None),  # Directory contains a WDL file, no exception expected
+            (
+                False,
+                FileNotFoundError,
+            ),  # Directory does not contain a WDL file, expect FileNotFoundError
+        ],
+    )
+    def test_check_if_dir_contains_wdl(self, contains_wdl, expected_exception, tmpdir):
+        # Create a temporary directory and conditionally add a WDL file
+        test_dir = Path(tmpdir) / "test_dir"
+        test_dir.mkdir()
+
+        if contains_wdl:
+            (test_dir / "test.wdl").touch()
+
+        # Call the function and assert the exception (if any)
+        if expected_exception:
+            with pytest.raises(expected_exception):
+                io_utils.check_if_dir_contains_wdl(test_dir)
+        else:
+            io_utils.check_if_dir_contains_wdl(test_dir)
+
+    @pytest.mark.parametrize(
         "workflow_id, column_to_update, update_value, should_fail",
         [
             [

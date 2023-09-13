@@ -20,6 +20,11 @@ def mock_workflow_database_tsv(mock_data_path):
 
 
 @pytest.fixture
+def workflows_path():
+    return Path(__file__).parents[1].joinpath("workflows/")
+
+
+@pytest.fixture
 def ansi_escape():
     """
     Removes ansi formatting from string. Useful when needing to remove

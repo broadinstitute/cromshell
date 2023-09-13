@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from cromshell.submit import command as submit_command
+import cromshell.utilities.womtool_utils as womtool_utils
 from cromshell.utilities import cromshellconfig
 from tests.integration.utility_test_functions import run_cromshell_submit
 
@@ -123,8 +123,8 @@ class TestSubmit:
         self, test_wdl_path, test_json_path
     ):
         # asserts that an exception is raised by the function
-        with pytest.raises(submit_command.ValidationError):
-            submit_command.womtool_validate_wdl_and_json(
+        with pytest.raises(womtool_utils.ValidationError):
+            womtool_utils.womtool_validate_wdl_and_json(
                 wdl=str(test_wdl_path),
                 wdl_json=str(test_json_path),
                 config=cromshellconfig,
@@ -134,7 +134,7 @@ class TestSubmit:
         workflow_wdl_path = workflows_path.joinpath("helloWorld.wdl")
         workflow_json_path = workflows_path.joinpath("helloWorld.json")
 
-        submit_command.womtool_validate_wdl_and_json(
+        womtool_utils.womtool_validate_wdl_and_json(
             wdl=str(workflow_wdl_path),
             wdl_json=str(workflow_json_path),
             config=cromshellconfig,

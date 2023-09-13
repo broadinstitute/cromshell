@@ -1,3 +1,5 @@
+version 1.0
+
 workflow HelloWorld {
     meta {
         workflow_description: "echos hello world"
@@ -13,23 +15,25 @@ workflow HelloWorld {
         cpu: "Number of CPU cores to give to each machine running each task in this workflow."
         boot_disk_size_gb: "Amount of boot disk space (in Gb) to give to each machine running each task in this workflow."
     }
-    String docker
+    input {
+        String docker
 
-    Int? mem
-    Int? preemptible_attempts
-    Int? disk_space_gb
-    Int? cpu
-    Int? boot_disk_size_gb
+        Int mem
+        Int? preemptible_attempts
+        Int? disk_space_gb
+        Int? cpu
+        Int? boot_disk_size_gb
+    }
 
-        call HelloWorldTask {
-            input:
-                docker               = docker,
-                mem                  = mem,
-                preemptible_attempts = preemptible_attempts,
-                disk_space_gb        = disk_space_gb,
-                cpu                  = cpu,
-                boot_disk_size_gb    = boot_disk_size_gb
-        }
+    call HelloWorldTask {
+        input:
+            docker               = docker,
+            mem                  = mem,
+            preemptible_attempts = preemptible_attempts,
+            disk_space_gb        = disk_space_gb,
+            cpu                  = cpu,
+            boot_disk_size_gb    = boot_disk_size_gb
+    }
 
     output {
         File output_file = HelloWorldTask.output_file
@@ -40,17 +44,16 @@ task HelloWorldTask {
 
     # ------------------------------------------------
     # Input args:
-
+    input {
     # Required:
-
-     # Runtime Options:
-     String docker
-     Int? mem
-     Int? preemptible_attempts
-     Int? disk_space_gb
-     Int? cpu
-     Int? boot_disk_size_gb
-
+        String docker
+    # Runtime Options:
+        Int mem
+        Int? preemptible_attempts
+        Int? disk_space_gb
+        Int? cpu
+        Int? boot_disk_size_gb
+    }
     # ------------------------------------------------
     # Process input args:
 
@@ -73,7 +76,7 @@ task HelloWorldTask {
     # Run our command:
      command <<<
          set -e
-				 echo 'Hello World!'				 
+         echo 'Hello World!'
      >>>
 
     # ------------------------------------------------
