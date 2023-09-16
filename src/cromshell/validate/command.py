@@ -80,6 +80,10 @@ def main(
 
     return_code = 0
 
+    if no_womtool and no_miniwdl:
+        LOGGER.error("At least one validation tool must be enabled.")
+        raise MissingArgumentError("At least one validation tool must be enabled.")
+
     if not no_womtool:
         if not wdl_json:
             LOGGER.error("WDL JSON file is required.")
