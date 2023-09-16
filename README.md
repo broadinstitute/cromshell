@@ -114,7 +114,7 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
      * `-d/--detailed` Get the cost for a workflow at the task level.
   
    #### Validate WDL
-   * `validate <wdl> --dependencies-zip [wdl_zip_file]`
+   * `validate [wdl] [input json] --dependencies-zip [wdl_zip_file]`
      * Validate a WDL file.
      * Runs both miniwdl and womtool validation by default, but can be configured to run only one or the other.
      * Womtool validation via Cromwell server API does not support validation of imported files, however miniwdl does.
