@@ -3,6 +3,7 @@ from pathlib import Path
 
 import click
 
+import cromshell.utilities.http_utils as http_utils
 import cromshell.utilities.miniwdl_utils as miniwdl
 import cromshell.utilities.womtool_utils as womtool
 
@@ -80,10 +81,22 @@ def main(
 
     return_code = 0
 
+    if no_womtool and no_miniwdl:
+        LOGGER.error(
+            "Both `--no-womtool` and `--no-miniwdl` options were used but"
+            "at least one validation tool must be enabled."
+        )
+        raise MissingArgumentError(
+            "Both `--no-womtool` and `--no-miniwdl` options were used but "
+            "at least one validation tool must be enabled."
+        )
+
     if not no_womtool:
         if not wdl_json:
             LOGGER.error("WDL JSON file is required.")
             raise MissingArgumentError("WDL JSON file is required.")
+
+        http_utils.assert_can_communicate_with_server(config)
 
         womtool.womtool_validate_wdl_and_json(
             wdl=str(wdl), wdl_json=str(wdl_json), config=config
