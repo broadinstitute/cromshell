@@ -1,8 +1,6 @@
 import json
 import logging
 import re
-
-# import os
 import shutil
 import tempfile
 from contextlib import nullcontext
@@ -157,7 +155,7 @@ def flatten_nested_dependencies(
             if line.startswith("import"):
                 m = re.match(r'import "(.+)"', line)
                 imported_wdl_name = m.group(1)
-                imported_wdl_path = (Path(wdl_dir) / imported_wdl_name).absolute()
+                imported_wdl_path = (Path(wdl_dir) / imported_wdl_name).resolve()
                 import_line = re.sub(
                     imported_wdl_name,
                     Path(get_flattened_filename(tempdir, imported_wdl_path)).name,
