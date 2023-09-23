@@ -31,7 +31,7 @@ def local_cromshell_config_json(local_hidden_cromshell_folder):
 
 @pytest.fixture
 def test_workflows_path():
-    return Path(__file__).joinpath("workflows/")
+    return Path(__file__).parent.joinpath("workflows/")
 
 
 @pytest.fixture

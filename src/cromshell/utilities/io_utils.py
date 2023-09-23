@@ -117,9 +117,7 @@ def has_nested_dependencies(wdl_path: str or Path) -> bool:
     return False
 
 
-def get_flattened_filename(
-    tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path
-) -> Path:
+def get_flattened_filename(tempdir: str, wdl_path: str or Path) -> Path:
     """Generate hyphen-separated path to use for flattened WDL file path.
     For example:
     tempdir: /path/2/tempdir/ and wdl_path: /dir/path/2/wdl.wdl
@@ -129,7 +127,7 @@ def get_flattened_filename(
     p = Path(wdl_path)
 
     return Path(
-        tempdir.name
+        tempdir
         + "/"
         + re.sub("^-", "", re.sub("/", "-", str(p.parent)))
         + "-"
@@ -138,17 +136,21 @@ def get_flattened_filename(
 
 
 def flatten_nested_dependencies(
-    tempdir: tempfile.TemporaryDirectory, wdl_path: str or Path
+    tempdir: tempfile.TemporaryDirectory, wdl_path: str
 ) -> Path:
     """Flatten a WDL directory structure and rewrite imports accordingly.
 
     Return string representing the filesystem location of the rewritten WDL.
+
+    tempdir: /path/2/tempdir/
+    wdl_path: /dir/path/2/wdl.wdl
+    returns: /path/2/tempdir/dir-path-2-wdl.wdl
     """
 
     p = Path(wdl_path)
     wdl_dir = p.parent
 
-    new_wdl_path = get_flattened_filename(tempdir, wdl_path)
+    new_wdl_path = get_flattened_filename(tempdir.name, wdl_path)
 
     with open(wdl_path, "r") as rf, open(new_wdl_path, "w") as wf:
         for line in rf:
@@ -158,7 +160,7 @@ def flatten_nested_dependencies(
                 imported_wdl_path = (Path(wdl_dir) / imported_wdl_name).resolve()
                 import_line = re.sub(
                     imported_wdl_name,
-                    Path(get_flattened_filename(tempdir, imported_wdl_path)).name,
+                    Path(get_flattened_filename(tempdir.name, imported_wdl_path)).name,
                     line,
                 )
 
