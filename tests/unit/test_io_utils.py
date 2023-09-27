@@ -1,9 +1,12 @@
 import csv
 import io
 import os
+import re
 import shutil
+import tempfile
 from contextlib import redirect_stdout
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from zipfile import ZipFile
 
 import pytest
@@ -352,6 +355,96 @@ class TestIOUtilities:
                         == workflow_id
                     ):
                         assert row[column_to_update] == update_value
+
+    @pytest.mark.parametrize(
+        "wdl_content, expected_result",
+        [
+            ('import "other.wdl"', False),  # No nested import
+            ('import "../nested/other.wdl"', True),  # Nested import
+            ('import "nested/other.wdl"', False),  # Relative path, but not nested
+            ("task my_task { command { echo 'Hello, World!' } }", False),  # No import
+            (
+                'import "../nested/other.wdl"\nimport "nested/another.wdl"',
+                True,
+            ),  # Multiple imports, one nested
+        ],
+    )
+    def test_has_nested_dependencies(self, wdl_content, expected_result):
+        # Create a temporary file with the provided WDL content
+        with NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write(wdl_content)
+
+        wdl_path = Path(temp_file.name)
+
+        # Call the function with the temporary file path
+        result = io_utils.has_nested_dependencies(wdl_path)
+
+        # Check if the result matches the expected outcome
+        assert result == expected_result
+
+        # Clean up the temporary file
+        wdl_path.unlink()
+
+    @pytest.mark.parametrize(
+        "wdl_path, flattened_wdl_file",
+        [
+            ("/dir/path/2/wdl.wdl", "dir-path-2-wdl.wdl"),
+            ("/another/wdl.wdl", "another-wdl.wdl"),
+        ],
+    )
+    def test_get_flattened_filename(self, wdl_path, flattened_wdl_file):
+        # Create a TemporaryDirectory to simulate tempdir
+        with tempfile.TemporaryDirectory() as tempdir:
+            # tempdir = Path(tempdir_name)
+            wdl_path = Path(wdl_path)
+
+            # Call the function with the simulated tempdir and wdl_path
+            result = io_utils.get_flattened_filename(tempdir, wdl_path)
+
+            # Check if the result matches the expected outcome
+            assert result == Path(tempdir).joinpath(flattened_wdl_file)
+
+    # Define test cases using @pytest.mark.parametrize
+    @pytest.mark.parametrize(
+        "wdl_path, expected_file_content",
+        [
+            (
+                "wdl_with_imports/helloWorld_with_imports.wdl",
+                ["-helloWorld.wdl", "-wdl_with_imports-hello_world_task.wdl"],
+            ),
+        ],
+    )
+    def test_flatten_nested_dependencies(
+        self, wdl_path, expected_file_content, test_workflows_path
+    ):
+        # Create a temporary directory to simulate tempdir
+
+        tempdir = tempfile.TemporaryDirectory()
+        abs_wdl_path = test_workflows_path.joinpath(wdl_path)
+
+        abs_wdl_path_str = str(abs_wdl_path.absolute())
+
+        # Call the function with the simulated tempdir and wdl_path
+        result_path = io_utils.flatten_nested_dependencies(
+            tempdir=tempdir, wdl_path=abs_wdl_path_str
+        )
+
+        # Check if the result matches the expected outcome
+        expected_result_path = Path(tempdir.name).joinpath(
+            re.sub("^-", "", re.sub("/", "-", str(abs_wdl_path)))
+        )
+        assert result_path == expected_result_path
+
+        # Check if the expected file content is in the result file
+        for expected_file_content_line in expected_file_content:
+            parsed_line = (
+                re.sub("^-", "", re.sub("/", "-", str(abs_wdl_path.parents[1])))
+                + expected_file_content_line
+            )
+            assert parsed_line in result_path.read_text()
+
+        # Clean up the temporary directory
+        tempdir.cleanup()
 
     @pytest.fixture
     def mock_data_path(self):

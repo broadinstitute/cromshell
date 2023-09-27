@@ -2,6 +2,7 @@ import contextlib
 import csv
 import json
 import logging
+import tempfile
 from datetime import datetime
 from pathlib import Path, PurePath
 
@@ -61,13 +62,35 @@ class ValidationFailedError(Exception):
     default=False,
     help="Do not check womtool for validation before submitting.",
 )
+@click.option(
+    "--do-not-flatten-wdls",
+    is_flag=True,
+    default=False,
+    help=".",
+)
 @click.pass_obj
-def main(config, wdl, wdl_json, options_json, dependencies_zip, no_validation):
+def main(
+    config,
+    wdl,
+    wdl_json,
+    options_json,
+    dependencies_zip,
+    no_validation,
+    do_not_flatten_wdls,
+):
     """Submit a workflow and arguments to the Cromwell Server"""
 
     LOGGER.info("submit")
 
     http_utils.assert_can_communicate_with_server(config=config)
+
+    if not do_not_flatten_wdls and io_utils.has_nested_dependencies(wdl):
+        tempdir = tempfile.TemporaryDirectory(prefix="cromshell_")
+
+        LOGGER.info(f"Flattening WDL structure to {tempdir.name}.")
+
+        wdl = io_utils.flatten_nested_dependencies(tempdir, wdl)
+        dependencies_zip = tempdir.name
 
     if no_validation:
         LOGGER.info("Skipping WDL validation")
