@@ -25,10 +25,10 @@ the Cromshell development environment can be set up by the following steps:
     
 After following the above development environment setup steps, cromshell should 
 have been added to your path.
-Run `cromshell-alpha --help` to confirm installation.
+Run `cromshell --help` to confirm installation.
 
-    > cromshell-alpha --help
-    Usage: cromshell-alpha [OPTIONS] COMMAND [ARGS]...
+    > cromshell --help
+    Usage: cromshell [OPTIONS] COMMAND [ARGS]...
     
       Cromshell is a script for submitting workflows to a cromwell server and
       monitoring / querying their results.
