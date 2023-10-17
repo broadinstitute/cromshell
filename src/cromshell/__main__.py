@@ -23,7 +23,7 @@ from .validate import command as validate
 
 # Version number is automatically set via bumpversion.
 # DO NOT MODIFY:
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 # Create a logger for this module:
 LOGGER = logging.getLogger(__name__)
