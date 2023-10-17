@@ -21,7 +21,7 @@ with open("README.md") as fh:
 # https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
 
 # Version number is automatically set via bumpversion. DO NOT MODIFY:
-version = "2.1.0"
+version = "2.1.1"
 setup(
     name="cromshell",
     version=version,

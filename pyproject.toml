@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cromshell"
 # Version number is automatically set via bumpversion. DO NOT MODIFY:
-version = "2.1.0"
+version = "2.1.1"
 readme = "README.md"
 
 
