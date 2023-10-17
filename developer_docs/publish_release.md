@@ -68,15 +68,14 @@ by using a tool like `pipdeptree` to list whether it has dependencies.
        requests==2.27.1
        - certifi [required: >=2017.4.17, installed: 2020.12.5]
        - charset-normalizer [required: ~=2.0.0, installed: 2.0.12]
-       - idna [required: >=2.5,<4, installed: 2.10]
-       - urllib3 [required: >=1.21.1,<1.27, installed: 1.26.2]  
+       ...
    ```
 
 2. The package url and hash can be obtained from the package pypi site or using a tool like
 homebrew-pypi-poet. 
 
    ```
-   poet requests
+   poet requests --also gcsfs --also termcolor
    ```
 
    results to: 
@@ -92,26 +91,18 @@ homebrew-pypi-poet.
        sha256 "2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597"
      end
    
-     resource "idna" do
-       url "https://files.pythonhosted.org/packages/ea/b7/e0e3c1c467636186c39925827be42f16fee389dc404ac29e930e9136be70/idna-2.10.tar.gz"
-       sha256 "b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"
-     end
-   
      resource "requests" do
        url "https://files.pythonhosted.org/packages/60/f3/26ff3767f099b73e0efa138a9998da67890793bfa475d8278f84a30fec77/requests-2.27.1.tar.gz"
        sha256 "68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"
      end
    
-     resource "urllib3" do
-       url "https://files.pythonhosted.org/packages/29/e6/d1a1d78c439cad688757b70f26c50a53332167c364edb0134cadd280e234/urllib3-1.26.2.tar.gz"
-       sha256 "19188f96923873c92ccb987120ec4acaa12f0461fa9ce5d3d0772bc965a39e08"
-     end
+     resource...
    ```
 ### Test Install
 
 Test installation using formula.
    ```
-   brew install --build-from-source cromshell@2.0.0.beta.1.rb
+   brew install --build-from-source cromshell.rb
    ```
 
 Test installation using brew tap
@@ -128,18 +119,16 @@ draft releases.
 
    `python3 -m pip install --upgrade pip twine build`
 
-2. Update the version tag and project name in pyproject.toml. If creating a release in 
-`testPyPi` use project name `cromshell-draft-release`, if creating a release in `PyPi`
-use project name `cromshell`. 
+2. Update the repo version using bumpversion if not done already. (For tests set project name to `cromshell-draft-release` in `pyproject.toml`). 
 
-3. In the root repository directory build cromshell. This will create a folder called `/dist` with tar files of the cromshell build.
+3. In the root repository directory build cromshell. Delete any persisting `/dist` folders before running this command. This will create a folder called `/dist` with tar files of the cromshell build.
 
    `python3 -m build`
        
 4. Publish build using twine. The [PYPI Token](https://pypi.org/help/#apitoken) is obtained from your pypi account, your
    account will need access permission to the cromshell project in pypi (you will have different tokens for testpypi and pypi repos).
 
-   `python3 -m twine upload --username __token__ --password <PYPI_TOKEN> --repository <testpypi/pypi> dist/*`
+   `python3 -m twine upload --username __token__ --password <PYPI_TOKEN> --repository pypi dist/*`
 
 ### Pypi git action [Not Available]
 *Because this git yml is only initiated through `workflow dispatch`, the action will not be
