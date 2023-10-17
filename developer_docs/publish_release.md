@@ -2,6 +2,13 @@
 
 Cromshell can be installed from a brew tap or through pypi. Instructions on how to publish to these repos are detailed below.
 
+
+## Steps Summary
+1. Set the correct version for the repository using bumpversion and merge changes to main. (e.g. `bumpversion --new-version 2.1.1 minor`)
+2. Create a GitHub release. The release notes may be subdivided by "Feature Additions" and "Bug Fixes".
+3. Publish on Brew.
+4. Publish on PyPi.
+
 ## Brew Tap
 
 Regular update of broadinstitute/dsp tap is needed as new releases of Cromshell are made. 
