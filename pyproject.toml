@@ -16,17 +16,16 @@ authors=[
     {name = "Beri Shifaw", email = "bshifaw@broadinstitute.org"},
 ]
 license={text = "BSD 3-Clause"}
-requires-python=">=3.7"
+requires-python=">=3.9"
 classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
     ]
 keywords = [
