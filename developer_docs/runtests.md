@@ -14,13 +14,13 @@ as seen below
 tox -e lint
 
 # reformat all project files
-black src tests setup.py
+black src tests 
 
 # sort imports in project files
-isort -rc src tests setup.py
+isort -rc src tests 
 
 # check pep8 against all project files
-flake8 src tests setup.py
+flake8 src tests 
 
 # lint python code for common errors and codestyle issues
 pylint src

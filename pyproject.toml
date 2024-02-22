@@ -1,3 +1,5 @@
+
+ignore_missing_imports = true
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -7,8 +9,53 @@ name = "cromshell"
 # Version number is automatically set via bumpversion. DO NOT MODIFY:
 version = "2.1.1"
 readme = "README.md"
-
+description="Command Line Interface (CLI) for Cromwell servers"
+authors=[
+    {name = "Jonn Smith", email = "jonn@broadinstitute.org"},
+    {name = "Louis Bergelson", email = "louisb@broadinstitute.org"},
+    {name = "Beri Shifaw", email = "bshifaw@broadinstitute.org"},
+]
+license={text = "BSD 3-Clause"}
+requires-python=">=3.7"
+classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: Implementation :: CPython",
+    ]
+keywords = [
+    "cromwell", "cromshell", "cromwell-cli", "cromwell-client", "cromwell-api",
+    "cromwell-rest", "cromwell-utilities", "cromwell-tools",
+]
+dynamic = ["dependencies", "optional-dependencies"]
 
 [project.urls]
-"Homepage" = "https://github.com/broadinstitute/cromshell"
+Homepage = "https://github.com/broadinstitute/cromshell"
 "Bug Tracker" = "https://github.com/broadinstitute/cromshell/issues"
+
+[project.scripts]
+cromshell = "cromshell.__main__:main_entry"
+
+# Configuration for the `setuptools` package
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["dev-requirements.txt"]}, tests = { file = ["test-requirements.txt"]}}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["src/**/*"]
+
+# former dump_setup.cfg configuration for mypy
+[tool.mypy."numpy.*"]
+ignore_missing_imports = true
+
+[tool.mypy."pysam.*"]
+ignore_missing_imports = true
+
+[tool.mypy."pytest.*"]
