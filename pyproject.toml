@@ -1,5 +1,4 @@
 
-ignore_missing_imports = true
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -50,7 +49,7 @@ optional-dependencies = {dev = { file = ["dev-requirements.txt"]}, tests = { fil
 where = ["src"]
 include = ["cromshell*"]
 
-# former dump_setup.cfg configuration for mypy
+# former setup.cfg configuration for mypy
 [tool.mypy."numpy.*"]
 ignore_missing_imports = true
 
@@ -58,3 +57,4 @@ ignore_missing_imports = true
 ignore_missing_imports = true
 
 [tool.mypy."pytest.*"]
+ignore_missing_imports = true
