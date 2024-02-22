@@ -10,4 +10,4 @@ tomli==2.0.1
 cython
 sphinx
 sphinx-rtd-theme
-mypy==0.770
+mypy==1.8.0
