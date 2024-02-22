@@ -20,7 +20,7 @@ the Cromshell development environment can be set up by the following steps:
     . venv/bin/activate
     pip install --upgrade pip
     pip install -r dev-requirements.txt
-    pip install -e . 
+    pip install -e .
 ```
     
 After following the above development environment setup steps, cromshell should 
