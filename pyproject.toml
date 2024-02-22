@@ -34,7 +34,7 @@ keywords = [
 dynamic = ["dependencies", "optional-dependencies"]
 
 [project.urls]
-Homepage = "https://github.com/broadinstitute/cromshell"
+"Homepage" = "https://github.com/broadinstitute/cromshell"
 "Bug Tracker" = "https://github.com/broadinstitute/cromshell/issues"
 
 [project.scripts]
