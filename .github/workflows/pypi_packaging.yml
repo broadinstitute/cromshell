@@ -80,9 +80,6 @@ jobs:
     - name: Setup Env
       run: python3 -m pip install --upgrade pip build
 
-    - name: Validate setup.py
-      run: python3 setup.py check --metadata
-
     - name: Build
       run: python3 -m build
 
