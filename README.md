@@ -110,6 +110,15 @@ Cromshell is a CLI for submitting workflows to a Cromwell server and monitoring/
      * Requires the `bq_cost_table` key to exist in the cromshell 
        configuration file and have a value equal to the BigQuery cost table 
        for your GCP billing project.
+       * For example, using the Methods cromwell server, your `~/.cromshell/cromshell_config.json` 
+         should be as follows:
+         ```json
+         {
+           "cromwell_server": "https://cromwell-v77.dsde-methods.broadinstitute.org/",
+           "requests_timeout": 5,
+           "bq_cost_table": "Methods_billing_dump.gcp_billing_export_v1_009C7D_923007_219A6F"
+         }
+         ```
      * `-c/--color` Color outliers in task level cost results.
      * `-d/--detailed` Get the cost for a workflow at the task level.
   
