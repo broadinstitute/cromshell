@@ -2,4 +2,3 @@ pytest
 pytest-cov
 pytest-dependency
 coverage>=4.5
--r requirements.txt
