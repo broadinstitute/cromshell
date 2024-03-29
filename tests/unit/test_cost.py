@@ -34,7 +34,7 @@ class TestCost:
                 """
                 SELECT sum(cost) as cost
                 FROM cost:table1, UNNEST(labels)
-                WHERE value LIKE @workflow_id AND partition_time BETWEEN @start_date AND @end_date
+                WHERE value LIKE @workflow_id AND export_time BETWEEN @start_date AND @end_date
                 """,
             ],
         ],
