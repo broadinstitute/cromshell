@@ -23,7 +23,7 @@ class TestCost:
                 AND task.key LIKE "wdl-task-name"
                 AND wfid.key LIKE "cromwell-workflow-id"
                 AND wfid.value like @workflow_id
-                AND partition_time BETWEEN @start_date AND @end_date
+                AND export_time BETWEEN @start_date AND @end_date
                 GROUP BY 1,2,3
                 ORDER BY 4 DESC
                 """,
@@ -34,7 +34,7 @@ class TestCost:
                 """
                 SELECT sum(cost) as cost
                 FROM cost:table1, UNNEST(labels)
-                WHERE value LIKE @workflow_id AND partition_time BETWEEN @start_date AND @end_date
+                WHERE value LIKE @workflow_id AND export_time BETWEEN @start_date AND @end_date
                 """,
             ],
         ],
